@@ -4,10 +4,13 @@ require "bundler/setup"
 require 'thor'
 require 'thor/runner'
 require 'version_info'
-require 'delphivm/version'
+
 require 'open3'
 require 'zip/zip'
 require 'win32/registry.rb'
+
+require 'delphivm/version'
+require 'delphivm/ide_services'
 
 class ::Pathname 
   def glob(*args, &block)
@@ -47,7 +50,7 @@ else
   TARGET = Object.const_get(target.name)
 end
 
-module Delphivm
+module ::Delphivm
   EXE_NAME = File.basename($0, '.rb')
   class Runner < Thor::Runner
     namespace "\n"

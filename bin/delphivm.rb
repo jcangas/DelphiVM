@@ -5,6 +5,8 @@ begin
   require 'bundler/setup'
   require 'DelphiVM'
    
+  ARGV << 'vendor:install' if defined? Ocra
+  
   Delphivm::Runner.start(ARGV)
 
 rescue Interrupt => e

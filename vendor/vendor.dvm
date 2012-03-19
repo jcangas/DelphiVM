@@ -1,0 +1,1 @@
+install "SummerFW4D", "0.4.6", config: 'Debug', idever: 'D150', source: 'http://jcangas.github.com/SummerFW4D/ship'
