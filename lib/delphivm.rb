@@ -23,6 +23,15 @@ class ::Pathname
   end
 end
 
+module Kernel
+  def silence_warnings
+    old_verbose, $VERBOSE = $VERBOSE, nil
+    yield
+  ensure
+    $VERBOSE = old_verbose
+  end
+end
+
 module Thor::Util #:nodoc:
   SEARCH_ROOT = File.dirname(__FILE__)
   # redefine to search tasks only for this app
