@@ -1,8 +1,11 @@
 
 
-source 'http://192.168.1.3:4000/ship' # 'http://jcangas.github.com/SummerFW4D/ship'
-idever 'D150'
-import "SummerFW4D", "0.4.6"
-idever = 'D160'
-import "SummerFW4D", "0.4.6", config: '*'
+source 'http://home.jcangas.info/ship'
 
+idever 'D150' do
+  import "SummerFW4D", "0.4.6"
+end
+
+idever 'D160' do
+  import "SummerFW4D", "0.4.6", config: '*'
+end

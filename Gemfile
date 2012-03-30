@@ -1,8 +1,11 @@
 # Gemfile
 source "http://rubygems.org"
 
-gem "version_info"
-# gem "ocra"
 gem "thor"
-gem "rubyzip"
+gem "version_info"
+gem "rubyzip", :require => "zip/zip"
 gem "ruby-progressbar"
+
+group :development do
+  gem "ocra"
+end

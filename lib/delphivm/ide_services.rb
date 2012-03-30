@@ -1,11 +1,24 @@
-module	Delphivm
+class	Delphivm
+
 	class IDEServices
-    REG_KEYS = {
-      'D150' => 'Software\Embarcadero\BDS\8.0',
-      'D160' => 'Software\Embarcadero\BDS\9.0'
-     }
     attr :idever
     attr :workdir
+
+    IDEInfos = {
+      'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE'},
+      'D160' => {regkey: 'Software\Embarcadero\BDS\9.0', name: 'XE2'}
+    }
+
+    def self.idelist
+      result = []
+      IDEInfos.each {|ide, info| result << ide if (Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)}
+      result
+    end
+    
+    def self.ideused
+			ROOT.glob('**/*.groupproj').map {|f| f.dirname.basename.to_s.split('-')[0]}
+    end
+    
     def initialize(idever, workdir)
       @idever = idever
       @workdir = workdir
@@ -13,7 +26,7 @@ module	Delphivm
     end
      
     def [](key)
-      @reg.open(REG_KEYS[idever]) {|r|  r[key] }
+      @reg.open(IDEInfos[idever][:regkey]) {|r|  r[key] }
     end
       
     def set_env
@@ -32,7 +45,7 @@ module	Delphivm
 
     def msbuild(config, target)
       set_env
-      winshell(out_filter: ->(line){line =~ /(error|Tiempo)/}) do |i|
+      winshell(out_filter: ->(line){line =~ /(error)/}) do |i|
         Pathname.glob(workdir + "#{idever}**/*.groupproj") do |f|
           f_to_show = f.relative_path_from(workdir)
           say "#{target} (#{config}) #{f_to_show} ...."
