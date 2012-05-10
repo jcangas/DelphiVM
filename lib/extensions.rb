@@ -9,6 +9,12 @@ class ::Pathname
   end
 end
 
+class String
+  def camelize
+    self.split('_').map(&:capitalize).join
+  end
+end
+
 module Kernel
   def silence_warnings
     old_verbose, $VERBOSE = $VERBOSE, nil

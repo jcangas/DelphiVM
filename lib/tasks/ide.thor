@@ -6,12 +6,17 @@ class Ide < Thor
     report_ides IDEServices.idelist
   end
 
-  desc "used", "current used IDE versions"
+  desc "use IDE-TAG", "use IDE with IDE_TAG"
+  def use(ide_tag)
+    puts "Active path: " + IDEServices.use(ide_tag)
+  end
+  
+  desc "used", "list used IDEs in project"
   def used
     report_ides IDEServices.ideused
   end
 
-  desc "start IDEVER  ", "start IDE IDEVER"
+  desc "start IDE-TAG  ", "start IDE with IDE-TAG"
   def start(idever)
     ide = IDEServices.new(idever, ROOT)
     ide.start 

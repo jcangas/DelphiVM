@@ -1,48 +1,17 @@
 
 	
-class Project < Thor
+class Project < BuildTarget
 
 	SHIP_FILE = "#{TARGET}-#{TARGET.VERSION.tag}"
 
-	desc  "clean", "clean #{SHIP_FILE} products"
-	method_option :config,  type: :array, aliases: '-c', default: 'Debug', desc: "use IDE config(s): Debug, Release, etc"
-	def clean
-		get_idevers.each do |idever|
-			ide = IDEServices.new(idever, ROOT)
-			configs = [options[:config]].flatten
-			configs.each do |cfg|
-				ide.msbuild(cfg, 'Clean')
-			end
-		end
-	end	
-	desc  "make", "make #{SHIP_FILE} products"
-	method_option :config,  type: :array, aliases: '-c', default: 'Debug', desc: "use IDE config(s): Debug, Release, etc"
-	def make
-		get_idevers.each do |idever|
-			ide = IDEServices.new(idever, ROOT)
-			configs = [options[:config]].flatten
-			configs.each do |cfg|
-				ide.msbuild(cfg, 'Make')
-			end
-		end
-	end
-
-	desc  "build", "build #{SHIP_FILE} products"
-	method_option :config,  type: :array, aliases: '-c', default: 'Debug', desc: "use IDE config(s): Debug, Release, etc"
-	def build
-		get_idevers.each do |idever|
-			ide = IDEServices.new(idever, ROOT)
-			configs = [options[:config]].flatten
-			configs.each do |cfg|
-				ide.msbuild(cfg, 'Build')
-			end
-		end
-	end
+	desc  "clean", "clean #{SHIP_FILE} products", :for => :clean
+	
+	desc  "make", "make #{SHIP_FILE} products", :for => :make
+	desc  "build", "build #{SHIP_FILE} products", :for => :build
 
 	desc  "ship", "create ship file #{SHIP_FILE}.zip file"
-	method_option :config,  type: :array, aliases: '-c', default: 'Debug', desc: "use IDE config(s): Debug, Release, etc"
+	method_option :config,  type: :array, aliases: '-c', default: '', desc: "use IDE config(s): Debug, Release, etc"
 	def ship
-		invoke :build
 		get_idevers.each do |idever|
 			ide = IDEServices.new(idever, ROOT)
 			configs = [options[:config]].flatten
@@ -52,6 +21,23 @@ class Project < Thor
 		end
 	end
 	
+protected
+
+	def do_clean(idetag, cfg)
+		ide = IDEServices.new(idetag, ROOT)
+		ide.msbuild(cfg, 'Clean')
+	end
+
+	def do_make(idetag, cfg)
+		ide = IDEServices.new(idetag, ROOT)
+		ide.msbuild(cfg, 'Make')
+	end
+
+	def do_build(idetag, cfg)
+		ide = IDEServices.new(idetag, ROOT)
+		ide.msbuild(cfg, 'Build')
+	end
+
 private
 
 	def get_idevers
@@ -59,15 +45,26 @@ private
 	end
 
 	def build_ship(idever, config)
-		zip_fname = ROOT + 'ship' + "#{SHIP_FILE}-#{idever}-#{config}.zip"
+		cfg_segment = config.strip
+		cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
+ 
+		zip_fname = ROOT + 'ship' + "#{SHIP_FILE}-#{idever}#{cfg_segment}.zip"
 		zip_fname.dirname.mkpath
-		zip_base_path = ROOT + 'out' + idever + config
 		zip_fname.delete if zip_fname.exist? 
+		
+		groups = [
+			["output", ROOT + 'out' + idever + config, Pathname('.')],
+			["source", ROOT + 'src', Pathname('src')],
+			["sample", ROOT + 'samples', Pathname('samples')]
+		]
 		puts "Ship file " + zip_fname.to_s
 		Zip::ZipFile.open(zip_fname, Zip::ZipFile::CREATE) do |zipfile|
-			Pathname.glob((zip_base_path + '**' + '*.*').to_s).each do |source_file|
-				zip_entry = Pathname(config) + source_file.relative_path_from(zip_base_path)
-				zipfile.get_output_stream(zip_entry) { |f| f.puts source_file.read(:mode => "rb") }
+		  groups.each do |group|
+				puts "Add #{group[0]} files"		
+				Pathname.glob((group[1] + '**' + '*.*').to_s).each do |source_file|
+					zip_entry = group[2] + source_file.relative_path_from(group[1])
+					zipfile.get_output_stream(zip_entry) { |f| f.puts source_file.read(:mode => "rb") }
+				end
 			end
 		end
 	end

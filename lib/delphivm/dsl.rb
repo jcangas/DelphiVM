@@ -21,12 +21,14 @@ class Delphivm
     
     def import(libname, libver, options={})
       configs = options[:config]
-      configs ||= 'Release'
+      configs ||= ''
       configs = ['Release', 'Debug'] if configs == '*'
       configs = [configs] unless configs.is_a?Array
+      source_uri = source
       configs.each do |config|
-        lib_file = "#{libname}-#{libver}-#{idever}-#{config}.zip"
-        source_uri = source
+        cfg_segment = config.strip
+        cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
+        lib_file = "#{libname}-#{libver}-#{idever}#{cfg_segment}.zip"
         result = download(source_uri, PATH_TO_VENDOR_CACHE, lib_file)
         path_to_lib = PATH_TO_VENDOR_CACHE + lib_file
         unzip(path_to_lib, PATH_TO_VENDOR_IMPORTS + idever) if result
@@ -53,14 +55,15 @@ class Delphivm
       if Pathname(to_here).exist?
         start.call(0, "(cached)")
       else
-        open(to_here, "wb") do |wfile|	
-          begin
-            content = open(full_url, content_length_proc: start, progress_proc: progress).read
+        begin
+          content = open(full_url, "rb", content_length_proc: start, progress_proc: progress).read
+        	File.open(to_here, "wb") do |wfile|	
             wfile.write(content)
-          rescue Exception => e
-            puts e
-            return false
-          end
+        	end
+        rescue Exception => e
+          puts e
+          Pathname(to_here).delete if File.exist?(to_here)
+          return false
         end
       end
       return true
@@ -75,6 +78,7 @@ class Delphivm
         pb.format_arguments = [:percentage, :bar, :title]
         zip_file.each do |f|
           f_path = destination + f.name
+          next if Pathname(f_path).directory?
           f_path.dirname.mkpath
           pb.instance_variable_set "@title", "#{f_path.basename}"
           pb.inc

@@ -8,21 +8,23 @@ class Vendor < Thor
     empty_directory vendor_path + 'cache'
     empty_directory vendor_path + 'imports'
     create_file(vendor_path + 'vendor.dvm', :skip => true) do <<-EOS
-# smaple vendor file
+# sample vendor file
 
 # first set source url
-source 'http://home.jcangas.info/ship'
+source "http://home.jcangas.info/ship"
 
-# then set your IDE version
-idever 'D150'
+# for each IDE version yo need
+idever "D150" do
+  # define some imports. 'Release' assumed by default: can be omitted
+  import "SummerFW4D", "0.4.6", config: "Release" 
+  import "SummerFW4D", "0.4.6", config: "*" # "*" => all configs 'Debug' and 'Release'
+end
 
-# define some imports. 'Release' assumed by default: can be omitted
-import "SummerFW4D", "0.4.6", config: 'Release' 
+# you can repeat it for other IDEs & sources
 
-# you can repeat it for other IDEs
+# source "#{PATH_TO_VENDOR}/local"
+# etc..
 
-idever = 'D160'
-import "SummerFW4D", "0.4.6", config: '*' # '*' => all configs 'Debug' and 'Release'
 EOS
     end
   end
@@ -56,7 +58,7 @@ private
     self.class.source_root PATH_TO_VENDOR_IMPORTS
     PATH_TO_VENDOR_IMPORTS.glob('**/bin/*.*') do |f|
       fname = f.relative_path_from(PATH_TO_VENDOR_IMPORTS)
-      copy_file(fname, ROOT + 'OUT' + fname)
+      copy_file(fname, ROOT + 'out' + fname)
     end
   end
 
