@@ -47,15 +47,16 @@ private
 	def build_ship(idever, config)
 		cfg_segment = config.strip
 		cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
- 
+    
 		zip_fname = ROOT + 'ship' + "#{SHIP_FILE}-#{idever}#{cfg_segment}.zip"
 		zip_fname.dirname.mkpath
 		zip_fname.delete if zip_fname.exist? 
 		
 		groups = [
 			["output", ROOT + 'out' + idever + config, Pathname('.')],
-			["source", ROOT + 'src', Pathname('src')],
-			["sample", ROOT + 'samples', Pathname('samples')]
+			["source", ROOT + 'src', Pathname('src') + SHIP_FILE],
+			["sample", ROOT + 'samples', Pathname('samples') + SHIP_FILE],
+			["documentation", ROOT + 'doc', Pathname('doc') + SHIP_FILE]
 		]
 		puts "Ship file " + zip_fname.to_s
 		Zip::ZipFile.open(zip_fname, Zip::ZipFile::CREATE) do |zipfile|

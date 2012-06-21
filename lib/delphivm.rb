@@ -38,7 +38,7 @@ else
     include VersionInfo
     self.VERSION.file_name = Delphivm::ROOT + 'VERSION'
   end
-  Object.const_set(Delphivm::ROOT.basename.to_s.camelize, target)
+  Object.const_set(Delphivm::ROOT.basename.to_s.snake_case.camelize, target)
   target.freeze
   VersionInfo.install_tasks(:target => target)
 

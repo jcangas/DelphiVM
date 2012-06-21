@@ -22,7 +22,7 @@ class	Delphivm
     end
     
     def self.ideused
-		  ROOT.glob('**/*.groupproj').map {|f| f.dirname.basename.to_s.split('-')[0]}
+		  ROOT.glob('{src,samples}/**/*.groupproj').map {|f| f.dirname.basename.to_s.split('-')[0]}.uniq
     end
     
 		def self.use(ide_tag)
@@ -71,7 +71,7 @@ class	Delphivm
     def msbuild(config, target)
       set_env
       self.class.winshell(out_filter: ->(line){line =~ /(error)/}) do |i|
-        Pathname.glob(workdir + "**/#{idever}**/*.groupproj") do |f|
+        Pathname.glob(workdir + "{src,samples}/#{idever}**/*.groupproj") do |f|
           f_to_show = f.relative_path_from(workdir)
           say "#{target} (#{config}) #{f_to_show} ...."
           # paths can contains spaces so we need use quotes
