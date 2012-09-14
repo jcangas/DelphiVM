@@ -9,10 +9,12 @@ class	Delphivm
 	class IDEServices
     attr :idever
     attr :workdir
-
+    GROUP_FILE_EXT = ['groupproj', 'bdsgroup']
     IDEInfos = {
+			'D100' => {regkey: 'Software\Borland\BDS\4.0', name: 'D2006', desc: 'Borland Developer Stuido 4.0'},
 			'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE', desc: 'Embarcadero RAD Stuido XE'},
-			'D160' => {regkey: 'Software\Embarcadero\BDS\9.0', name: 'XE2', desc: 'Embarcadero RAD Stuido XE2'}
+			'D160' => {regkey: 'Software\Embarcadero\BDS\9.0', name: 'XE2', desc: 'Embarcadero RAD Stuido XE2'},
+			'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'}
     }
 
     def self.idelist
@@ -22,14 +24,12 @@ class	Delphivm
     end
     
     def self.ideused
-		  ROOT.glob('{src,samples}/**/*.groupproj').map {|f| f.dirname.basename.to_s.split('-')[0]}.uniq
+			#TODO ensure we return only ides listed at IDEInfos
+		  ROOT.glob("{src,samples}/**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.split('-')[0]}.uniq
     end
     
 		def self.use(ide_tag)
 			bin_paths = ide_paths.map{ |p| p + 'bin' }
-			# path = ENV['path']
-			#File.open("dvm_set_path.bat", "w"){|f| f.puts "@set path=#{path}"}
-
 			path = Win32::Registry::HKEY_CURRENT_USER.open('Environment'){|r| r['PATH']}
 
 			path = path.split(';')
@@ -42,7 +42,7 @@ class	Delphivm
 		end
 		
 		def initialize(idever, workdir)
-			@idever = idever
+			@idever = idever.upcase
 			@workdir = workdir
 			@reg = Win32::Registry::HKEY_CURRENT_USER     
 		end
@@ -68,15 +68,24 @@ class	Delphivm
       workdir.basename.to_s.upcase
     end
     
+		def supports_msbuild?(idever)
+      ide_number = idever[1..-1].to_i
+			ide_number > 140			
+		end
+		
     def msbuild(config, target)
       set_env
       self.class.winshell(out_filter: ->(line){line =~ /(error)/}) do |i|
-        Pathname.glob(workdir + "{src,samples}/#{idever}**/*.groupproj") do |f|
+        Pathname.glob(workdir + "{src,samples}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
           f_to_show = f.relative_path_from(workdir)
-          say "#{target} (#{config}) #{f_to_show} ...."
+          say "#{target} (#{config}) #{f_to_show.win} ...."
           # paths can contains spaces so we need use quotes
-          i.puts %Q["#{self['RootDir'] + 'bin\rsvars.bat'}"]
-          i.puts %Q[msbuild /nologo /t:#{target} /p:Config=#{config} "#{f.win}"]
+					if supports_msbuild?(idever)
+          	i.puts %Q["#{self['RootDir'] + 'bin\rsvars.bat'}"]
+          	i.puts %Q[msbuild /nologo /t:#{target} /p:Config=#{config} "#{f.win}"]
+					else						
+          	i.puts %Q[bds -b "#{f.win}"]
+					end
         end  
       end    
     end
