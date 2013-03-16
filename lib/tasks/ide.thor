@@ -6,7 +6,7 @@ class Ide < Thor
     report_ides IDEServices.idelist
   end
 
-  desc "use IDE-TAG", "use IDE with IDE_TAG"
+  desc "use IDE-TAG", "use IDE with IDE-TAG"
   def use(ide_tag)
     puts "Active path: " + IDEServices.use(ide_tag)
   end

@@ -31,9 +31,9 @@ end
 module Jekyll
 	module AssetFilter
 		def download_entry(input)      
-			info = File.basename(input, '.zip').split('-')[1..-1]
-			info << '*' if info.size < 3
-			"%1s | %2s | %3s " % info
+			info = File.basename(input, '.zip').split('-')[0..-1]
+			info << '*' if info.size < 4
+			"%1s | %2s | %3s | %4s" % info
 		end
 	end
 end

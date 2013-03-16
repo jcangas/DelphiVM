@@ -7,17 +7,16 @@ class Vendor < Thor
     empty_directory vendor_path
     empty_directory vendor_path + 'cache'
     empty_directory vendor_path + 'imports'
-    create_file(vendor_path + 'vendor.dvm', :skip => true) do <<-EOS
-# sample vendor file
+    create_file(DVM_IMPORTS_FILE, :skip => true) do <<-EOS
+# sample imports file for delphivm
 
 # first set source url
 source "http://home.jcangas.info/ship"
 
 # for each IDE version yo need
 idever "D150" do
-  # define some imports. 'Release' assumed by default: can be omitted
-  import "SummerFW4D", "0.4.6", config: "Release" 
-  import "SummerFW4D", "0.4.6", config: "*" # "*" => all configs 'Debug' and 'Release'
+  # define some imports:
+  import "SummerFW4D", "0.4.6"
 end
 
 # you can repeat it for other IDEs & sources
@@ -35,7 +34,7 @@ EOS
   def import
     clean_vendor(options) if options.clean?
     prepare
-    silence_warnings{DSL.uses(File.join(ROOT, 'vendor', 'vendor.dvm'))}
+    silence_warnings{DSL.uses(DVM_IMPORTS_FILE)}
     deploy_vendor if options.deploy?
   end
 
@@ -50,7 +49,6 @@ EOS
   def deploy
     deploy_vendor
   end
-  
 
 private
 

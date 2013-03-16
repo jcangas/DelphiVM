@@ -5,10 +5,12 @@ group: navigation
 gallery: "ship/**/*.zip"
 ---
 
-## Latest stable versions
+## Available imports ##
 
-| Version |   IDE  | Config    |    |
-|---------|--------|-----------|----| {% for item in page.gallery_items %}
+
+
+| Name | Version |   IDE  | Config    |    |
+|------|---------|--------|-----------|----| {% for item in page.gallery_items %}
 | {{ item | download_entry }}  | <a href="{{ item }}">download</a> | {% endfor %}
 
 

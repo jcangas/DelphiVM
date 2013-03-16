@@ -11,7 +11,7 @@ begin
     ARGV.shift
   end
   
-  ARGV << 'vendor:import' << '-c' if defined? Ocra
+  ARGV << 'vendor:import' << '-c' if defined? Ocra #to see all requires when compiling
 
   $0 = Pathname($0).basename('.rb').to_s
 

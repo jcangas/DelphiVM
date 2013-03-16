@@ -147,6 +147,7 @@ class Delphivm
   PATH_TO_VENDOR = ROOT + 'vendor'
   PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
   PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
+  DVM_IMPORTS_FILE = PATH_TO_VENDOR + 'imports.dvm'
 
   class Runner
     # remove some tasks not needed

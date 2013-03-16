@@ -11,7 +11,7 @@ class	Delphivm
     attr :workdir
     GROUP_FILE_EXT = ['groupproj', 'bdsgroup']
     IDEInfos = {
-			'D100' => {regkey: 'Software\Borland\BDS\4.0', name: 'D2006', desc: 'Borland Developer Stuido 4.0'},
+			'D100' => {regkey: 'Software\Borland\BDS\4.0', name: '2006', desc: 'Borland Developer Stuido 4.0'},
 			'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE', desc: 'Embarcadero RAD Stuido XE'},
 			'D160' => {regkey: 'Software\Embarcadero\BDS\9.0', name: 'XE2', desc: 'Embarcadero RAD Stuido XE2'},
 			'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'}
@@ -34,7 +34,7 @@ class	Delphivm
 
 			path = path.split(';')
 			path.reject! { |p| bin_paths.include?(p) }
-			new_path = ide_paths(ide_tag).map{ |p| p + 'bin' }.first
+			new_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bin' }.first
 			path.unshift new_path
 			path = path.join(';')
 			self.winpath= path
@@ -132,9 +132,9 @@ class	Delphivm
 
 		def self.ide_paths(idetag=nil)
 			result = []
-			@reg = Win32::Registry::HKEY_CURRENT_USER  
+			@reg = Win32::Registry::HKEY_CURRENT_USER 
 			IDEInfos.each { |key, data|
-				@reg.open(data[:regkey]) {|r|  result << r['RootDir'] } if idetag.nil? || idetag.to_s == key
+				@reg.open(data[:regkey]) {|r| result << 'RootDir' } if idetag.nil? || idetag.to_s == key
 			} 
 			result
 		end
