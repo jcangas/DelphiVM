@@ -1,3 +1,4 @@
+# encoding: UTF-8
 class ::Pathname 
   def glob(*args, &block)
     args[0] = (self + args[0]).to_s
@@ -6,6 +7,10 @@ class ::Pathname
 
   def win
     self.to_s.gsub('/','\\')
+  end
+  
+  def to_str
+    win
   end
 end
 

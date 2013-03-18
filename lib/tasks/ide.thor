@@ -1,3 +1,4 @@
+﻿# encoding: UTF-8
 
 class Ide < Thor
 
@@ -17,7 +18,8 @@ class Ide < Thor
   end
 
   desc "start IDE-TAG  ", "start IDE with IDE-TAG"
-  def start(idever)
+  def start(idever=nil)
+    idever ||= IDEServices.idelist.first
     ide = IDEServices.new(idever, ROOT)
     ide.start 
   end

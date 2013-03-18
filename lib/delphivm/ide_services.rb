@@ -1,3 +1,4 @@
+# encoding: UTF-8
 
 SendMessageTimeout = Win32API.new('user32', 'SendMessageTimeout', 'LLLPLLP', 'L') 
 HWND_BROADCAST = 0xffff
@@ -20,12 +21,12 @@ class	Delphivm
     def self.idelist
       result = []
       IDEInfos.each {|ide, info| result << ide if (Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)}
-      result
+      result.sort.reverse
     end
     
     def self.ideused
 			#TODO ensure we return only ides listed at IDEInfos
-		  ROOT.glob("{src,samples}/**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.split('-')[0]}.uniq
+		  ROOT.glob("{src,samples}/**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.split('-')[0]}.uniq.sort
     end
     
 		def self.use(ide_tag)
@@ -97,15 +98,15 @@ class	Delphivm
 
 			Open3.popen3(acmd) do |i,o,e,t|
 				err_t = Thread.new(e) do |stm|
-						while (line = stm.gets)
-							say "STDERR: #{line}" if err_filter.call(line)
-						end
+					while (line = stm.gets)
+						say "STDERR: #{line}" if err_filter.call(line)
+					end
 				end 
 
 				out_t = Thread.new(o) do |stm|
-						while (line = stm.gets)
-							say "#{line}" if out_filter.call(line) 
-						end
+					while (line = stm.gets)
+						say "#{line}" if out_filter.call(line) 
+					end
 				end
 
 				begin
@@ -123,9 +124,11 @@ class	Delphivm
 		end
 
   private
-    def self.say(msg)
+    
+		def self.say(msg)
 			puts msg
 		end
+		
     def say(msg)
 			self.class.say(msg)
 		end

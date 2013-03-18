@@ -1,4 +1,4 @@
-# encoding: UTF-8
+﻿# encoding: UTF-8
 require 'version_info'
 
 $LOAD_PATH << Pathname(__FILE__).dirname + 'lib'

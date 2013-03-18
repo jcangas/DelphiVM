@@ -1,8 +1,7 @@
-#!/usr/bin/env ruby
+﻿#!/usr/bin/env ruby
+# encoding: UTF-8
 begin
   $LOAD_PATH.unshift File.join(File.dirname($0), '..', 'lib')
-  
-  #require 'bundler/setup'
 
   require 'DelphiVM'
 

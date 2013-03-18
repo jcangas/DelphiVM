@@ -1,3 +1,4 @@
+﻿# encoding: UTF-8
 class Vendor < Thor
   include Thor::Actions
   
