@@ -3,3 +3,7 @@
 *.zip
 /vendor/cache
 /vendor/imports
+_site
+.DS_Store
+Thumbs.db
+pkg
