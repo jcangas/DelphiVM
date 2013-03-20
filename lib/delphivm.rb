@@ -50,7 +50,7 @@ module Thor::Util #:nodoc:
   SEARCH_ROOT = File.dirname(__FILE__)
   # redefine to search tasks only for this app
   def self.globs_for(path)
-    ["#{SEARCH_ROOT}/tasks/*.thor", "#{Delphivm::ROOT}/dvm/*.thor"]
+    ["#{SEARCH_ROOT}/dvm/*.thor", "#{Delphivm::ROOT}/dvm/*.thor"]
   end
 end
 

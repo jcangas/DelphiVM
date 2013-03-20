@@ -6,14 +6,6 @@ require 'delphivm/version'
 
 VersionInfo.install_tasks(:target => Delphivm)
 
-
-module Thor::Util
-  SEARCH_ROOT = File.dirname(__FILE__)
-  # redefine to search tasks only for this app   
-  def self.load_thorfile(path, content=nil, debug=false)
-  end
-end
-
 class Build < Thor
   desc "ocra", "compile script with ocra"
   def ocra

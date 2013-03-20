@@ -4,6 +4,7 @@
 begin
   $LOAD_PATH.unshift File.join(File.dirname($0), '..', 'lib')
 
+puts "loading !"
   require 'DelphiVM'
 
   if ARGV[0] == 'backtrace'
