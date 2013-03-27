@@ -1,6 +1,14 @@
 # encoding: UTF-8
 
-SendMessageTimeout = Win32API.new('user32', 'SendMessageTimeout', 'LLLPLLP', 'L') 
+require 'fiddle'
+require 'fiddle/import'
+
+module User32
+	extend Fiddle::Importer
+	dlload 'user32'
+	extern 'long SendMessageTimeout(long, long, long, void*, long, long, void*)'
+end
+
 HWND_BROADCAST = 0xffff
 WM_SETTINGCHANGE = 0x001A
 SMTO_ABORTIFHUNG = 2
@@ -135,10 +143,11 @@ class	Delphivm
 
 		def self.ide_paths(idetag=nil)
 			result = []
-			@reg = Win32::Registry::HKEY_CURRENT_USER 
-			IDEInfos.each { |key, data|
-				@reg.open(data[:regkey]) {|r| result << 'RootDir' } if idetag.nil? || idetag.to_s == key
-			} 
+  		IDEInfos.each { |key, info|
+				Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]){|r| 				
+				  result << r['RootDir'] if (idetag.nil? || idetag.to_s == key)
+				} rescue true
+			}
 			result
 		end
     
@@ -146,7 +155,7 @@ class	Delphivm
 			Win32::Registry::HKEY_CURRENT_USER.open('Environment', Win32::Registry::KEY_WRITE) do |r| 
 				r['PATH'] = path
 			end
-			SendMessageTimeout.call(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, 0)    
+			User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, 0)    
 		end
   end
 end

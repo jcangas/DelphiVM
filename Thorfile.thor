@@ -11,6 +11,6 @@ class Build < Thor
   def ocra
     root = Pathname.getwd
     (root + 'out').mkpath
-    system "ocra --icon delphi_PROJECTICON.ico --output ./out/DelphiVM.exe  --no-enc --gem-full --console bin\\delphivm.rb **\\*.thor"
+    system "ocra --icon delphi_PROJECTICON.ico --output ./out/DelphiVM.exe  --no-enc --gem-full --console bin\\delphivm **\\*.thor"
   end
 end

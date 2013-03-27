@@ -5,7 +5,6 @@ require 'thor'
 require 'pathname'
 
 Delphivm = Thor
-
 class Delphivm
   ROOT = ::Pathname.getwd
 end
@@ -16,12 +15,11 @@ require 'open3'
 require 'nokogiri'
 
 require 'win32/registry.rb'
-require 'Win32API'
 
 require 'version_info'
 require 'open-uri'
 require 'net/http'
-require 'progressbar'
+require 'ruby-progressbar'
 
 require 'extensions'
 require 'delphivm/version'
@@ -53,7 +51,6 @@ module Thor::Util #:nodoc:
     ["#{SEARCH_ROOT}/dvm/*.thor", "#{Delphivm::ROOT}/dvm/*.thor"]
   end
 end
-
 
 class BuildTarget < Thor
   attr_accessor :idetag
