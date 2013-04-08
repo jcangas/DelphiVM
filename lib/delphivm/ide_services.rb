@@ -85,7 +85,7 @@ class	Delphivm
     def msbuild(config, target)
       set_env
       self.class.winshell(out_filter: ->(line){line =~ /(error)/}) do |i|
-        Pathname.glob(workdir + "{src,samples}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
+        Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
           f_to_show = f.relative_path_from(workdir)
           say "#{target} (#{config}) #{f_to_show.win} ...."
           # paths can contains spaces so we need use quotes

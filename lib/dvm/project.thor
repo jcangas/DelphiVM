@@ -14,7 +14,6 @@ class Project < BuildTarget
 	method_option :config,  type: :array, aliases: '-c', default: '', desc: "use IDE config(s): Debug, Release, etc"
 	def ship
 		get_idevers.each do |idever|
-			#ide = IDEServices.new(idever, ROOT)
 			configs = [options[:config]].flatten
 			configs.each do |cfg|
 				build_ship(idever, cfg)

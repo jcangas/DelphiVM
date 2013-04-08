@@ -27,3 +27,4 @@ rescue Exception => e
   puts e.backtrace.join("\n") if defined? ::BACKTRACE
   exit 1
 end
+exit 0

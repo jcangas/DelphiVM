@@ -42,19 +42,15 @@ class Delphivm
       full_url = source_uri + '/' + file_name
       to_here = dowonlad_root_path + file_name
       pb = nil
-      puts "Downloading: #{full_url}"
+      puts "\nDownloading: #{full_url}"
       start = lambda do |length, hint=''| 
-        pb = ProgressBar.new("#{file_name}", length);	
-        pb.instance_variable_set "@title_width", file_name.length + 2
-        pb.format =  "\s\s%-s #{hint} %3d%% %s %s"
-        pb.clear
-        pb.send :show
+        pb = ProgressBar.create(:title => "#{hint}", :format => "%t %E %w");
       end
 
-      progress = lambda {|s| pb.set(s)}
+      progress = lambda {|s| pb.progress = s; pb.refresh}
 
       if Pathname(to_here).exist?
-        start.call(0, "(cached)")
+        start.call(0, "(cached) ")
       else
         begin
           content = open(full_url, "rb", content_length_proc: start, progress_proc: progress).read
@@ -74,15 +70,12 @@ class Delphivm
 
     def unzip(file, destination)
       Zip::ZipFile.open(file) do |zip_file|
-        pb = ProgressBar.new("", zip_file.size)
-        pb.format =  "\s\s\s\sextracting: %3d%% %s file: %-34s"
-        pb.format_arguments = [:percentage, :bar, :title]
+        pb = ProgressBar.create(:total =>  zip_file.size, :format => "extracting %c/%C %B %t")
         zip_file.each do |f|
           f_path = destination + f.name
           next if Pathname(f_path).directory?
           f_path.dirname.mkpath
-          pb.instance_variable_set "@title", "#{f_path.basename}"
-          pb.inc
+          pb.title = "#{f_path.basename}"
           Pathname(f_path).delete if File.exist?(f_path)
           zip_file.extract(f, f_path) 
         end
