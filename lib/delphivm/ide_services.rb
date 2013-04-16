@@ -1,5 +1,3 @@
-# encoding: UTF-8
-
 require 'fiddle'
 require 'fiddle/import'
 
@@ -69,8 +67,8 @@ class	Delphivm
 
     def start
       set_env
-      Process.detach(spawn "#{self['App']}", "-r#{prj_slug}")
-      say "started bds -r#{prj_slug}"
+      Process.detach(spawn "#{self['App']}", "-rDelphiVM\\#{prj_slug}")
+      say "started bds -rDelphiVM\\#{prj_slug}"
     end
     
     def prj_slug
@@ -82,18 +80,20 @@ class	Delphivm
 			ide_number > 140			
 		end
 		
-    def msbuild(config, target)
+    def msbuild(target, config)
       set_env
-      self.class.winshell(out_filter: ->(line){line =~ /(error)/}) do |i|
-        Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
+      self.class.winshell(out_filter: ->(line){line =~/\b(warning|error)\b/i}) do |i|
+			  Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
           f_to_show = f.relative_path_from(workdir)
-          say "#{target} (#{config}) #{f_to_show.win} ...."
           # paths can contains spaces so we need use quotes
 					if supports_msbuild?(idever)
+						msbuild_prms = config.inject([]) {|prms, item| prms << '/p:' + item.join('=')}.join(' ')
+	          say "[#{idever}] msbuild /t:#{target} #{msbuild_prms} #{f_to_show.win} ...."
           	i.puts %Q["#{self['RootDir'] + 'bin\rsvars.bat'}"]
-          	i.puts %Q[msbuild /nologo /t:#{target} /p:Config=#{config} "#{f.win}"]
+          	i.puts %Q[msbuild /nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed /t:#{target} #{msbuild_prms} "#{f.win}"]
 					else						
-          	i.puts %Q[bds -b "#{f.win}"]
+            say "[#{idever}] bds -b #{f_to_show.win} ...."
+	        	i.puts %Q[bds -b "#{f.win}"]
 					end
         end  
       end    

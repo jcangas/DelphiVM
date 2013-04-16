@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: UTF-8
 
 require 'thor'
 require 'pathname'
@@ -26,7 +25,7 @@ require 'delphivm/version'
 require 'delphivm/ide_services'
 require 'delphivm/dsl'
 
-require 'thor/runner'
+require 'delphivm/runner'
 
 if Delphivm::ROOT == Pathname(__FILE__).dirname.parent
   TARGET = Object.const_get('Delphivm')
@@ -116,17 +115,15 @@ protected
   def self.publish    
     [:clean, :make, :build].each do |mth|
       desc "#{mth}", "#{mth} #{self.namespace} products"
-      method_option :config,  type: :array, aliases: '-c', default: 'Debug', desc: "use IDE config(s): Debug, Release, etc"
+      method_option :params,  type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "more MSBuild params. See MSBuild help"
       define_method mth do
-        IDEServices.ideused.each do |idetag|
-          configs = [options[:config]].flatten
-          configs.each do |cfg|
-            self.idetag = idetag
-            self.config = cfg
-            self.clear_products
-            self.class.depends.each { |task| self.invoke "#{task}:#{mth}" }
-            send("do_#{mth}", idetag, cfg)
-          end
+        msbuild_params = options[:params]
+        IDEServices.ideused.each do |idetag|          
+          self.idetag = idetag
+          self.config = msbuild_params
+          self.clear_products
+          self.class.depends.each { |task| self.invoke "#{task}:#{mth}" }
+          send("do_#{mth}", idetag, msbuild_params)
         end
       end
     end
@@ -137,28 +134,4 @@ protected
     ROOT + under_scored.to_s.split('_').join('/').gsub(INCL_BUILD, '\1' + buildpath_as_str + '\2')
   end
   
-end
-
-class Delphivm
-  EXE_NAME = File.basename($0, '.rb')
-  
-  PATH_TO_VENDOR = ROOT + 'vendor'
-  PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
-  PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
-  DVM_IMPORTS_FILE = PATH_TO_VENDOR + 'imports.dvm'
-
-  class Runner
-    # remove some tasks not needed
-    remove_task :install, :installed, :uninstall, :update
-
-    # default version and banner outputs THOR, so redefine it
-    def self.banner(task, all = false, subcommand = false)
-      "#{Delphivm::EXE_NAME} " + task.formatted_usage(self, all, subcommand)
-    end    
-
-    desc "version", "Show #{Delphivm::EXE_NAME} version"
-    def version
-      say "#{Delphivm::VERSION}"
-    end
-  end
 end

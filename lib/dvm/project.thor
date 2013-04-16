@@ -1,12 +1,9 @@
-﻿# encoding: UTF-8
-
-	
+﻿	
 class Project < BuildTarget
 
 	SHIP_FILE = "#{TARGET}-#{TARGET.VERSION.tag}"
 
 	desc  "clean", "clean #{SHIP_FILE} products", :for => :clean
-	
 	desc  "make", "make #{SHIP_FILE} products", :for => :make
 	desc  "build", "build #{SHIP_FILE} products", :for => :build
 
@@ -25,17 +22,17 @@ protected
 
 	def do_clean(idetag, cfg)
 		ide = IDEServices.new(idetag, ROOT)
-		ide.msbuild(cfg, 'Clean')
+		ide.msbuild('Clean', cfg)
 	end
 
 	def do_make(idetag, cfg)
 		ide = IDEServices.new(idetag, ROOT)
-		ide.msbuild(cfg, 'Make')
+		ide.msbuild('Make', cfg)
 	end
 
 	def do_build(idetag, cfg)
 		ide = IDEServices.new(idetag, ROOT)
-		ide.msbuild(cfg, 'Build')
+		ide.msbuild('Build', cfg)
 	end
 
 private
@@ -55,7 +52,7 @@ private
 		groups = [
 			["output", ROOT + 'out' + idever + config, Pathname('.')],
 			["source", ROOT + 'src', Pathname('src') + SHIP_FILE],
-			["sample", ROOT + 'samples', Pathname('samples') + SHIP_FILE],
+			["samples", ROOT + 'samples', Pathname('samples') + SHIP_FILE],
 			["documentation", ROOT + 'doc', Pathname('doc') + SHIP_FILE]
 		]
 		puts "Ship file " + zip_fname.to_s
