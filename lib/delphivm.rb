@@ -75,7 +75,7 @@ class BuildTarget < Thor
 protected
   def self.depends(*task_names)
     @depends ||=[]
-    @depends.push *task_names
+    @depends.push(*task_names)
     @depends
   end
   
@@ -91,7 +91,7 @@ protected
   end
 
   def catch_product(*prods)
-    @products.push *prods
+    @products.push(*prods)
     yield *prods unless @catch_products
   end
   
@@ -130,7 +130,7 @@ protected
   end
 
   def convert_to_path(under_scored='')
-    buildpath_as_str = (Pathname('out') + self.idetag + self.config).to_s
+    buildpath_as_str = (Pathname('out') + self.idetag + self.config[:Config]).to_s    
     ROOT + under_scored.to_s.split('_').join('/').gsub(INCL_BUILD, '\1' + buildpath_as_str + '\2')
   end
   
