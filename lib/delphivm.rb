@@ -3,11 +3,6 @@
 require 'thor'
 require 'pathname'
 
-Delphivm = Thor
-class Delphivm
-  ROOT = ::Pathname.getwd
-end
-
 require 'zip/zip'
 
 require 'open3'
@@ -21,117 +16,48 @@ require 'net/http'
 require 'ruby-progressbar'
 
 require 'extensions'
-require 'delphivm/version'
-require 'delphivm/ide_services'
-require 'delphivm/dsl'
 
-require 'delphivm/runner'
+require 'build_target'
 
-if Delphivm::ROOT == Pathname(__FILE__).dirname.parent
-  TARGET = Object.const_get('Delphivm')
-else
-  VersionInfo.file_format = :text
-  target = Module.new
-  target.module_exec do
-    include VersionInfo
-    self.VERSION.file_name = Delphivm::ROOT + 'VERSION'
-  end
-  Object.const_set(Delphivm::ROOT.basename.to_s.snake_case.camelize, target)
-  target.freeze
-  VersionInfo.install_tasks(:target => target)
+Delphivm = Thor # sure, we are hacking Thor !
 
-  TARGET = Object.const_get(target.name)
-end
+class Thor 
+  include(VersionInfo)
 
-module Thor::Util #:nodoc:
-  SEARCH_ROOT = File.dirname(__FILE__)
-  # redefine to search tasks only for this app
-  def self.globs_for(path)
-    ["#{SEARCH_ROOT}/dvm/*.thor", "#{Delphivm::ROOT}/dvm/*.thor"]
-  end
-end
+  ROOT = ::Pathname.getwd
+  GEM_ROOT = Pathname(__FILE__).dirname.parent
+  EXE_NAME = File.basename($0, '.rb')
 
-class BuildTarget < Thor
-  attr_accessor :idetag
-  attr_accessor :config
-   
-  INCL_BUILD = /(_|\/|\A)build(_|\/|\Z)/ # REX for recognize a build subpath
-  
-  include Thor::Actions
-  
-  def self.inherited(klass)
-    klass.source_root(ROOT)
-    klass.publish
+ 	PATH_TO_VENDOR = ROOT + 'vendor'
+  PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
+  PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
+  DVM_IMPORTS_FILE = PATH_TO_VENDOR + 'imports.dvm'
+
+ module Util #:nodoc:
+    # redefine Thor to search tasks only for this app
+    def self.globs_for(path)
+      ["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::ROOT}/dvm/**/*.thor"]
+    end
   end
 
-  def method_missing(name, *args, &block)
-    if name.to_s.match(/(\w+)_path$/)
-      convert_to_path $1
+private
+  def self.get_app
+    return @app_module if @app_module
+    if ROOT.basename.to_s.casecmp(EXE_NAME) == 0
+      @app_module = self
     else
-      super
-    end
-  end
-
-protected
-  def self.depends(*task_names)
-    @depends ||=[]
-    @depends.push(*task_names)
-    @depends
-  end
-  
-  def clear_products
-    @products = [] 
-  end
-    
-  def catch_products
-    @catch_products = true
-    yield
-  ensure
-    @catch_products = false
-  end
-
-  def catch_product(*prods)
-    @products.push(*prods)
-    yield *prods unless @catch_products
-  end
-  
-  def do_clean(idetag, cfg)
-    catch_products do
-      do_make(idetag, cfg)
-    end
-    @products.each do |p| 
-      remove_file(p) 
-    end
-  end
-  
-  def do_make(idetag, cfg)
-  end
-
-  def do_build(idetag, cfg)
-    invoke :clean
-    invoke :make
-  end
-
-  def self.publish    
-    [:clean, :make, :build].each do |mth|
-      desc "#{mth}", "#{mth} #{self.namespace} products"
-      method_option :params,  type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "more MSBuild params. See MSBuild help"
-      define_method mth do
-        msbuild_params = options[:params]
-        IDEServices.ideused.each do |idetag|          
-          self.idetag = idetag
-          self.config = msbuild_params
-          self.clear_products
-          self.class.depends.each { |task| self.invoke "#{task}:#{mth}" }
-          send("do_#{mth}", idetag, msbuild_params)
-        end
+      @app_module = Module.new do
+        include VersionInfo
+        self.VERSION.file_name = ROOT + 'VERSION'
       end
+      Object.const_set(ROOT.basename.to_s.snake_case.camelize, @app_module)
+      @app_module.freeze
     end
+    VersionInfo.install_tasks(:target => @app_module)
+    @app_module
   end
-
-  def convert_to_path(under_scored='')
-    buildpath_as_str = (Pathname('out') + self.idetag + self.config[:Config]).to_s    
-    ROOT + under_scored.to_s.split('_').join('/').gsub(INCL_BUILD, '\1' + buildpath_as_str + '\2')
-  end
-  
+  self.const_set('APP', self.get_app)
 end
+
+# Runner must be loaded last
+require 'delphivm/runner'

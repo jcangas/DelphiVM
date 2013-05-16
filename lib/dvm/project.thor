@@ -1,7 +1,7 @@
 ﻿	
 class Project < BuildTarget
 
-	SHIP_FILE = "#{TARGET}-#{TARGET.VERSION.tag}"
+	SHIP_FILE = "#{Delphivm::APP}-#{Delphivm::APP.VERSION.tag}"
 
 	desc  "clean", "clean #{SHIP_FILE} products", :for => :clean
 	desc  "make", "make #{SHIP_FILE} products", :for => :make

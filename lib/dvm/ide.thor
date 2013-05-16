@@ -19,7 +19,7 @@ class Ide < Thor
 
   desc "start IDE-TAG  ", "start IDE with IDE-TAG"
   def start(idever=nil)
-    idever ||= IDEServices.idelist.first
+    idever ||= IDEServices.default_ide
     ide = IDEServices.new(idever, ROOT)
     ide.start 
   end

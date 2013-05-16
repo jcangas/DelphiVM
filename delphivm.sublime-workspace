@@ -1,0 +1,247 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "class ::Pathname \n  def glob(*args, &block)\n    args = [''] if args.empty?\n    args[0] = (self + args[0]).to_s\n    Pathname.glob(*args, &block)\n  end\n\n  def win\n    self.to_s.gsub('/','\\\\')\n  end\n  \n  def to_str\n    win\n  end\nend\n\nclass String\n  def snake_case\n    gsub(/([A-Z]+)([A-Z][a-z])/,'\\1_\\2').\n    gsub(/([a-z\\d])([A-Z])/,'\\1_\\2').\n    tr(\"-\", \"_\").\n    downcase\n  end\n\n  def camelize\n    self.split('_').map(&:capitalize).join\n  end\nend\n\nmodule Kernel\n  def silence_warnings\n    old_verbose, $VERBOSE = $VERBOSE, nil\n    yield\n  ensure\n    $VERBOSE = old_verbose\n  end\nend\n",
+			"file": "lib/extensions.rb",
+			"file_size": 639,
+			"file_write_time": 130131649780000000,
+			"settings":
+			{
+				"buffer_size": 583,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+			[
+				"",
+				"Indentation: Reindent Lines"
+			]
+		],
+		"width": 416.0
+	},
+	"console":
+	{
+		"height": 125.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Y/papps/Documents/Projects/tgprofesional/src/ormcfg/TGPROFESIONALSQL.FDB/Acreedor.ORM.Config",
+		"/Y/papps/Documents/Projects/tgprofesional/src/ormcfg/TGPROFESIONALSQL.FDB/Adicional.ORM.Config",
+		"/Y/papps/Documents/Projects/tgprofesional/out/D170/Debug/data/TGProfesional.exe.ORM.config",
+		"/Y/papps/Documents/Projects/tgprofesional/Notas migracion a XE3.md",
+		"/Y/papps/Documents/Projects/tgprofesional/out/D170/Debug/data/TGProfesional.exe.ORM.json",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0112_EFECTI_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0002_initialToSQL/0010_creatingdomains.sql",
+		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/User/Preferences.sublime-settings",
+		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Default/Preferences.sublime-settings",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0075_CUESTO_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0078_ARTIDIN_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0093_FPAGOS_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0099_ARTIDI_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0103_ARTICUN_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0104_CABPRO_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0106_PROVEEN_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0107_CLIENTN_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0108_DETTLL_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0109_DETCOL_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0074_CABSTO_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0072_CONTAD_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0064_DIRCLI_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0065_SERIES_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0062_SECCLI_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0057_ESCAND_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0058_TIPORT_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0059_RELAPR_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0056_TRABAJ_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0055_CONCON_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0047_PROVEE_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0048_ARTICU_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0049_AGENTE_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0050_BANCOS_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0051_EFEPAG_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0052_EFECOB_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0053_FAMILI_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0044_PAISES.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0046_CLIENT_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0045_DATOSE_02.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0043_DEFGRNIC.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0042_DEFCTNIC.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0040_HTAREAS.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0039_STPSEG.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0038_ESTSEG.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0037_BUSQUEDN.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0036_BUSQUED.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0032_TIPSEG.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0030_DEFCTIVA.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0029_DEFCONCO.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0028_DEFRGTIV.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0027_TAREASN.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0031_USUEMP.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0033_TAREPR.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0034_TAREPRG.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0035_TAREPRN.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0026_TAREAS.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0024_NOTASA.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0023_CONFBA.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0019_DEFIRPF.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0014_CONSISTM.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0012_BALANIVE.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0001_EMPRESA.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0003_DICLISCA.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0002_POSTAL.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0004_DICLISGR.sql",
+		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0000_initialstructure/0000_estructuradesdedbfs.sql"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+			"Z:\\Projects\\github\\DelphiVM",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"PATH_TO_VENDOR",
+			"icoimage"
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"PATH_TO_VENDOR"
+		],
+		"reverse": false,
+		"show_context": false,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "lib/extensions.rb",
+					"settings":
+					{
+						"buffer_size": 583,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"replace":
+	{
+		"height": 62.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 274.0,
+	"status_bar_visible": true
+}

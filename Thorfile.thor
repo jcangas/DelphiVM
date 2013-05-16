@@ -6,7 +6,7 @@ require 'delphivm/version'
 
 VersionInfo.install_tasks(:target => Delphivm)
 
-class Build < Thor
+class Default < Thor
   desc "ocra", "compile script with ocra"
   def ocra
     root = Pathname.getwd

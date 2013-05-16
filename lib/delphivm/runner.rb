@@ -1,13 +1,10 @@
-﻿require 'thor/runner'
+﻿require 'delphivm/version'
+require 'delphivm/ide_services'
+require 'delphivm/dsl'
 
-class Delphivm
-	EXE_NAME = File.basename($0, '.rb')
-	
-	PATH_TO_VENDOR = ROOT + 'vendor'
-	PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
-	PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
-	DVM_IMPORTS_FILE = PATH_TO_VENDOR + 'imports.dvm'
+require 'thor/runner'
 
+class Delphivm	
 	class Runner
 		# remove some tasks not needed
 		remove_task :install, :installed, :uninstall, :update

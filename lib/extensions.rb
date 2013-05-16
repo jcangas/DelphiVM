@@ -1,6 +1,6 @@
-# encoding: UTF-8
 class ::Pathname 
   def glob(*args, &block)
+    args = [''] if args.empty?
     args[0] = (self + args[0]).to_s
     Pathname.glob(*args, &block)
   end

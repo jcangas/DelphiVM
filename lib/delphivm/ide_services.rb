@@ -30,6 +30,10 @@ class	Delphivm
       result.sort.reverse
     end
     
+		def self.default_ide
+			self.idelist.first
+		end
+		
     def self.ideused
 			#TODO ensure we return only ides listed at IDEInfos
 		  ROOT.glob("{src,samples}/**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.split('-')[0]}.uniq.sort
@@ -44,7 +48,7 @@ class	Delphivm
 			new_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bin' }.first
 			path.unshift new_path
 			path = path.join(';')
-			self.winpath= path
+			self.winpath = path
 			return new_path
 		end
 		
@@ -59,7 +63,7 @@ class	Delphivm
     end
       
     def set_env
-      ENV["PATH"] =  '$(BDSCOMMONDIR)\bpl;' + ENV["PATH"]
+      ENV["PATH"] = '$(BDSCOMMONDIR)\bpl;' + ENV["PATH"]
       ENV["PATH"] = self['RootDir'] + 'bin;' + ENV["PATH"]
       ENV["BDSPROJECTGROUPDIR"] = workdir.win
       ENV["IDEVERSION"] = idever

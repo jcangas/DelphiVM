@@ -1,0 +1,44 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{48DA70E3-3E30-47CE-9558-D9E63CD144D4}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="D170-XE3\Sample.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Sample">
+        <MSBuild Projects="D170-XE3\Sample.dproj"/>
+    </Target>
+    <Target Name="Sample:Clean">
+        <MSBuild Projects="D170-XE3\Sample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample:Make">
+        <MSBuild Projects="D170-XE3\Sample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Sample"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Sample:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Sample:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+    <ItemGroup Condition="'$(BuildGroup)'=='All'">
+        <BuildGroupProject Include="D170-XE3\Sample.dproj">
+            <ProjectGuid>{41B08D8F-E234-4EF7-9B27-881AD8AA6BCA}</ProjectGuid>
+            <Configurations>Samples</Configurations>
+            <Platforms>Win32;Win64</Platforms>
+            <Enabled>True</Enabled>
+        </BuildGroupProject>
+    </ItemGroup>
+</Project>
