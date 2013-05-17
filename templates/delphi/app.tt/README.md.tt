@@ -1,7 +1,7 @@
 
 ## Overview
 
- <%=app_name%> is a fantastic tool
+ <%=name%> is a fantastic tool
  
 ## Features
 
@@ -10,7 +10,7 @@
 
 ## License
  
- Appname by YourCompany <info@example.org>
+ <%=name%> by YourCompany <info@example.org>
  
  Copyright(c) 2013 YourCompany.
  

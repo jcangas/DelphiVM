@@ -2,11 +2,6 @@
     <PropertyGroup>
         <ProjectGuid>{48DA70E3-3E30-47CE-9558-D9E63CD144D4}</ProjectGuid>
     </PropertyGroup>
-    <ItemGroup>
-        <Projects Include="D170-XE3\Sample.dproj">
-            <Dependencies/>
-        </Projects>
-    </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
         <Borland.ProjectType/>
@@ -14,29 +9,36 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="Sample">
-        <MSBuild Projects="D170-XE3\Sample.dproj"/>
+    <ItemGroup>
+        <Projects Include="<%=idever%>\<%=name%>.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+
+    <Target Name="<%=name%>">
+        <MSBuild Projects="<%=idever%>\<%=name%>.dproj"/>
     </Target>
-    <Target Name="Sample:Clean">
-        <MSBuild Projects="D170-XE3\Sample.dproj" Targets="Clean"/>
+    <Target Name="<%=name%>:Clean">
+        <MSBuild Projects="<%=idever%>\<%=name%>.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="Sample:Make">
-        <MSBuild Projects="D170-XE3\Sample.dproj" Targets="Make"/>
+    <Target Name="<%=name%>:Make">
+        <MSBuild Projects="<%=idever%>\<%=name%>.dproj" Targets="Make"/>
     </Target>
+
     <Target Name="Build">
-        <CallTarget Targets="Sample"/>
+        <CallTarget Targets="<%=name%>"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="Sample:Clean"/>
+        <CallTarget Targets="<%=name%>:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="Sample:Make"/>
+        <CallTarget Targets="<%=name%>:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
     <ItemGroup Condition="'$(BuildGroup)'=='All'">
-        <BuildGroupProject Include="D170-XE3\Sample.dproj">
+        <BuildGroupProject Include="<%=idever%>\<%=name%>.dproj">
             <ProjectGuid>{41B08D8F-E234-4EF7-9B27-881AD8AA6BCA}</ProjectGuid>
-            <Configurations>Samples</Configurations>
+            <Configurations>samples</Configurations>
             <Platforms>Win32;Win64</Platforms>
             <Enabled>True</Enabled>
         </BuildGroupProject>

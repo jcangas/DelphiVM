@@ -6,4 +6,4 @@ set IDEVERSION=D170
 %~d0
 cd %~dp0
 
-START BDS.EXE -rDelphiVM\<%=app_name%>
+START BDS.EXE -rDelphiVM\<%=name%>

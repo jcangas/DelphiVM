@@ -3,7 +3,7 @@
         <ProjectGuid>{41B08D8F-E234-4EF7-9B27-881AD8AA6BCA}</ProjectGuid>
         <ProjectVersion>14.4</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
-        <MainSource>Sample.dpr</MainSource>
+        <MainSource><%=name%>.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Samples</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>

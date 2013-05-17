@@ -1,4 +1,4 @@
-unit Sample.MainFrm;
+unit <%=name%>.MainFrm;
 
 interface
 

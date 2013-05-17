@@ -1,8 +1,8 @@
-program Sample;
+program <%=name%>;
 
 uses
   Vcl.Forms,
-  Sample.MainFrm in '..\Sample\Sample.MainFrm.pas' {MainForm};
+  <%=name%>.MainFrm in '..\<%=name%>\<%=name%>.MainFrm.pas' {MainForm};
 
 {$R *.res}
 
