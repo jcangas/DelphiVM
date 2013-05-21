@@ -3,21 +3,90 @@
 	{
 		"selected_items":
 		[
+			[
+				"app",
+				"app_module"
+			],
+			[
+				"c",
+				"create_app_module"
+			],
+			[
+				"APPMO",
+				"APPMODULE"
+			],
+			[
+				"nam",
+				"namesapce"
+			],
+			[
+				"bind",
+				"binding_params"
+			],
+			[
+				"ge",
+				"get_binding_params"
+			],
+			[
+				"sub",
+				"subpath"
+			],
+			[
+				"templa",
+				"template_subfolder"
+			],
+			[
+				"templ",
+				"template_subfolder"
+			],
+			[
+				"tem",
+				"template_subfolder"
+			],
+			[
+				"gener",
+				"generate"
+			],
+			[
+				"na",
+				"name"
+			],
+			[
+				"to",
+				"to_s"
+			],
+			[
+				"ar",
+				"arg"
+			],
+			[
+				"par",
+				"params"
+			],
+			[
+				"argu",
+				"arguments"
+			],
+			[
+				"su",
+				"subtemplate"
+			],
+			[
+				"SAmple",
+				"SamplePrj"
+			],
+			[
+				"do_",
+				"do_create_subfolder"
+			],
+			[
+				"des",
+				"destination_subfolder"
+			]
 		]
 	},
 	"buffers":
 	[
-		{
-			"contents": "class ::Pathname \n  def glob(*args, &block)\n    args = [''] if args.empty?\n    args[0] = (self + args[0]).to_s\n    Pathname.glob(*args, &block)\n  end\n\n  def win\n    self.to_s.gsub('/','\\\\')\n  end\n  \n  def to_str\n    win\n  end\nend\n\nclass String\n  def snake_case\n    gsub(/([A-Z]+)([A-Z][a-z])/,'\\1_\\2').\n    gsub(/([a-z\\d])([A-Z])/,'\\1_\\2').\n    tr(\"-\", \"_\").\n    downcase\n  end\n\n  def camelize\n    self.split('_').map(&:capitalize).join\n  end\nend\n\nmodule Kernel\n  def silence_warnings\n    old_verbose, $VERBOSE = $VERBOSE, nil\n    yield\n  ensure\n    $VERBOSE = old_verbose\n  end\nend\n",
-			"file": "lib/extensions.rb",
-			"file_size": 639,
-			"file_write_time": 130131649780000000,
-			"settings":
-			{
-				"buffer_size": 583,
-				"line_ending": "Windows"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -47,6 +116,35 @@
 	},
 	"file_history":
 	[
+		"/Z/Projects/github/DelphiVM/lib/dvm/gen/app.thor",
+		"/Z/Projects/github/DelphiVM/lib/delphivm.rb",
+		"/Z/Projects/github/DelphiVM/lib/dvm/project.thor",
+		"/Z/Projects/github/DelphiVM/bin/delphivm",
+		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/@D170/%{app_name}Samples.groupproj",
+		"/Z/Projects/github/DelphiVM/probando/samples/D170/ProbandoSamples.groupproj",
+		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/samples.optset",
+		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/%{app_name}Samples.groupproj",
+		"/Z/Projects/github/DelphiVM/lib/delphivm/generator.rb",
+		"/Z/Projects/github/DelphiVM/lib/dvm/gen.thor",
+		"/Z/Projects/github/DelphiVM/lib/dvm/ide.thor",
+		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Ruby/Ruby.tmLanguage",
+		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Ruby/Ruby.sublime-build",
+		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Default/Preferences.sublime-settings",
+		"/Z/Projects/github/DelphiVM/templates/delphi/dproj-sample.tt/samples/%{name}/%{name}.MainFrm.pas",
+		"/Z/Projects/github/DelphiVM/lib/delphivm/ide_services.rb",
+		"/Z/Projects/github/DelphiVM/templates/delphi/app.tt/BUILD.bat.tt",
+		"/Z/Projects/github/DelphiVM/probando/samples/D170/MyProject.dproj",
+		"/Z/Projects/github/DelphiVM/probando/samples/D170/MyProject.dpr",
+		"/Z/Projects/github/DelphiVM/templates/delphi/dproj-sample.tt/samples/D170/%{name}.dproj",
+		"/Z/Projects/github/DelphiVM/templates/delphi/app.tt/README.md.tt",
+		"/Z/Projects/github/DelphiVM/templates/delphi/app.tt/BDS.bat.tt",
+		"/Z/Projects/github/DelphiVM/templates/delphi/dproj-sample.tt/samples/D170/%{name}.dpr",
+		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/AppSamples.groupproj",
+		"/Z/Projects/github/DelphiVM/templates/delphi/sample-prj.tt/D170/Sample.dproj",
+		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/User/Ruby.sublime-settings",
+		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/User/Preferences.sublime-settings",
+		"/Z/Projects/github/DelphiVM/lib/extensions.rb",
+		"/Z/Projects/github/DelphiVM/delphivm.sublime-project",
 		"/Y/papps/Documents/Projects/tgprofesional/src/ormcfg/TGPROFESIONALSQL.FDB/Acreedor.ORM.Config",
 		"/Y/papps/Documents/Projects/tgprofesional/src/ormcfg/TGPROFESIONALSQL.FDB/Adicional.ORM.Config",
 		"/Y/papps/Documents/Projects/tgprofesional/out/D170/Debug/data/TGProfesional.exe.ORM.config",
@@ -54,8 +152,6 @@
 		"/Y/papps/Documents/Projects/tgprofesional/out/D170/Debug/data/TGProfesional.exe.ORM.json",
 		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0112_EFECTI_02.sql",
 		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0002_initialToSQL/0010_creatingdomains.sql",
-		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/User/Preferences.sublime-settings",
-		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Default/Preferences.sublime-settings",
 		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0075_CUESTO_02.sql",
 		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0078_ARTIDIN_02.sql",
 		"/Y/papps/Documents/Projects/tgprofesional/db/migrations/0001_clientdata/0093_FPAGOS_02.sql",
@@ -120,7 +216,7 @@
 	},
 	"find_in_files":
 	{
-		"height": 90.0,
+		"height": 0.0,
 		"where_history":
 		[
 			"Z:\\Projects\\github\\DelphiVM",
@@ -129,9 +225,21 @@
 	},
 	"find_state":
 	{
-		"case_sensitive": false,
+		"case_sensitive": true,
 		"find_history":
 		[
+			"<%=idever%>\\",
+			"AppModule",
+			"APP",
+			"params",
+			"generate",
+			"$(IDEVERSION)",
+			"Sample",
+			"sample",
+			"app_name",
+			"Wizard",
+			"destination_subfolder",
+			"D170-XE3",
 			"PATH_TO_VENDOR",
 			"icoimage"
 		],
@@ -141,6 +249,14 @@
 		"regex": false,
 		"replace_history":
 		[
+			"",
+			"execute",
+			"do_create_subfolder",
+			"<%=idever%>",
+			"<%=name%>",
+			"Generator",
+			"output_folder",
+			"$(IDEVERSION)",
 			"PATH_TO_VENDOR"
 		],
 		"reverse": false,
@@ -152,37 +268,8 @@
 	"groups":
 	[
 		{
-			"selected": 0,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "lib/extensions.rb",
-					"settings":
-					{
-						"buffer_size": 583,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],
@@ -192,7 +279,7 @@
 	},
 	"input":
 	{
-		"height": 0.0
+		"height": 31.0
 	},
 	"layout":
 	{
@@ -217,6 +304,10 @@
 		]
 	},
 	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 100.0
+	},
 	"replace":
 	{
 		"height": 62.0
@@ -242,6 +333,6 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 274.0,
+	"side_bar_width": 304.0,
 	"status_bar_visible": true
 }

@@ -1,0 +1,45 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{<%=SecureRandom.uuid%>}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="<%=app_name%>.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="<%=app_name%>">
+        <MSBuild Projects="<%=app_name%>.dproj"/>
+    </Target>
+    <Target Name="<%=app_name%>:Clean">
+        <MSBuild Projects="<%=app_name%>.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="<%=app_name%>:Make">
+        <MSBuild Projects="<%=app_name%>.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="<%=app_name%>"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="<%=app_name%>:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="<%=app_name%>:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+    <ItemGroup Condition="'$(BuildGroup)'=='All'">
+        <BuildGroupProject Include="<%=app_name%>.dproj">
+            <ProjectGuid>{DD84F52E-FAFA-4B77-A481-74278AA5A9A4}</ProjectGuid>
+            <Configurations>Debug;Release</Configurations>
+            <Platforms>Win32</Platforms>
+            <Enabled>True</Enabled>
+        </BuildGroupProject>
+    </ItemGroup>
+</Project>
+    

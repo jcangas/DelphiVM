@@ -1,7 +1,12 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{48DA70E3-3E30-47CE-9558-D9E63CD144D4}</ProjectGuid>
+        <ProjectGuid>{<%=SecureRandom.uuid%>}</ProjectGuid>
     </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="<%=name%>.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
         <Borland.ProjectType/>
@@ -9,22 +14,15 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <ItemGroup>
-        <Projects Include="<%=idever%>\<%=name%>.dproj">
-            <Dependencies/>
-        </Projects>
-    </ItemGroup>
-
     <Target Name="<%=name%>">
-        <MSBuild Projects="<%=idever%>\<%=name%>.dproj"/>
+        <MSBuild Projects="<%=name%>.dproj"/>
     </Target>
     <Target Name="<%=name%>:Clean">
-        <MSBuild Projects="<%=idever%>\<%=name%>.dproj" Targets="Clean"/>
+        <MSBuild Projects="<%=name%>.dproj" Targets="Clean"/>
     </Target>
     <Target Name="<%=name%>:Make">
-        <MSBuild Projects="<%=idever%>\<%=name%>.dproj" Targets="Make"/>
+        <MSBuild Projects="<%=name%>.dproj" Targets="Make"/>
     </Target>
-
     <Target Name="Build">
         <CallTarget Targets="<%=name%>"/>
     </Target>
@@ -36,9 +34,9 @@
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
     <ItemGroup Condition="'$(BuildGroup)'=='All'">
-        <BuildGroupProject Include="<%=idever%>\<%=name%>.dproj">
-            <ProjectGuid>{41B08D8F-E234-4EF7-9B27-881AD8AA6BCA}</ProjectGuid>
-            <Configurations>samples</Configurations>
+        <BuildGroupProject Include="<%=name%>.dproj">
+            <ProjectGuid>{<%=SecureRandom.uuid%>}</ProjectGuid>
+            <Configurations>Samples</Configurations>
             <Platforms>Win32;Win64</Platforms>
             <Enabled>True</Enabled>
         </BuildGroupProject>
