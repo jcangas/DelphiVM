@@ -35,7 +35,7 @@
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
     <ItemGroup Condition="'$(BuildGroup)'=='All'">
         <BuildGroupProject Include="<%=app_name%>.dproj">
-            <ProjectGuid>{DD84F52E-FAFA-4B77-A481-74278AA5A9A4}</ProjectGuid>
+            <ProjectGuid>{<%=SecureRandom.uuid%>}</ProjectGuid>
             <Configurations>Debug;Release</Configurations>
             <Platforms>Win32</Platforms>
             <Enabled>True</Enabled>

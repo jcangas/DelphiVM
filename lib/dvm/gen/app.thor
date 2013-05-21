@@ -16,6 +16,7 @@ class App < Thor::Group
 		do_folder_template self.class.output_folder
 	 	do_execute
 		do_invoke Dproj, [self.name], idever: self.options[:idever], template: 'src'
+
 	end
 
 	invoke_from_option :samples do |klass|

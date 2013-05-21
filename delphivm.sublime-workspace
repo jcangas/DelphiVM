@@ -87,6 +87,38 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "lib/dvm/gen/app.thor",
+			"settings":
+			{
+				"buffer_size": 1954,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "templates/delphi/dproj/src.tt/src/@D170/%{app_name}.dproj",
+			"settings":
+			{
+				"buffer_size": 10844,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "templates/delphi/app.tt/src/@D170/%{app_name}App.groupproj",
+			"settings":
+			{
+				"buffer_size": 1629,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "lib/delphivm/generator.rb",
+			"settings":
+			{
+				"buffer_size": 2889,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -116,16 +148,24 @@
 	},
 	"file_history":
 	[
+		"/Z/Projects/github/DelphiVM/templates/delphi/dproj/sample.tt/samples/@D170/%{name}.dpr",
+		"/Z/Projects/github/DelphiVM/lib/dvm/gen.thor",
 		"/Z/Projects/github/DelphiVM/lib/dvm/gen/app.thor",
+		"/Z/Projects/github/DelphiVM/lib/delphivm/generator.rb",
+		"/Z/Projects/github/DelphiVM/prueba/src/D170/Prueba.dproj",
+		"/Z/Projects/github/DelphiVM/prueba/src/D170/PruebaApp.groupproj",
+		"/Z/Projects/github/DelphiVM/templates/delphi/app.tt/src/@D170/%{app_name}App.groupproj",
+		"/Z/Projects/github/DelphiVM/templates/delphi/dproj/src.tt/src/@D170/%{app_name}.dproj",
+		"/Z/Projects/github/DelphiVM/templates/delphi/dproj/src.tt/src/@D170/%{name}.dpr",
+		"/Z/Projects/github/DelphiVM/templates/delphi/dproj/src.tt/src/@D170/%{name}.dproj",
+		"/Z/Projects/github/DelphiVM/prueba/src/D170/Prueba.dpr",
+		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/@D170/%{app_name}Samples.groupproj",
 		"/Z/Projects/github/DelphiVM/lib/delphivm.rb",
 		"/Z/Projects/github/DelphiVM/lib/dvm/project.thor",
 		"/Z/Projects/github/DelphiVM/bin/delphivm",
-		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/@D170/%{app_name}Samples.groupproj",
 		"/Z/Projects/github/DelphiVM/probando/samples/D170/ProbandoSamples.groupproj",
 		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/samples.optset",
 		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/%{app_name}Samples.groupproj",
-		"/Z/Projects/github/DelphiVM/lib/delphivm/generator.rb",
-		"/Z/Projects/github/DelphiVM/lib/dvm/gen.thor",
 		"/Z/Projects/github/DelphiVM/lib/dvm/ide.thor",
 		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Ruby/Ruby.tmLanguage",
 		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Ruby/Ruby.sublime-build",
@@ -225,9 +265,15 @@
 	},
 	"find_state":
 	{
-		"case_sensitive": true,
+		"case_sensitive": false,
 		"find_history":
 		[
+			"Prueba",
+			"<%=name%>",
+			"guid",
+			"Prueba",
+			"source.optset",
+			"Prueba",
 			"<%=idever%>\\",
 			"AppModule",
 			"APP",
@@ -249,6 +295,8 @@
 		"regex": false,
 		"replace_history":
 		[
+			"<%=app_name%>",
+			"<%=name%>",
 			"",
 			"execute",
 			"do_create_subfolder",
@@ -268,8 +316,119 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "lib/dvm/gen/app.thor",
+					"settings":
+					{
+						"buffer_size": 1954,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1873,
+								1873
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 427.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "templates/delphi/dproj/src.tt/src/@D170/%{app_name}.dproj",
+					"settings":
+					{
+						"buffer_size": 10844,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1901,
+								1901
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2520.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "templates/delphi/app.tt/src/@D170/%{app_name}App.groupproj",
+					"settings":
+					{
+						"buffer_size": 1629,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								790,
+								790
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "lib/delphivm/generator.rb",
+					"settings":
+					{
+						"buffer_size": 2889,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2658,
+								2658
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 907.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
 			]
 		}
 	],
