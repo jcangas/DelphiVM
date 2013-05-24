@@ -103,6 +103,22 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "delphivm.gemspec",
+			"settings":
+			{
+				"buffer_size": 972,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Thorfile.thor",
+			"settings":
+			{
+				"buffer_size": 445,
+				"line_ending": "Windows"
+			}
+		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -132,6 +148,8 @@
 	},
 	"file_history":
 	[
+		"/Z/Projects/github/DelphiVM/lib/delphivm/version.rb",
+		"/Z/Projects/github/DelphiVM/Thorfile.thor",
 		"/Z/Projects/github/DelphiVM/templates/delphi/tests.tt/tests/@D170/%{app_name}Tests.groupproj",
 		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/@D170/%{app_name}Samples.groupproj",
 		"/Z/Projects/github/DelphiVM/templates/delphi/tests.tt/tests/tests.optset",
@@ -311,8 +329,62 @@
 	"groups":
 	[
 		{
+			"selected": 1,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "delphivm.gemspec",
+					"settings":
+					{
+						"buffer_size": 972,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								882,
+								882
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "Thorfile.thor",
+					"settings":
+					{
+						"buffer_size": 445,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								40,
+								40
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
 			]
 		}
 	],
