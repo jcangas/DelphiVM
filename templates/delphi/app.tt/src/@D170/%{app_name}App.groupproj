@@ -1,6 +1,6 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{<%=SecureRandom.uuid%>}</ProjectGuid>
+        <ProjectGuid>{<%=SecureRandom.uuid.upcase%>}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
         <Projects Include="<%=app_name%>.dproj">
@@ -35,8 +35,8 @@
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
     <ItemGroup Condition="'$(BuildGroup)'=='All'">
         <BuildGroupProject Include="<%=app_name%>.dproj">
-            <ProjectGuid>{<%=SecureRandom.uuid%>}</ProjectGuid>
-            <Configurations>Debug;Release</Configurations>
+            <ProjectGuid>{<%=($src_prj_guid ||= SecureRandom.uuid.upcase) %>}</ProjectGuid>
+        <Configurations>Debug;Release</Configurations>
             <Platforms>Win32</Platforms>
             <Enabled>True</Enabled>
         </BuildGroupProject>
