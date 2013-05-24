@@ -31,7 +31,8 @@ private
       say "NO IDE(s) found\n"
     else
       say "found IDEs:\n"
-      say ides.join("\n")
+      infos = IDEServices::IDEInfos
+      say ides.map{|ide| ide  + ": #{infos[ide][:name]}, #{infos[ide][:desc]}"}.join("\n")
     end
   end
 

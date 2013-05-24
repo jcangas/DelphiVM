@@ -1,43 +1,44 @@
 ﻿require 'securerandom'
 require 'delphivm/generator'
-	
-class App < Thor::Group
-	include Generator
 
-	argument :name, type: :string, desc: "app name to be executed"
-	class_option :samples, type: :boolean, default: true, desc: "include samples"
-	class_option :tests, type: :boolean, default: true, desc: "include tests"
-	class_option :idever, type: :string, default: 'D170', desc: "IDE version"
 
-	desc "Generate app structure in current dir"		
-					
-	def execute
-		self.class.output_folder = name.snake_case
-		do_folder_template self.class.output_folder
-	 	do_execute
-		do_invoke Dproj, [self.name], idever: self.options[:idever], template: 'src'
+class Delphivm::Gen
 
-	end
+	class App < Thor::Group
+		include Generator
 
-	invoke_from_option :samples do |klass|
-		do_invoke klass, ['Sample1'], idever: self.options[:idever]
-	end
-	invoke_from_option :tests do |klass|
-		do_invoke klass, ['Test1']
-	end
-			
-private
-	def self.prepare_for_invocation(key, name)
-		case name
-		when Symbol, String
-			const_get(name.to_s.camelize)
-		else
-			name
+		argument :name, type: :string, desc: "app name to be executed"
+		class_option :samples, type: :boolean, default: true, desc: "include samples"
+		class_option :tests, type: :boolean, default: true, desc: "include tests"
+		class_option :idever, type: :string, default: 'D170', desc: "IDE version"
+
+		desc "Generate app structure in current dir"		
+	 
+		def execute
+			self.class.output_folder = name.snake_case
+			do_folder_template self.class.output_folder
+		 	do_execute
+			do_invoke Dproj, [self.name], idever: self.options[:idever], template: 'src'
+  		end
+
+		invoke_from_option :samples do |klass|
+			do_invoke klass, ['Sample1'], idever: self.options[:idever]
+		end
+		invoke_from_option :tests do |klass|
+			do_invoke klass, ['Test1'], idever: self.options[:idever]
+		end
+				
+	private
+		def self.prepare_for_invocation(key, name)
+			case name
+			when Symbol, String
+				Gen.const_get(name.to_s.camelize)
+			else
+				name
+			end
 		end
 	end
-end
 
-class App
 	class Samples < Thor::Group
 		include Generator
 
@@ -60,6 +61,7 @@ class App
 
 		def execute
 			do_execute
+			do_invoke Dproj, [self.name], idever: self.options[:idever], template: 'test'
 		end
 	end
 
@@ -75,6 +77,8 @@ class App
 		def execute
 			self.class.subtemplate = self.options[:template]
 			do_execute
+			# forgett ithis invocation in order to  several invocations
+			_shared_configuration[:invocations].delete self.class 
 		end
 	end
 end

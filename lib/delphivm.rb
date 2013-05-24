@@ -43,6 +43,10 @@ class Delphivm
   class Gen < Thor
     namespace :gen
     # used only as thor namesapce for generators
+    # defined here because we need ensure class Gen exist when generator tasks are loaded
+    desc "echo", "prueba de echo"
+    def echo
+    end
   end
 
 private
