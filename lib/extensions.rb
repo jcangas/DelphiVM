@@ -27,6 +27,7 @@ class String
   end
 end
 
+## Thor silence_warnings
 module Kernel
   def silence_warnings
     old_verbose, $VERBOSE = $VERBOSE, nil

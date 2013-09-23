@@ -1,4 +1,4 @@
-program <%=name%>;
+program <%=app_name%>;
 
 uses
   Vcl.Forms;

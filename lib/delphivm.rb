@@ -1,37 +1,48 @@
 #!/usr/bin/env ruby
 
 require 'thor'
+
 require 'pathname'
-
 require 'zip/zip'
-
 require 'open3'
 require 'nokogiri'
-
 require 'win32/registry.rb'
 
 require 'version_info'
 require 'open-uri'
 require 'net/http'
 require 'ruby-progressbar'
-
-require 'extensions'
-
 require 'build_target'
 
-Delphivm = Thor # sure, we are hacking Thor !
+require 'delphivm/configuration'
+require 'extensions'
 
+Delphivm = Thor # sure, we are hacking Thor !
 class Delphivm
   include(VersionInfo)
+  include Configurable
 
   ROOT = ::Pathname.getwd
   GEM_ROOT = Pathname(__FILE__).dirname.parent
   EXE_NAME = File.basename($0, '.rb')
 
+  DEFAULT_CFG_FILE = $0 + '.cfg'
  	PATH_TO_VENDOR = ROOT + 'vendor'
   PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
   PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
   DVM_IMPORTS_FILE = PATH_TO_VENDOR + 'imports.dvm'
+  DELPHIVM_DEFAULTS = 
+    {known_ides: 
+      {
+        'D100' => {regkey: 'Software\Borland\BDS\4.0', name: '2006', desc: 'Borland Developer Stuido 4.0'},
+        'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE', desc: 'Embarcadero RAD Stuido XE'},
+        'D160' => {regkey: 'Software\Embarcadero\BDS\9.0', name: 'XE2', desc: 'Embarcadero RAD Stuido XE2'},
+        'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'},
+        'D180' => {regkey: 'Software\Embarcadero\BDS\11.0', name: 'XE4', desc: 'Embarcadero RAD Stuido XE4'},
+        'D190' => {regkey: 'Software\Embarcadero\BDS\12.0', name: 'XE5', desc: 'Embarcadero RAD Stuido XE5'},
+      }
+    }
+
   
   module Util #:nodoc:
     # redefine Thor to search tasks only for this app
@@ -52,6 +63,7 @@ class Delphivm
 private
   def self.create_app_module
     @app_module = ::Module.new do
+      VersionInfo.file_format = :text
       include VersionInfo
       self.VERSION.file_name = ROOT + 'VERSION'
     end
@@ -71,7 +83,9 @@ private
   end
 public
   APPMODULE = self.app_module
-end
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
+  self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE)
+end
+
 require 'delphivm/runner'

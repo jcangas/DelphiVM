@@ -4,6 +4,18 @@
 		"selected_items":
 		[
 			[
+				"up",
+				"upcase"
+			],
+			[
+				"path",
+				"paths_to_remove"
+			],
+			[
+				"pa",
+				"patfh	path_from_here( .. )"
+			],
+			[
 				"sub",
 				"subtemplate"
 			],
@@ -103,22 +115,6 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "delphivm.gemspec",
-			"settings":
-			{
-				"buffer_size": 972,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "Thorfile.thor",
-			"settings":
-			{
-				"buffer_size": 445,
-				"line_ending": "Windows"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -135,7 +131,10 @@
 	},
 	"console":
 	{
-		"height": 125.0
+		"height": 125.0,
+		"history":
+		[
+		]
 	},
 	"distraction_free":
 	{
@@ -148,8 +147,14 @@
 	},
 	"file_history":
 	[
-		"/Z/Projects/github/DelphiVM/lib/delphivm/version.rb",
+		"/Z/Projects/github/DelphiVM/delphivm.sublime-project",
+		"/Z/Projects/github/DelphiVM/lib/delphivm/ide_services.rb",
+		"/Y/papps/PortableApps/SublimeText/Data/Packages/User/Preferences.sublime-settings",
+		"/Y/papps/PortableApps/SublimeText/Data/Packages/User/JSON.sublime-settings",
+		"/Z/Projects/github/DelphiVM/delphivm.gemspec",
 		"/Z/Projects/github/DelphiVM/Thorfile.thor",
+		"/Z/Projects/github/DelphiVM/README.md",
+		"/Z/Projects/github/DelphiVM/lib/delphivm/version.rb",
 		"/Z/Projects/github/DelphiVM/templates/delphi/tests.tt/tests/@D170/%{app_name}Tests.groupproj",
 		"/Z/Projects/github/DelphiVM/templates/delphi/samples.tt/samples/@D170/%{app_name}Samples.groupproj",
 		"/Z/Projects/github/DelphiVM/templates/delphi/tests.tt/tests/tests.optset",
@@ -169,7 +174,6 @@
 		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/Default/Preferences.sublime-settings",
 		"/Z/Projects/github/DelphiVM/bin/my_thor.rb",
 		"/Z/Projects/github/DelphiVM/lib/dvm/ide.thor",
-		"/Z/Projects/github/DelphiVM/lib/delphivm/ide_services.rb",
 		"/Z/Projects/github/DelphiVM/lib/dvm/gen.thor",
 		"/Z/Projects/github/DelphiVM/templates/delphi/dproj/src.tt/src/@D170/%{name}.dpr",
 		"/Z/Projects/github/DelphiVM/templates/delphi/dproj/src.tt/src/@D170/%{name}.dproj",
@@ -193,7 +197,6 @@
 		"/Z/Projects/github/DelphiVM/templates/delphi/sample-prj.tt/D170/Sample.dproj",
 		"/Y/papps/PortableApps/Sublime Text 2.0.1/Data/Packages/User/Ruby.sublime-settings",
 		"/Z/Projects/github/DelphiVM/lib/extensions.rb",
-		"/Z/Projects/github/DelphiVM/delphivm.sublime-project",
 		"/Y/papps/Documents/Projects/tgprofesional/src/ormcfg/TGPROFESIONALSQL.FDB/Acreedor.ORM.Config",
 		"/Y/papps/Documents/Projects/tgprofesional/src/ormcfg/TGPROFESIONALSQL.FDB/Adicional.ORM.Config",
 		"/Y/papps/Documents/Projects/tgprofesional/out/D170/Debug/data/TGProfesional.exe.ORM.config",
@@ -277,6 +280,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"bin_paths",
+			"set_env",
+			"path",
 			"sample",
 			"samples",
 			"optset",
@@ -308,6 +314,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"bin_paths",
 			"<%=app_name%>",
 			"<%=name%>",
 			"",
@@ -329,62 +336,8 @@
 	"groups":
 	[
 		{
-			"selected": 1,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "delphivm.gemspec",
-					"settings":
-					{
-						"buffer_size": 972,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								882,
-								882
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "Thorfile.thor",
-					"settings":
-					{
-						"buffer_size": 445,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								40,
-								40
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Ruby/Ruby.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],
@@ -423,6 +376,7 @@
 	{
 		"height": 100.0
 	},
+	"project": "delphivm.sublime-project",
 	"replace":
 	{
 		"height": 62.0
@@ -444,10 +398,24 @@
 		],
 		"width": 0.0
 	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
 	"show_minimap": false,
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
 	"side_bar_width": 302.0,
-	"status_bar_visible": true
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
 }

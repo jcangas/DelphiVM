@@ -2,9 +2,9 @@
 
 class Ide < Thor
 
-  desc "list", "show instaled IDE versions"
-  def list
-    report_ides IDEServices.idelist
+  desc "list", "show instaled(default) or all known IDE versions"
+  def list(known_ides=false)
+    report_ides IDEServices.idelist(known_ides)
   end
 
   desc "use IDE-TAG", "use IDE with IDE-TAG"
@@ -32,7 +32,7 @@ private
     else
       say "found IDEs:\n"
       infos = IDEServices::IDEInfos
-      say ides.map{|ide| ide  + ": #{infos[ide][:name]}, #{infos[ide][:desc]}"}.join("\n")
+      say ides.map{|ide| ide.to_s  + ": #{infos[ide][:name]}, #{infos[ide][:desc]}"}.join("\n")
     end
   end
 

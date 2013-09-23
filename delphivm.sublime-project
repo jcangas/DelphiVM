@@ -2,7 +2,8 @@
 	"folders":
 	[
 		{
-			"path": "/Z/Projects/github/DelphiVM"
+			"follow_symlinks": true,
+			"path": "Z:\\Projects\\github\\DelphiVM"
 		}
 	]
 }
