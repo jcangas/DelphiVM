@@ -66,6 +66,7 @@ class Configuration < OpenStruct
 		opts = Configuration.from_json(r)
 		io.close if owned_io
 		deep_merge!(opts) if opts
+		self
 	end
 				
 	def save(io_or_filename)
@@ -78,6 +79,7 @@ class Configuration < OpenStruct
 		end
 		io.write(JSON.pretty_generate(self.to_h))
 		io.close if owned_io
+		self
 	end
 end
 

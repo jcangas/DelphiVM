@@ -30,7 +30,8 @@ class Delphivm
         'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'},
         'D180' => {regkey: 'Software\Embarcadero\BDS\11.0', name: 'XE4', desc: 'Embarcadero RAD Stuido XE4'},
         'D190' => {regkey: 'Software\Embarcadero\BDS\12.0', name: 'XE5', desc: 'Embarcadero RAD Stuido XE5'},
-      }
+      },
+      msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
     }
 
   
@@ -41,6 +42,10 @@ class Delphivm
     desc "echo", "prueba de echo"
     def echo
     end
+  end
+
+  def self.shell
+    @shell ||= Thor::Base.shell.new
   end
 
 private

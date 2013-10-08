@@ -11,12 +11,11 @@ HWND_BROADCAST = 0xffff
 WM_SETTINGCHANGE = 0x001A
 SMTO_ABORTIFHUNG = 2
 
-class	Delphivm
+class Delphivm
  	class IDEServices
 		attr :idever
 		attr :workdir
 		GROUP_FILE_EXT = ['groupproj', 'bdsgroup']
-		MSBUILD_ARGS = 
 		IDEInfos = Delphivm.configuration.known_ides || {}
 
 	def self.idelist(kind = :found)
@@ -101,16 +100,22 @@ class	Delphivm
 	 	ENV["PATH"] = self['RootDir'] + 'bin;' + ENV["PATH"]
 	 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
 	 	ENV["IDEVERSION"] = idever.to_s
-	 	say "set BDSPROJECTGROUPDIR=#{workdir.win}"
-	 	say "IDEVERSION=#{idever.to_s}"
 	end
 
 	def start
 		set_env
-		Process.detach(spawn "#{self['App']}", "-rDelphiVM\\#{prj_slug}")
-		say "started bds -rDelphiVM\\#{prj_slug}"
+		Process.detach(spawn "#{self['App']}", ide_args)
+		say "started bds #{ide_args}"
 	end
 	
+	def ide_args(reg: "DelphiVM\\#{prj_slug}", target: nil, file: nil)
+		args = ''
+		args << " -r#{reg}" if reg
+		args << " -#{target[0].downcase}" if target
+		args << %Q[ "#{file}"] if file
+		args.strip
+	end
+
 	def prj_slug
 	 	workdir.basename.to_s.upcase
 	end
@@ -122,22 +127,33 @@ class	Delphivm
 		
 	def msbuild(target, config)
 	 	set_env
-	 	#self.class.winshell(out_filter: ->(line){line =~/\b(warning|error)\b/i}) do |i|
-	 	self.class.winshell do |i|
+	 	self.class.winshell(out_filter: ->(line){line =~/\b(warning|hint|error)\b/i}) do |i|
+	 	#self.class.winshell do |i|
 		Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
-			 f_to_show = f.relative_path_from(workdir)
+			f_to_show = f.relative_path_from(workdir)
 			 # paths can contains spaces so we need use quotes
-			if supports_msbuild?(idever)
-				msbuild_prms = config.inject([]) {|prms, item| prms << '/p:' + item.join('=')}.join(' ')
-				say "using #{idever}"
-				say %Q[msbuild /nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed /t:#{target} #{msbuild_prms} "#{f.win}" ...]
+			if supports_msbuild?(idever) 
 				i.puts %Q["#{self['RootDir'] + 'bin\rsvars.bat'}"]
-				i.puts %Q[msbuild /nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed /t:#{target} #{msbuild_prms} "#{f.win}"]
-			else						
-				say "using #{idever}"
-				say "bds -b #{f_to_show.win} ...."
-				i.puts %Q[bds -b "#{f.win}"]
+
+				tool = {app: 'msbuild', title: 'MS-Build'}
+
+				msbuild_args = IDEInfos[idever].msbuild_args
+				msbuild_args = msbuild_args || Delphivm.configuration.msbuild_args
+				tool_args = " " + msbuild_args.strip
+				tool_args << " /t:#{target}"
+				tool_args << " " + config.inject([]) {|prms, item| prms << '/p:' + item.join('=')}.join(' ')
+				tool_args << " " + %Q["#{f.win}"]
+				tool[:args] = tool_args.strip
+			else				
+				tool = {app: 'bds', title: 'IDE Compiler'}
+				tool[:args] = ide_args(target: target, file: f.win)	
 			end
+			say "[#{idever}] ", :green
+			say "#{target.upcase}: #{f_to_show.win}"
+			say("[#{tool[:title]}] ", :green)
+			say(tool[:args])
+			say
+			i.puts %Q[#{tool[:app]} #{tool[:args]}]
 		end  
 	  end    
 	end
@@ -176,12 +192,12 @@ class	Delphivm
 
   private
 	
-	def self.say(msg)
-		puts msg
+	def self.say(*args)
+		Delphivm.shell.say(*args)
 	end
 		
-	def say(msg)
-		self.class.say(msg)
+	def say(*args)
+		self.class.say(*args)
 	end
 
 	def self.ide_paths(idetag=nil)
