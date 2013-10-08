@@ -38,7 +38,7 @@ protected
 private
 
 	def get_idevers
-		IDEServices.ideused
+		IDEServices.ides_used
 	end
 
 	def build_ship(idever, config)

@@ -1,21 +1,11 @@
 #!/usr/bin/env ruby
 
 require 'thor'
-
 require 'pathname'
-require 'zip/zip'
-require 'open3'
-require 'nokogiri'
-require 'win32/registry.rb'
+require 'extensions'
 
 require 'version_info'
-require 'open-uri'
-require 'net/http'
-require 'ruby-progressbar'
-require 'build_target'
-
 require 'delphivm/configuration'
-require 'extensions'
 
 Delphivm = Thor # sure, we are hacking Thor !
 class Delphivm
@@ -30,7 +20,7 @@ class Delphivm
  	PATH_TO_VENDOR = ROOT + 'vendor'
   PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
   PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
-  DVM_IMPORTS_FILE = PATH_TO_VENDOR + 'imports.dvm'
+  DVM_IMPORTS_FILE = ROOT + 'imports.dvm'
   DELPHIVM_DEFAULTS = 
     {known_ides: 
       {
@@ -44,13 +34,6 @@ class Delphivm
     }
 
   
-  module Util #:nodoc:
-    # redefine Thor to search tasks only for this app
-    def self.globs_for(path)
-      ["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::ROOT}/dvm/**/*.thor"]
-    end
-  end
-
   class Gen < Thor
     namespace :gen
     # used only as thor namesapce for generators
@@ -83,9 +66,8 @@ private
   end
 public
   APPMODULE = self.app_module
-
-# Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
   self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE)
 end
 
+# Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
 require 'delphivm/runner'

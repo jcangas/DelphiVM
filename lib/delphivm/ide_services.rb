@@ -16,23 +16,37 @@ class	Delphivm
 		attr :idever
 		attr :workdir
 		GROUP_FILE_EXT = ['groupproj', 'bdsgroup']
+		MSBUILD_ARGS = 
 		IDEInfos = Delphivm.configuration.known_ides || {}
 
-	def self.idelist(known_ides=false)
-	 	result = []
-	  IDEInfos.each do	|ide, info| 
-			result << ide if known_ides || (Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)
-		end
-	 	result.sort.reverse
+	def self.idelist(kind = :found)
+		%W(known found used).include?(kind.to_s) ? send("ides_#{kind}") : []
 	end
 	
 	def self.default_ide
 	 	self.idelist.first
 	end
 		
-	def self.ideused
-	 	#TODO ensure we return only ides listed at IDEInfos
-	 	ROOT.glob("{src,samples, test}/**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.split('-')[0]}.uniq.sort
+	def self.ides_known
+	 	known_ides = IDEInfos.to_h.keys
+	end
+
+	def self.ides_found
+	 	result = []
+		IDEInfos.each do |ide, info| 
+			result << ide if (Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)
+		end
+	 	result.sort
+	end
+
+	def ide_found?(ide)
+		info =  IDEInfos[ide]
+		(Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)
+	end
+
+	def self.ides_used
+	 	ide_codes = ROOT.glob("{src,samples,test}/D**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.gsub(/-.*/,'').to_sym}.uniq
+	 	ide_codes.select{|ide| ides_known.include?(ide)}.sort
 	end
 	
 	def self.use(ide_tag)
@@ -76,7 +90,9 @@ class	Delphivm
 	 	ENV["PATH"] = '$(BDSCOMMONDIR)\bpl;' + ENV["PATH"]
 	 	ENV["PATH"] = self['RootDir'] + 'bin;' + ENV["PATH"]
 	 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
-	 	ENV["IDEVERSION"] = idever
+	 	ENV["IDEVERSION"] = idever.to_s
+	 	say "set BDSPROJECTGROUPDIR=#{workdir.win}"
+	 	say "IDEVERSION=#{idever.to_s}"
 	end
 
 	def start
@@ -90,23 +106,26 @@ class	Delphivm
 	end
 	
 	def supports_msbuild?(idever)
-		 ide_number = idever[1..-1].to_i
+		ide_number = idever[1..-1].to_i
 		ide_number > 140			
 	end
 		
 	def msbuild(target, config)
 	 	set_env
-	 	self.class.winshell(out_filter: ->(line){line =~/\b(warning|error)\b/i}) do |i|
+	 	#self.class.winshell(out_filter: ->(line){line =~/\b(warning|error)\b/i}) do |i|
+	 	self.class.winshell do |i|
 		Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
 			 f_to_show = f.relative_path_from(workdir)
 			 # paths can contains spaces so we need use quotes
 			if supports_msbuild?(idever)
 				msbuild_prms = config.inject([]) {|prms, item| prms << '/p:' + item.join('=')}.join(' ')
-				say "[#{idever}] msbuild /t:#{target} #{msbuild_prms} #{f_to_show.win} ...."
+				say "using #{idever}"
+				say %Q[msbuild /nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed /t:#{target} #{msbuild_prms} "#{f.win}" ...]
 				i.puts %Q["#{self['RootDir'] + 'bin\rsvars.bat'}"]
 				i.puts %Q[msbuild /nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed /t:#{target} #{msbuild_prms} "#{f.win}"]
 			else						
-				say "[#{idever}] bds -b #{f_to_show.win} ...."
+				say "using #{idever}"
+				say "bds -b #{f_to_show.win} ...."
 				i.puts %Q[bds -b "#{f.win}"]
 			end
 		end  

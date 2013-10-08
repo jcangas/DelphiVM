@@ -62,10 +62,13 @@ protected
 	def self.publish    
 		[:clean, :make, :build].each do |mth|
 			desc "#{mth}", "#{mth} #{self.namespace} products"
-			method_option :params,  type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "more MSBuild params. See MSBuild help"
+			method_option :ide, type: :array, default: [], desc: "IDEs to use. if empty: all used"
+			method_option :params, type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "more MSBuild params. See MSBuild help"
 			define_method mth do
+				p options
 				msbuild_params = options[:params]
-				IDEServices.ideused.each do |idetag|          
+				ides_to_call = options[:ide].empty? ? IDEServices.ides_used : options[:ide]
+				ides_to_call.each do |idetag|          
 					self.idetag = idetag
 					self.config = msbuild_params
 					self.clear_products

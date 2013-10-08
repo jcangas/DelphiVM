@@ -11,9 +11,10 @@ begin
   if defined? Ocra 
     ARGV << 'vendor:import' << '-c' #to see all requires when compiling
   end
- 
+
   require 'DelphiVM'
   $thor_runner = true
+
   Delphivm::Runner.start(ARGV)
 
 rescue Interrupt => e

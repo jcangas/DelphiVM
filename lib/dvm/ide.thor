@@ -2,19 +2,9 @@
 
 class Ide < Thor
 
-  desc "list", "show instaled(default) or all known IDE versions"
-  def list(known_ides=false)
-    report_ides IDEServices.idelist(known_ides)
-  end
-
-  desc "use IDE-TAG", "use IDE with IDE-TAG"
-  def use(ide_tag)
-    puts "Active path: " + IDEServices.use(ide_tag)
-  end
-  
-  desc "used", "list used IDEs in project"
-  def used
-    report_ides IDEServices.ideused
+  desc "list CRITERIA", "list IDEs info. CRITERIA=(known|*found|used) => delgpivm.cfg|this machine|this project"
+  def list(kind = :found)
+    report_ides(IDEServices.idelist(kind), kind)
   end
 
   desc "start IDE-TAG  ", "start IDE with IDE-TAG"
@@ -24,16 +14,24 @@ class Ide < Thor
     ide.start 
   end
 
+  desc "use IDE-TAG", "use IDE with IDE-TAG"
+  def use(ide_tag)
+    puts "Active path: " + IDEServices.use(ide_tag)
+  end
+  
 private
 
-  def report_ides(ides)
-    if ides.empty?
-      say "NO IDE(s) found\n"
-    else
-      say "found IDEs:\n"
-      infos = IDEServices::IDEInfos
-      say ides.map{|ide| ide.to_s  + ": #{infos[ide][:name]}, #{infos[ide][:desc]}"}.join("\n")
+  def report_ides(ides, kind = :found)
+    say
+    say "%40s" % "#{kind.to_s.upcase} IDEs:", :green, true
+    infos = IDEServices::IDEInfos
+    say "+%s-%s-%s+" % ['-'*7, '-'*12, '-'*42]
+    say "| %5.5s | %10.10s | %40.40s |" % ['Tag', 'Name', 'Description']
+    ides.map do |ide| 
+      say "|%s+%s+%s|" % ['-'*7, '-'*12, '-'*42]
+      say "| %5.5s | %10.10s | %40.40s |" % [ide.to_s, infos[ide][:name], infos[ide][:desc]]
     end
+    say "+%s-%s-%s+" % ['-'*7, '-'*12, '-'*42]
   end
 
 end

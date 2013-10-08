@@ -10,4 +10,5 @@ gem "dnote"
 gem "json"
 group :development do
   gem "ocra"
+  gem "rake"
 end
