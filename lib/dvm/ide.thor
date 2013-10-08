@@ -23,7 +23,7 @@ private
 
   def report_ides(ides, kind = :found)
     say
-    say "%40s" % "#{kind.to_s.upcase} IDEs:", :green, true
+    say "%30s IDEs: %d" % ["#{kind.to_s.upcase}", ides.size], :green, true
     infos = IDEServices::IDEInfos
     say "+%s-%s-%s+" % ['-'*7, '-'*12, '-'*42]
     say "| %5.5s | %10.10s | %40.40s |" % ['Tag', 'Name', 'Description']

@@ -20,35 +20,45 @@ class	Delphivm
 		IDEInfos = Delphivm.configuration.known_ides || {}
 
 	def self.idelist(kind = :found)
-		%W(known found used).include?(kind.to_s) ? send("ides_#{kind}") : []
+		ide_filter_valid?(kind) ? send("ides_#{kind}") : []
 	end
 	
+	def self.ide_filter_valid?(kind)
+		%W(known found used).include?(kind.to_s)
+	end
+
 	def self.default_ide
-	 	self.idelist.first
+	 	self.ides_used.last
 	end
 		
 	def self.ides_known
-	 	known_ides = IDEInfos.to_h.keys
+	 	known_ides = IDEInfos.to_h.keys.sort
 	end
 
 	def self.ides_found
-	 	result = []
-		IDEInfos.each do |ide, info| 
-			result << ide if (Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)
-		end
-	 	result.sort
-	end
-
-	def ide_found?(ide)
-		info =  IDEInfos[ide]
-		(Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)
+		ides_filter(ides_known, :found)
 	end
 
 	def self.ides_used
-	 	ide_codes = ROOT.glob("{src,samples,test}/D**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.gsub(/-.*/,'').to_sym}.uniq
-	 	ide_codes.select{|ide| ides_known.include?(ide)}.sort
+		ides_filter(ides_known, :used)
+	end
+
+	def self.ides_filter(ides, kind)
+		ide_filter_valid?(kind) ? ides.select {|ide| send("ide_#{kind}?", ide)} : []
+	end
+
+	def self.ide_known?(ide)
+		ides_known.include?(ide)
+	end
+
+	def self.ide_found?(ide)
+		(Win32::Registry::HKEY_CURRENT_USER.open(IDEInfos[ide][:regkey]) {|reg| reg} rescue false)
 	end
 	
+	def self.ide_used?(ide)
+	 	!ROOT.glob("{src,samples,test}/#{ide.to_s}**/*.{#{GROUP_FILE_EXT.join(',')}}").empty?
+	end
+
 	def self.use(ide_tag)
 	 	bin_paths = ide_paths.map{ |p| p + 'bin' }
 
