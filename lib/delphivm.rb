@@ -19,7 +19,7 @@ class Delphivm
       Delphivm.shell.say(*args)
     end
   end
-
+    
   include(VersionInfo)
   include Configurable
 
@@ -28,6 +28,7 @@ class Delphivm
   EXE_NAME = File.basename($0, '.rb')
 
   DEFAULT_CFG_FILE = $0 + '.cfg'
+
  	PATH_TO_VENDOR = ROOT + 'vendor'
   PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
   PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
@@ -78,6 +79,7 @@ private
       create_app_module
     end
     VersionInfo.install_tasks(:target => @app_module)
+    VersionInfo.file_format = :module # para reportar la propia
     @app_module
   end
 public
