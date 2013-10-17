@@ -9,6 +9,17 @@ require 'delphivm/configuration'
 
 Delphivm = Thor # sure, we are hacking Thor !
 class Delphivm
+  module Talk
+    def self.included(other)
+      super
+      other.extend self
+    end
+
+    def say(*args)
+      Delphivm.shell.say(*args)
+    end
+  end
+
   include(VersionInfo)
   include Configurable
 
@@ -25,7 +36,7 @@ class Delphivm
     {known_ides: 
       {
         'D100' => {regkey: 'Software\Borland\BDS\4.0', name: '2006', desc: 'Borland Developer Stuido 4.0'},
-        'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE', desc: 'Embarcadero RAD Stuido XE'},
+        'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE', desc: 'Embarcadero RAD Stuido XE', msbuild_args: "/nologo /consoleloggerparameters:v=quiet"},
         'D160' => {regkey: 'Software\Embarcadero\BDS\9.0', name: 'XE2', desc: 'Embarcadero RAD Stuido XE2'},
         'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'},
         'D180' => {regkey: 'Software\Embarcadero\BDS\11.0', name: 'XE4', desc: 'Embarcadero RAD Stuido XE4'},
@@ -56,7 +67,7 @@ private
       self.VERSION.file_name = ROOT + 'VERSION'
     end
     Object.const_set(ROOT.basename.to_s.snake_case.camelize, @app_module)
-    @app_module.freeze # force to fix then module name
+    @app_module.freeze
   end  
 
   def self.app_module
@@ -72,6 +83,7 @@ private
 public
   APPMODULE = self.app_module
   self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE)
+  APP_ID = "#{::Delphivm::APPMODULE}-#{::Delphivm::APPMODULE.VERSION.tag}"
 end
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
