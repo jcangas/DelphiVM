@@ -22,8 +22,8 @@ class String
     downcase
   end
 
-  def camelize
-    self.split('_').map(&:capitalize).join
+  def camelize(sep='')
+    self.split('_').map(&:capitalize).join(sep)
   end
 end
 

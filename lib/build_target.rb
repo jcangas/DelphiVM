@@ -1,6 +1,7 @@
 ﻿class BuildTarget < Thor
 	attr_accessor :idetag
 	attr_accessor :config
+	attr_accessor :platform
 	 
 	INCL_BUILD = /(_|\/|\A)build(_|\/|\Z)/ # REX for recognize a build subpath
 	
@@ -62,12 +63,11 @@ protected
 	def self.publish    
 		[:clean, :make, :build].each do |mth|
 			desc "#{mth}", "#{mth} #{self.namespace} products"
-			method_option :ide, type: :array, default: [], desc: "IDEs to use. if empty: all used"
-			method_option :params, type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "more MSBuild params. See MSBuild help"
+			method_option :ide, type: :array, default: [IDEServices.default_ide], desc: "IDE list or ALL. #{IDEServices.default_ide} by default"
+			method_option :props, type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "MSBuild properties. See MSBuild help"
 			define_method mth do
-				p options
-				msbuild_params = options[:params]
-				ides_to_call = options[:ide].empty? ? IDEServices.ides_used : options[:ide]
+				msbuild_params = options[:props]
+				ides_to_call = options[:ide].any?{ |s| s.casecmp('all')==0 } ? IDEServices.ides_in_prj : IDEServices.ides_filter(options[:ide], :prj)
 				ides_to_call.each do |idetag|          
 					self.idetag = idetag
 					self.config = msbuild_params
@@ -79,9 +79,11 @@ protected
 		end
 	end
 
-	def convert_to_path(under_scored='')
-		buildpath_as_str = (Pathname('out') + self.idetag + self.config[:Config]).to_s    
-		ROOT + under_scored.to_s.split('_').join('/').gsub(INCL_BUILD, '\1' + buildpath_as_str + '\2')
+	def convert_to_path(under_scored_name='')
+		self.platform = self.platform || ENV['Platform'] || 'Win32'
+		buildpath_as_str = (Pathname('out') + self.idetag + platform + self.config[:Config]).to_s    
+		ROOT + under_scored_name.to_s.split('_').join('/').gsub(INCL_BUILD, '\1' + buildpath_as_str + '\2')
 	end
 	
 end
+ 

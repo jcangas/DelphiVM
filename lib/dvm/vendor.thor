@@ -11,19 +11,28 @@ class Vendor < Thor
     create_file(DVM_IMPORTS_FILE, :skip => true) do <<-EOS
 # sample imports file for delphivm
 
-# first set source url
-source "http://home.jcangas.info/ship"
+# set source url
+source "my_imports_path"
 
-# for each IDE version yo need
-idever "D150" do
-  # define some imports:
-  import "SummerFW4D", "0.4.6"
+# can use environment vars anywhere
+# source "#{ENV['IMPORTS_PATH']}"
+
+# set IDE version
+uses 'D150'
+
+# now, you can declare some imports
+
+import "FastReport", "4.13.1" do
+  ide_install('dclfs15.bpl','dclfsADO15.bpl', 'dclfsBDE15.bpl', 'dclfsDB15.bpl', 'dclfsIBX15.bpl',
+    'dclfsTee15.bpl', 'dclfrxADO15.bpl', 'dclfrxBDE15.bpl', 'dclfrxDBX15.bpl', 'dclfrx15.bpl',
+    'dclfrxDB15.bpl', 'dclfrxTee15.bpl', 'dclfrxe15.bpl', 'dclfrxIBX15.bpl')
 end
 
-# you can repeat it for other IDEs & sources
+import "TurboPower", "7.0.0" do
+  ide_install('RegisterTurboPowerAsyncPro.bpl')
+end
 
-# source "#{PATH_TO_VENDOR}/local"
-# etc..
+# repeat for other sources or IDEs
 
 EOS
     end
@@ -35,7 +44,7 @@ EOS
   def import
     clean_vendor(options) if options.clean?
     prepare
-    silence_warnings{DSL.uses(DVM_IMPORTS_FILE)}
+    silence_warnings{DSL.run_imports_dvm_script(DVM_IMPORTS_FILE)}
     deploy_vendor if options.deploy?
   end
 
@@ -46,20 +55,7 @@ EOS
     prepare
   end
 
-  desc "deploy", "deploy vendor bin files to project out dir"
-  def deploy
-    deploy_vendor
-  end
-
 private
-
-  def deploy_vendor
-    self.class.source_root PATH_TO_VENDOR_IMPORTS
-    PATH_TO_VENDOR_IMPORTS.glob('**/bin/*.*') do |f|
-      fname = f.relative_path_from(PATH_TO_VENDOR_IMPORTS)
-      copy_file(fname, ROOT + 'out' + fname)
-    end
-  end
 
   def clean_vendor(opts)
     remove_dir(PATH_TO_VENDOR_IMPORTS)

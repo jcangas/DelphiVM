@@ -1,177 +1,167 @@
 require 'fiddle'
 require 'fiddle/import'
+require 'delphivm/tool'
+require 'delphivm/win_services'
 
-module User32
-	extend Fiddle::Importer
-	dlload 'user32'
-	extern 'long SendMessageTimeout(long, long, long, void*, long, long, void*)'
-end
+class Delphivm
+	IDEInfos = Delphivm.configuration.known_ides || {}
 
-HWND_BROADCAST = 0xffff
-WM_SETTINGCHANGE = 0x001A
-SMTO_ABORTIFHUNG = 2
-
-class	Delphivm
  	class IDEServices
 		attr :idever
 		attr :workdir
-		GROUP_FILE_EXT = ['groupproj', 'bdsgroup']
-		MSBUILD_ARGS = 
-		IDEInfos = Delphivm.configuration.known_ides || {}
+		attr :build_tool
 
-	def self.idelist(kind = :found)
-		%W(known found used).include?(kind.to_s) ? send("ides_#{kind}") : []
-	end
-	
-	def self.default_ide
-	 	self.idelist.first
-	end
-		
-	def self.ides_known
-	 	known_ides = IDEInfos.to_h.keys
-	end
-
-	def self.ides_found
-	 	result = []
-		IDEInfos.each do |ide, info| 
-			result << ide if (Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)
+		def self.idelist(kind = :installed)
+			ide_filter_valid?(kind) ? send("ides_in_#{kind}") : []
 		end
-	 	result.sort
-	end
-
-	def ide_found?(ide)
-		info =  IDEInfos[ide]
-		(Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) {|reg| reg} rescue false)
-	end
-
-	def self.ides_used
-	 	ide_codes = ROOT.glob("{src,samples,test}/D**/*.{#{GROUP_FILE_EXT.join(',')}}").map {|f| f.dirname.basename.to_s.gsub(/-.*/,'').to_sym}.uniq
-	 	ide_codes.select{|ide| ides_known.include?(ide)}.sort
-	end
-	
-	def self.use(ide_tag)
-	 	bin_paths = ide_paths.map{ |p| p + 'bin' }
-
-	 	paths_to_remove = [""] + bin_paths + bpl_paths + bipl_paths
-	 	p paths_to_remove =  paths_to_remove.map{|p| p.upcase}
-         
-	 	path = Win32::Registry::HKEY_CURRENT_USER.open('Environment'){|r| r['PATH']}
-	 	path = path.split(';')
-	 	p "============= Entrada"
-	 	p path
-	 	path.reject! { |p|  paths_to_remove.include?(p.upcase)  }
-	 	p "============= Borrado"
-	 	p path
-
-	 	new_bin_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bin' }.first
-	  	path.unshift new_bin_path
-
-	 	new_bpl_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bpl' }.first
-	  	path.unshift new_bpl_path
-	 	p "============= Final"
-	 	p path
-
-	  	path = path.join(';')
-	  	self.winpath = path
-	  	return path
-	end
 		
-	def initialize(idever, workdir)
-		@idever = idever.upcase
-		@workdir = workdir
-		@reg = Win32::Registry::HKEY_CURRENT_USER     
-	end
-	 
-	def [](key)
-	  @reg.open(IDEInfos[idever][:regkey]) {|r|  r[key] }
-	end
-	  
-	def set_env
-	 	ENV["PATH"] = '$(BDSCOMMONDIR)\bpl;' + ENV["PATH"]
-	 	ENV["PATH"] = self['RootDir'] + 'bin;' + ENV["PATH"]
-	 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
-	 	ENV["IDEVERSION"] = idever.to_s
-	 	say "set BDSPROJECTGROUPDIR=#{workdir.win}"
-	 	say "IDEVERSION=#{idever.to_s}"
-	end
+		def self.ide_filter_valid?(kind)
+			%W(config installed prj).include?(kind.to_s)
+		end
 
-	def start
-		set_env
-		Process.detach(spawn "#{self['App']}", "-rDelphiVM\\#{prj_slug}")
-		say "started bds -rDelphiVM\\#{prj_slug}"
-	end
-	
-	def prj_slug
-	 	workdir.basename.to_s.upcase
-	end
-	
-	def supports_msbuild?(idever)
-		ide_number = idever[1..-1].to_i
-		ide_number > 140			
-	end
+		def self.default_ide
+		 	self.ides_in_prj.last.to_s
+		end
+			
+		def self.ides_in_config
+		 	IDEInfos.to_h.keys.sort
+		end
+
+		def self.ides_in_installed
+			ides_filter(ides_in_config, :installed)
+		end
+
+		def self.ides_in_prj
+			ides_filter(ides_in_config, :prj)
+		end
+
+		def self.ides_filter(ides, kind)
+			ide_filter_valid?(kind) ? ides.select {|ide| send("ide_in_#{kind}?", ide)} : []
+		end
+
+		def self.ide_in_config?(ide)
+			ides_in_config.include?(ide)
+		end
+
+		def self.ide_in_installed?(ide)
+			(Win32::Registry::HKEY_CURRENT_USER.open(IDEInfos[ide][:regkey]) {|reg| reg} rescue false)
+		end
 		
-	def msbuild(target, config)
-	 	set_env
-	 	#self.class.winshell(out_filter: ->(line){line =~/\b(warning|error)\b/i}) do |i|
-	 	self.class.winshell do |i|
-		Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.{#{GROUP_FILE_EXT.join(',')}}") do |f|
-			 f_to_show = f.relative_path_from(workdir)
-			 # paths can contains spaces so we need use quotes
-			if supports_msbuild?(idever)
-				msbuild_prms = config.inject([]) {|prms, item| prms << '/p:' + item.join('=')}.join(' ')
-				say "using #{idever}"
-				say %Q[msbuild /nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed /t:#{target} #{msbuild_prms} "#{f.win}" ...]
-				i.puts %Q["#{self['RootDir'] + 'bin\rsvars.bat'}"]
-				i.puts %Q[msbuild /nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed /t:#{target} #{msbuild_prms} "#{f.win}"]
-			else						
-				say "using #{idever}"
-				say "bds -b #{f_to_show.win} ...."
-				i.puts %Q[bds -b "#{f.win}"]
-			end
-		end  
-	  end    
+		def self.ide_in_prj?(ide)
+		 	!ROOT.glob("{src}/#{ide.to_s}*/").empty?
+		end
+
+		def self.platforms_in_prj(ide)
+			(ROOT + 'out' + ide + '**/lib/').glob.map{|p| p.parent.parent.basename.to_s}
+		end
+
+		def self.use(ide_tag)
+		 	bin_paths = ide_paths.map{ |p| p + 'bin' }
+		 	bpl_paths = []
+		 	paths_to_remove = [""] + bin_paths + bpl_paths
+		 	paths_to_remove =  paths_to_remove.map{|p| p.upcase}
+	         
+		 	path = Win32::Registry::HKEY_CURRENT_USER.open('Environment'){|r| r['PATH']}
+		 	path = path.split(';')
+		 	path.reject! { |p|  paths_to_remove.include?(p.upcase)  }
+
+		 	new_bin_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bin' }.first
+		  	path.unshift new_bin_path
+
+		 	new_bpl_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bpl' }.first
+		  	path.unshift new_bpl_path
+
+		  	path = path.join(';')
+		  	WinServices.winpath = path
+		  	return path
+		end
+			
+		def initialize(idever, workdir=ROOT)
+			@idever = idever.to_s.upcase
+			@workdir = workdir
+			@reg = Win32::Registry::HKEY_CURRENT_USER     
+			@build_tool = supports_msbuild? ? MSBuild.new(self) : IDETool.new(self)
+		end
+		 
+		def [](key)
+		  @reg.open(IDEInfos[idever][:regkey]) {|r| r[key] }
+		end
+		  
+		def set_env
+		 	ENV["PATH"] = '$(BDSCOMMONDIR)\bpl;' + ENV["PATH"]
+		 	ENV["PATH"] = self['RootDir'] + 'bin;' + ENV["PATH"]
+		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + ENV["PATH"]
+
+		 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
+		 	ENV["IDEVERSION"] = idever.to_s
+		end
+
+		def prj_slug
+		 	workdir.basename.to_s.upcase
+		end
+		
+		def prj_regkey
+			"DelphiVM\\#{prj_slug}"
+		end
+
+		def pkg_regkey
+			regkey = Pathname(IDEInfos[idever][:regkey])
+			"HKCU\\#{regkey.parent.parent}\\#{prj_regkey}\\#{regkey.basename}\\Known Packages"
+		end
+
+		def vendor_bin_paths
+		    Pathname.glob(PATH_TO_VENDOR_IMPORTS + idever + '**' + 'bin').map{|p| p.win}
+		end
+
+		def supports_msbuild?
+			ide_number = idever[1..-1].to_i
+			ide_number > 140
+		end
+		
+		def group_file_ext
+			supports_msbuild? ? 'groupproj' : 'bdsgroup'
+		end
+
+		def get_main_group_file
+			Pathname.glob(workdir + "src/#{idever}**/#{prj_slug}App.#{group_file_ext}").first || 
+			Pathname.glob(workdir + "src/#{idever}**/*.#{group_file_ext}").first
+		end
+
+		def start(main_group_file=nil)
+			set_env
+			main_group_file ||= get_main_group_file
+			#bds_args = IDETool.new(self).args(file: main_group_file.win).cmdln_args
+			bds_args = IDETool.new(self).cmdln_args
+			Process.detach(spawn "#{self['App']}", bds_args)
+			say "[#{idever}] ", :green
+			say "started bds #{bds_args}"
+		end
+		
+		def call_build_tool(target, config)
+		 	set_env
+		 	WinServices.winshell(out_filter: ->(line){line =~/\b(warning|hint|error)\b/i}) do |i|
+		 	# WINServices..winshell do |i|
+			Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.#{group_file_ext}") do |f|
+				f_to_show = f.relative_path_from(workdir)
+				build_tool.args(config: config, target: target, file: f)
+				say "[#{idever}] ", :green
+				say "#{target.upcase}: #{f_to_show}"
+				say("[#{build_tool.title}] ", :green)
+				say(build_tool.cmdln_args)
+				say
+				build_tool.call(i)
+			end  
+	  	end    
 	end
 	
-	def self.winshell(options = {})
-		acmd = options[:cmd] || 'cmd /k'
-		out_filter = options[:out_filter] || ->(line){true}
-		err_filter = options[:err_filter] || ->(line){true}
-
-		Open3.popen3(acmd) do |i, o, e, t|
-			err_t = Thread.new(e) do |stm|
-				while (line = stm.gets)
-					say "STDERR: #{line}" if err_filter.call(line)
-				end
-			end 
-
-			out_t = Thread.new(o) do |stm|
-				while (line = stm.gets)
-					say "#{line}" if out_filter.call(line) 
-				end
-			end
-
-			begin
-				yield i if block_given?
-				i.close
-				err_t.join
-				out_t.join
-				o.close
-				e.close
-			rescue Exception => excep
-				say excep
-			end
-			t.value
-		end      
-	end
-
   private
 	
-	def self.say(msg)
-		puts msg
+	def self.say(*args)
+		Delphivm.shell.say(*args)
 	end
 		
-	def say(msg)
-		self.class.say(msg)
+	def say(*args)
+		self.class.say(*args)
 	end
 
 	def self.ide_paths(idetag=nil)
@@ -184,11 +174,5 @@ class	Delphivm
 		result
 	end
 	
-	def self.winpath=(path)
-		Win32::Registry::HKEY_CURRENT_USER.open('Environment', Win32::Registry::KEY_WRITE) do |r| 
-			r['PATH'] = path
-		end
-		User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, 0)    
-	end
   end
 end

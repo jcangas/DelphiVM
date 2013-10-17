@@ -2,8 +2,8 @@
 
 class Ide < Thor
 
-  desc "list CRITERIA", "list IDEs info. CRITERIA=(known|*found|used) => delgpivm.cfg|this machine|this project"
-  def list(kind = :found)
+  desc "list CRITERIA", "list IDEs info. CRITERIA=(config|installed|*prj) => delgpivm.cfg|this machine|this project"
+  def list(kind = :prj)
     report_ides(IDEServices.idelist(kind), kind)
   end
 
@@ -19,12 +19,17 @@ class Ide < Thor
     puts "Active path: " + IDEServices.use(ide_tag)
   end
   
+  desc "test ", "internal use"
+  def test
+    IDEServices.platforms_in_prj
+  end
+
 private
 
   def report_ides(ides, kind = :found)
     say
-    say "%40s" % "#{kind.to_s.upcase} IDEs:", :green, true
-    infos = IDEServices::IDEInfos
+    say "%30s IDEs: %d" % ["#{kind.to_s.upcase}", ides.size], :green, true
+    infos = Delphivm::IDEInfos
     say "+%s-%s-%s+" % ['-'*7, '-'*12, '-'*42]
     say "| %5.5s | %10.10s | %40.40s |" % ['Tag', 'Name', 'Description']
     ides.map do |ide| 
