@@ -38,9 +38,13 @@ protected
 		@catch_products = false
 	end
 
+	def catching_products?
+		@catch_products
+	end
+
 	def catch_product(*prods)
 		@products.push(*prods)
-		yield *prods unless @catch_products
+		yield *prods unless catching_products?
 	end
 	
 	def do_clean(idetag, cfg)
