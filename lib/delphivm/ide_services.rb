@@ -20,7 +20,7 @@ class Delphivm
 		end
 
 		def self.default_ide
-		 	self.ides_in_prj.last.to_s
+		 	(ides_in_prj.last || ides_in_installed.last).to_s
 		end
 			
 		def self.ides_in_config
@@ -53,6 +53,10 @@ class Delphivm
 
 		def self.platforms_in_prj(ide)
 			(ROOT + 'out' + ide + '**/lib/').glob.map{|p| p.parent.parent.basename.to_s}
+		end
+
+		def self.ide_folder(ide)
+			"#{ide}-#{IDEInfos[ide][:name]}"
 		end
 
 		def self.use(ide_tag)
@@ -139,8 +143,6 @@ class Delphivm
 		
 		def call_build_tool(target, config)
 		 	set_env
-		 	WinServices.winshell(out_filter: ->(line){line =~/\b(warning|hint|error)\b/i}) do |i|
-		 	# WINServices..winshell do |i|
 			Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.#{group_file_ext}") do |f|
 				f_to_show = f.relative_path_from(workdir)
 				build_tool.args(config: config, target: target, file: f)
@@ -149,30 +151,30 @@ class Delphivm
 				say("[#{build_tool.title}] ", :green)
 				say(build_tool.cmdln_args)
 				say
-				build_tool.call(i)
+			 	WinServices.winshell(out_filter: ->(line){line =~/\b(warning|hint|error)\b/i}) do |i|
+			 	#WinServices.winshell do |i|
+					build_tool.call(i)
+				end
 			end  
-	  	end    
-	end
+	  	end    	
+  	private
 	
-  private
-	
-	def self.say(*args)
-		Delphivm.shell.say(*args)
-	end
-		
-	def say(*args)
-		self.class.say(*args)
-	end
-
-	def self.ide_paths(idetag=nil)
-		result = []
-		IDEInfos.each do |key, info|
-			Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) { |r| 	
-				result << r['RootDir'] if (idetag.nil? || idetag.to_s == key)
-			} rescue true
+		def self.say(*args)
+			Delphivm.shell.say(*args)
 		end
-		result
-	end
-	
-  end
+		
+		def say(*args)
+			self.class.say(*args)
+		end
+
+		def self.ide_paths(idetag=nil)
+			result = []
+			IDEInfos.each do |key, info|
+				Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) { |r| 	
+					result << r['RootDir'] if (idetag.nil? || idetag.to_s == key)
+				} rescue true
+			end
+			result
+		end
+  	end
 end

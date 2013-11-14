@@ -3,7 +3,7 @@ require File.dirname(__FILE__) +  '/ship/group'
 class Ship < Thor
 	include Thor::Actions
 
-	ShipGroup = ::Ship::FileSet #escape Thor sandbox
+	ShipGroup = ::Ship::FileSet #prefix :: allow escape Thor sandbox
 
 	desc  "clean IDE", "remove ship file(s) #{APP_ID}-XXX.zip"
 	def clean
@@ -44,13 +44,13 @@ private
 		empty_directory zip_fname.dirname
 	
 		groups = [
-		ShipGroup.new(:binary, 'out/' + idever),
-		ShipGroup.new(:source_resources, 'src', '**{.*,}/*.{dfm,fmx,res,dcr}', false),
-		ShipGroup.new(:source, 'src'),
-		ShipGroup.new(:source, '.', '*.*', false),
-		ShipGroup.new(:documentation, 'doc'),
-		ShipGroup.new(:samples, 'samples'),
-		ShipGroup.new(:test, 'test')
+			ShipGroup.new(:binary, 'out/' + idever),
+			ShipGroup.new(:source_resources, 'src', '**{.*,}/*.{dfm,fmx,res,dcr}', false),
+			ShipGroup.new(:source, 'src'),
+			ShipGroup.new(:source, '.', '*.*', false),
+			ShipGroup.new(:documentation, 'doc'),
+			ShipGroup.new(:samples, 'samples'),
+			ShipGroup.new(:test, 'test')
 		]
 
 		platform_lib_paths = (ROOT + 'out' + idever + '**/lib/').glob.map{|p| p.relative_path_from p.parent.parent.parent}

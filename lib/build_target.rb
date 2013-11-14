@@ -1,4 +1,27 @@
-﻿class BuildTarget < Thor
+﻿module PathMethods
+	def self.extension(rootpath= '')
+		mod = Module.new do
+			def method_missing(name, *args, &block)
+				(m = name.to_s.match(/(\w+)_path$/)) ? _to_path(m[1], *args) : super
+			end
+		private
+			def _to_path(under_scored_name='', rel: false)
+				paths = under_scored_name.to_s.stripdup('_').split('_')
+				paths.unshift('root') unless (paths[0] == "root") || rel
+				Pathname(paths.map{|p| respond_to?("_#{p}_path", true) ? send("_#{p}_path") : p}.join('/'))
+			end
+		end
+
+		mod.class_eval do 
+			define_method :_root_path do
+				@get_root ||= rootpath.to_s
+			end
+		end
+		mod
+	end
+end
+
+class BuildTarget < Thor
 	attr_accessor :idetag
 	attr_accessor :config
 	attr_accessor :platform
@@ -68,7 +91,7 @@ protected
 		[:clean, :make, :build].each do |mth|
 			desc "#{mth}", "#{mth} #{self.namespace} products"
 			method_option :ide, type: :array, default: [IDEServices.default_ide], desc: "IDE list or ALL. #{IDEServices.default_ide} by default"
-			method_option :props, type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "MSBuild properties. See MSBuild help"
+			method_option :props, type: :hash, aliases: '-p', default: {}, desc: "MSBuild properties. See MSBuild help"
 			define_method mth do
 				msbuild_params = options[:props]
 				ides_to_call = options[:ide].any?{ |s| s.casecmp('all')==0 } ? IDEServices.ides_in_prj : IDEServices.ides_filter(options[:ide], :prj)

@@ -18,12 +18,21 @@ class String
   def snake_case
     gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
     gsub(/([a-z\d])([A-Z])/,'\1_\2').
-    tr("-", "_").
+    stripdup('\s|-', '_').
     downcase
   end
 
+  #strip duplicates
+  def stripdup(pattern, str=pattern,options=[:no_head, :no_trail])
+    result = self.dup
+    result.gsub!(/^(#{pattern})((#{pattern})*)/,"") if options.include?(:no_head)
+    result.gsub!(/(#{pattern})((#{pattern})*)$/,"") if options.include?(:no_trail)
+    result.gsub!(/(#{pattern})((#{pattern})*)/,"#{str}")
+    result
+  end
+
   def camelize(sep='')
-    self.split('_').map(&:capitalize).join(sep)
+    self.stripdup('\s|-', '_').split('_').map(&:capitalize).join(sep)
   end
 end
 
