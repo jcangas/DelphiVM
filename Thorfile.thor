@@ -11,6 +11,6 @@ class Default < Thor
   def ocra
     root = Pathname.getwd
     (root + 'out').mkpath
-    system "ocra --debug-extract --icon delphi_PROJECTICON.ico --output ./out/DelphiVM.exe --no-enc --gem-all --console bin\\delphivm **\\*.thor templates"
+    system "ocra --icon delphi_PROJECTICON.ico --output ./out/DelphiVM.exe --no-enc --gem-all --console bin\\delphivm **\\*.thor templates"
   end
 end
