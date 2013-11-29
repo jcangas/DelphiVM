@@ -23,10 +23,10 @@ class String
   end
 
   #strip duplicates
-  def stripdup(pattern, str=pattern,options=[:no_head, :no_trail])
+  def stripdup(pattern, str=pattern,options=[:head, :no_tail])
     result = self.dup
-    result.gsub!(/^(#{pattern})((#{pattern})*)/,"") if options.include?(:no_head)
-    result.gsub!(/(#{pattern})((#{pattern})*)$/,"") if options.include?(:no_trail)
+    result.gsub!(/^(#{pattern})((#{pattern})*)/,"") if options.include?(:head)
+    result.gsub!(/(#{pattern})((#{pattern})*)$/,"") if options.include?(:tail)
     result.gsub!(/(#{pattern})((#{pattern})*)/,"#{str}")
     result
   end

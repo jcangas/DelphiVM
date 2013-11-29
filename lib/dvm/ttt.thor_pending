@@ -1,6 +1,4 @@
 
-__END__ # experimental
-
 class Tt < Thor
 	include Thor::Actions
 

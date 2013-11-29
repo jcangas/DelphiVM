@@ -1,5 +1,3 @@
-require 'fiddle'
-require 'fiddle/import'
 require 'delphivm/tool'
 require 'delphivm/win_services'
 
@@ -52,7 +50,21 @@ class Delphivm
 		end
 
 		def self.platforms_in_prj(ide)
-			(ROOT + 'out' + ide + '**/lib/').glob.map{|p| p.parent.parent.basename.to_s}
+			result = []
+			Pathname.glob(ROOT + "{src,samples,test}/**/*.dproj") do |f|
+				doc = Nokogiri::XML(File.open(f))
+				result = result | doc.css("Platforms Platform").select{|node| node.content=='True'}.map{|node| node.attr(:value)}
+			end
+			result
+		end
+
+		def self.configs_in_prj(ide)
+			result = []
+			Pathname.glob(ROOT + "{src,samples,test}/**/*.dproj") do |f|
+				doc = Nokogiri::XML(File.open(f))
+				result = result | doc.css("BuildConfiguration[@Include != 'Base']").map{|node| node.attr('Include')}
+			end
+			result
 		end
 
 		def self.ide_folder(ide)
@@ -126,6 +138,10 @@ class Delphivm
 			supports_msbuild? ? 'groupproj' : 'bdsgroup'
 		end
 
+		def proj_file_ext
+			'dproj'
+		end
+
 		def get_main_group_file
 			Pathname.glob(workdir + "src/#{idever}**/#{prj_slug}App.#{group_file_ext}").first || 
 			Pathname.glob(workdir + "src/#{idever}**/*.#{group_file_ext}").first
@@ -134,7 +150,7 @@ class Delphivm
 		def start(main_group_file=nil)
 			set_env
 			main_group_file ||= get_main_group_file
-			#bds_args = IDETool.new(self).args(file: main_group_file.win).cmdln_args
+			#bds_args = IDETool.new(self).args(file: main_group_file.to_s).cmdln_args
 			bds_args = IDETool.new(self).cmdln_args
 			Process.detach(spawn "#{self['App']}", bds_args)
 			say "[#{idever}] ", :green
