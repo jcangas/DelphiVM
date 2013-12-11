@@ -1,6 +1,6 @@
 ﻿# encoding: UTF-8
 
-class Ide < Thor
+class Ide < DvmTask
 
   desc "list CRITERIA", "list IDEs info. CRITERIA=(config|installed|*prj) => delgpivm.cfg|this machine|this project"
   def list(kind = :prj)
@@ -19,11 +19,6 @@ class Ide < Thor
     puts "Active path: " + IDEServices.use(ide_tag)
   end
   
-  desc "test ", "internal use"
-  def test
-    IDEServices.platforms_in_prj
-  end
-
 private
 
   def report_ides(ides, kind = :found)

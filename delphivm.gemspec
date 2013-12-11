@@ -20,6 +20,14 @@ Gem::Specification.new do |s|
 	s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
 	s.require_paths = ["lib","templates"]
 	
-	s.add_development_dependency "bundler"  
+	s.add_dependency "thor"  
+	s.add_dependency "version_info"  
+	s.add_dependency "json"  
+	s.add_dependency "nokogiri"  
+	s.add_dependency "mini_portile"  
+	s.add_dependency "ruby-progressbar"  
+	s.add_dependency "rubyzip"  
+	s.add_dependency "bundler"  
+	s.add_development_dependency "dnote"
 	s.add_development_dependency "rake"  
 end

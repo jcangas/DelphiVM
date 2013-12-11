@@ -1,5 +1,5 @@
 class Delphivm
-		class Tool
+	class Tool
 		attr :app
 		attr :title
 
@@ -64,7 +64,10 @@ class Delphivm
 		end
 
 		def get_default_args
-			{msbuild_args:  (IDEInfos[idever].msbuild_args || Delphivm.configuration.msbuild_args || '').strip}			
+			{
+				msbuild_args:  (IDEInfos[idever].msbuild_args || Delphivm.configuration.msbuild_args || '').strip,
+
+			}			
 		end
 
 		def arg_to_cmdln(arg_name, arg_value)
@@ -72,6 +75,7 @@ class Delphivm
 			when :target
 				"/t:#{arg_value}"
 			when :config
+				arg_value ||= {}
 				arg_value.inject([]) {|prms, item| prms << '/p:' + item.join('=')}.join(' ')
 			else
 				super

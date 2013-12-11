@@ -1,25 +1,41 @@
-﻿class BuildTarget < Thor
+﻿module PathMethods
+	def self.extension(rootpath= '')
+		mod = Module.new do
+			def method_missing(name, *args, &block)
+				(m = name.to_s.match(/(\w+)_path$/)) ? _to_path(m[1], *args) : super
+			end
+		private
+			def _to_path(under_scored_name='', rel: false)
+				paths = under_scored_name.to_s.stripdup('_').split('_')
+				paths.unshift('root') unless (paths[0] == "root") || rel
+				paths = paths.map{|p| respond_to?("_#{p}_path", true) ? send("_#{p}_path") : p}
+				paths.unshift(Pathname('')).inject(:+)
+			end
+		end
+
+		mod.class_eval do 
+			define_method :_root_path do
+				@get_root ||= rootpath.to_s
+			end
+		end
+		mod
+	end
+end
+
+class BuildTarget < Delphivm
 	attr_accessor :idetag
 	attr_accessor :config
-	attr_accessor :platform
-	 
-	INCL_BUILD = /(_|\/|\A)build(_|\/|\Z)/ # REX for recognize a build subpath
-	
+	attr_accessor :configs
+	attr_accessor :platforms
+	 	
 	include Thor::Actions
+	include PathMethods.extension(ROOT)
 	
 	def self.inherited(klass)
 		klass.source_root(ROOT)
 		klass.publish
 	end
-
-	def method_missing(name, *args, &block)
-		if name.to_s.match(/(\w+)_path$/)
-			convert_to_path $1
-		else
-			super
-		end
-	end
-
+	
 protected
 	def self.depends(*task_names)
 		@depends ||=[]
@@ -38,9 +54,13 @@ protected
 		@catch_products = false
 	end
 
+	def catching_products?
+		@catch_products
+	end
+
 	def catch_product(*prods)
 		@products.push(*prods)
-		yield *prods unless @catch_products
+		yield(*prods) unless catching_products?
 	end
 	
 	def do_clean(idetag, cfg)
@@ -60,17 +80,24 @@ protected
 		invoke :make
 	end
 
+	def invocation
+		_shared_configuration[:invocations][self.class].last
+	end
+
 	def self.publish    
 		[:clean, :make, :build].each do |mth|
 			desc "#{mth}", "#{mth} #{self.namespace} products"
 			method_option :ide, type: :array, default: [IDEServices.default_ide], desc: "IDE list or ALL. #{IDEServices.default_ide} by default"
-			method_option :props, type: :hash, aliases: '-p', default: {:Config => 'Debug'}, desc: "MSBuild properties. See MSBuild help"
+			method_option :props, type: :hash, aliases: '-p', default: {}, desc: "MSBuild properties. See MSBuild help"
 			define_method mth do
 				msbuild_params = options[:props]
 				ides_to_call = options[:ide].any?{ |s| s.casecmp('all')==0 } ? IDEServices.ides_in_prj : IDEServices.ides_filter(options[:ide], :prj)
 				ides_to_call.each do |idetag|          
 					self.idetag = idetag
 					self.config = msbuild_params
+					self.configs =  IDEServices.configs_in_prj(idetag)
+    			self.platforms = IDEServices.platforms_in_prj(idetag)
+
 					self.clear_products
 					self.class.depends.each { |task| self.invoke "#{task}:#{mth}" }
 					send("do_#{mth}", idetag, msbuild_params)
@@ -79,10 +106,8 @@ protected
 		end
 	end
 
-	def convert_to_path(under_scored_name='')
-		self.platform = self.platform || ENV['Platform'] || 'Win32'
-		buildpath_as_str = (Pathname('out') + self.idetag + platform + self.config[:Config]).to_s    
-		ROOT + under_scored_name.to_s.split('_').join('/').gsub(INCL_BUILD, '\1' + buildpath_as_str + '\2')
+	def _build_path
+		Pathname('out') + self.idetag
 	end
 	
 end

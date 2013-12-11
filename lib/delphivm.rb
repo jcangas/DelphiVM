@@ -1,13 +1,17 @@
 #!/usr/bin/env ruby
 
 require 'thor'
+Delphivm = Thor # sure, we are hacking Thor !
+
+
 require 'pathname'
 require 'extensions'
 
 require 'version_info'
-require 'delphivm/configuration'
 
-Delphivm = Thor # sure, we are hacking Thor !
+require 'delphivm/configuration'
+require 'delphivm/version'
+
 class Delphivm
   module Talk
     def self.included(other)
@@ -20,7 +24,6 @@ class Delphivm
     end
   end
     
-  include(VersionInfo)
   include Configurable
 
   ROOT = ::Pathname.getwd
@@ -46,16 +49,6 @@ class Delphivm
       msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
     }
 
-  
-  class Gen < Thor
-    namespace :gen
-    # used only as thor namesapce for generators
-    # defined here because we need ensure class Gen exist when generator tasks are loaded
-    desc "echo", "prueba de echo"
-    def echo
-    end
-  end
-
   def self.shell
     @shell ||= Thor::Base.shell.new
   end
@@ -72,14 +65,14 @@ private
   end  
 
   def self.app_module
-    return @app_module if @app_module
+    return @app_module if defined?(@app_module) && @app_module
     if ROOT.basename.to_s.casecmp(EXE_NAME) == 0
-      @app_module = Delphivm
+      @app_module = self
+      VersionInfo.file_format = :module # para reportar la propia
     else
       create_app_module
     end
     VersionInfo.install_tasks(:target => @app_module)
-    VersionInfo.file_format = :module # para reportar la propia
     @app_module
   end
 public
@@ -87,6 +80,10 @@ public
   self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE)
   APP_ID = "#{::Delphivm::APPMODULE}-#{::Delphivm::APPMODULE.VERSION.tag}"
 end
+
+
+# pretty alias to define custom tasks
+DvmTask = Delphivm
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
 require 'delphivm/runner'

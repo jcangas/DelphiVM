@@ -1,4 +1,6 @@
 ﻿
+require 'mini_portile' # force OCRA sees it !!
+
 require 'nokogiri'
 require 'zip/zip'
 
@@ -18,10 +20,11 @@ require 'thor/runner'
 class Delphivm	
 	module Util #:nodoc:
 	    # redefine Thor to search tasks only for this app
-	    def self.globs_for(path)
-	      ["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::ROOT}/dvm/**/*.thor"]
-	 	end
+		def self.globs_for(path)
+	  	["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::ROOT}/dvm/**/*.thor"]
+		end
 	end
+
 	class Runner
 		# remove some tasks not needed
 		remove_task :install, :installed, :uninstall, :update

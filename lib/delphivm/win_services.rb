@@ -1,3 +1,6 @@
+require 'fiddle'
+require 'fiddle/import'
+
 module User32
 	extend Fiddle::Importer
 	dlload 'user32'

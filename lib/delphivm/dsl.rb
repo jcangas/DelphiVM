@@ -24,7 +24,7 @@ class Delphivm
       end
 
       def import(libname, libver, options={}, &block)
-        importer = Importer.new(self, libname, libver, options, &block)
+        Importer.new(self, libname, libver, options, &block)
       end      
     end
 
