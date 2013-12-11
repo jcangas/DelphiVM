@@ -1,5 +1,5 @@
 ﻿# encoding: UTF-8
-class Vendor < Thor
+class Vendor < DvmTask
   include Thor::Actions
   
   desc "init", "create and initialize vendor directory"

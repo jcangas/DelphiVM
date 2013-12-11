@@ -1,6 +1,6 @@
-require File.dirname(__FILE__) +  '/ship/group'
 
-class Ship < Thor
+class Ship < DvmTask
+	require File.dirname(__FILE__) +  '/ship/group'
 	include Thor::Actions
 
 	ShipGroup = ::Ship::FileSet #prefix :: allow escape Thor sandbox

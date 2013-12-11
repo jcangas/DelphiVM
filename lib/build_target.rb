@@ -22,7 +22,7 @@
 	end
 end
 
-class BuildTarget < Thor
+class BuildTarget < Delphivm
 	attr_accessor :idetag
 	attr_accessor :config
 	attr_accessor :configs
@@ -60,7 +60,7 @@ protected
 
 	def catch_product(*prods)
 		@products.push(*prods)
-		yield *prods unless catching_products?
+		yield(*prods) unless catching_products?
 	end
 	
 	def do_clean(idetag, cfg)
