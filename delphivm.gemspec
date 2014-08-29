@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
 	
 	s.add_dependency "thor"  
 	s.add_dependency "version_info"  
+	s.add_dependency "dnote"  
 	s.add_dependency "json"  
 	s.add_dependency "nokogiri"  
 	s.add_dependency "mini_portile"  

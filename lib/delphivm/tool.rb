@@ -30,13 +30,14 @@ class Delphivm
 		end
 
 		def call(out)
-			out.puts %Q[#{app} #{cmdln_args}]
+			cmd = %Q[#{app} #{cmdln_args.join(" ").strip}].encode(Encoding.default_external)
+			out.puts cmd
 		end
 
 		def cmdln_args
 			cmd_args = get_default_args.dup
 			cmd_args.merge!(args)
-			cmd_args.map{| arg_name, arg_value| arg_to_cmdln(arg_name, arg_value) }.compact.join(" ").strip
+			cmd_args.map{| arg_name, arg_value| arg_to_cmdln(arg_name, arg_value) }.compact #.join(" ").strip
 		end
 
 		def get_default_args
@@ -64,10 +65,7 @@ class Delphivm
 		end
 
 		def get_default_args
-			{
-				msbuild_args:  (IDEInfos[idever].msbuild_args || Delphivm.configuration.msbuild_args || '').strip,
-
-			}			
+			{ msbuild_args:  (IDEInfos[idever].msbuild_args || Delphivm.configuration.msbuild_args || '').strip	}			
 		end
 
 		def arg_to_cmdln(arg_name, arg_value)
@@ -90,13 +88,17 @@ class Delphivm
 		end
 
 		def get_default_args
-			{reg: "DelphiVM\\#{prj_slug}"}
+			{idecaption: "#{prj_slug}", reg: "DelphiVM\\#{prj_slug}", personality: "Delphi"}
 		end
 
 		def arg_to_cmdln(arg_name, arg_value)
 			case arg_name
 			when :reg
-				"-r#{arg_value}"
+				%Q[-r#{arg_value}]
+			when :idecaption
+				%Q[-idecaption="#{arg_value}"]
+			when :personality
+				%Q[-p#{arg_value}]
 			when :target
 				"-#{arg_value[0].downcase}"
 			when :config

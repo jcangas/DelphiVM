@@ -46,7 +46,7 @@ class Delphivm
 		end
 		
 		def self.ide_in_prj?(ide)
-		 	!ROOT.glob("{src}/#{ide.to_s}*/").empty?
+		 	!ROOT.glob("{src,samples,test}/#{ide.to_s}*/").empty?
 		end
 
 		def self.platforms_in_prj(ide)
@@ -71,7 +71,7 @@ class Delphivm
 			"#{ide}-#{IDEInfos[ide][:name]}"
 		end
 
-		def self.use(ide_tag)
+		def self.use(ide_tag)#experimental, aun parece no funcionar
 		 	bin_paths = ide_paths.map{ |p| p + 'bin' }
 		 	bpl_paths = []
 		 	paths_to_remove = [""] + bin_paths + bpl_paths
@@ -144,28 +144,30 @@ class Delphivm
 
 		def get_main_group_file
 			Pathname.glob(workdir + "src/#{idever}**/#{prj_slug}App.#{group_file_ext}").first || 
-			Pathname.glob(workdir + "src/#{idever}**/*.#{group_file_ext}").first
+			Pathname.glob(workdir + "src/#{idever}**/*.#{group_file_ext}").first ||
+			Pathname.glob(workdir + "src/*.#{group_file_ext}").first ||
+			Pathname.glob(workdir + "*.#{group_file_ext}").first
 		end
 
 		def start(main_group_file=nil)
 			set_env
 			main_group_file ||= get_main_group_file
-			#bds_args = IDETool.new(self).args(file: main_group_file.to_s).cmdln_args
+			#bds_args = IDETool.new(self).args(file: main_group_file.win).cmdln_args
 			bds_args = IDETool.new(self).cmdln_args
-			Process.detach(spawn "#{self['App']}", bds_args)
+			Process.detach(spawn("#{self['App']}", *bds_args))
 			say "[#{idever}] ", :green
-			say "started bds #{bds_args}"
+			say "started bds #{bds_args.join(" ")}"
 		end
 		
 		def call_build_tool(target, config)
 		 	set_env
 			Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.#{group_file_ext}") do |f|
 				f_to_show = f.relative_path_from(workdir)
-				build_tool.args(config: config, target: target, file: f)
+				build_tool.args(config: config, target: target, file: f.win)
 				say "[#{idever}] ", :green
 				say "#{target.upcase}: #{f_to_show}"
 				say("[#{build_tool.title}] ", :green)
-				say(build_tool.cmdln_args)
+				say(build_tool.cmdln_args.join(" "))
 				say
 			 	WinServices.winshell(out_filter: ->(line){line =~/\b(warning|hint|error)\b/i}) do |i|
 			 	#WinServices.winshell do |i|
@@ -178,7 +180,7 @@ class Delphivm
 		def self.say(*args)
 			Delphivm.shell.say(*args)
 		end
-		
+			
 		def say(*args)
 			self.class.say(*args)
 		end

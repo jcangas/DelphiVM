@@ -33,7 +33,7 @@ class Delphivm
   DEFAULT_CFG_FILE = $0 + '.cfg'
 
  	PATH_TO_VENDOR = ROOT + 'vendor'
-  PATH_TO_VENDOR_CACHE = PATH_TO_VENDOR + 'cache'
+  PATH_TO_VENDOR_CACHE = Pathname($0).dirname + 'dvm-cache' #PATH_TO_VENDOR + 'cache'
   PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
   DVM_IMPORTS_FILE = ROOT + 'imports.dvm'
   DELPHIVM_DEFAULTS = 
@@ -56,11 +56,12 @@ class Delphivm
 private
   def self.create_app_module
     @app_module = ::Module.new do
-      VersionInfo.file_format = :text
+      VersionInfo.file_format = :module
       include VersionInfo
-      self.VERSION.file_name = ROOT + 'VERSION'
     end
     Object.const_set(ROOT.basename.to_s.snake_case.camelize, @app_module)
+    @app_module.VERSION.file_name = ROOT + 'VERSION.pas'
+    @app_module.VERSION.load
     @app_module.freeze
   end  
 
@@ -83,7 +84,10 @@ end
 
 
 # pretty alias to define custom tasks
-DvmTask = Delphivm
+class DvmTask < Delphivm
+  include Thor::Actions
+  source_root(ROOT)
+end
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
 require 'delphivm/runner'

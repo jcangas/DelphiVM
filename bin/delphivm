@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/env ruby
 begin
   $LOAD_PATH.unshift File.join(File.dirname($0), '..', 'lib')
-  if ARGV[0] == 'backtrace'
+  if ARGV[0] == 'debug'
     ::BACKTRACE = true
     ARGV.shift
   end

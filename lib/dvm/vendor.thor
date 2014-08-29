@@ -15,7 +15,7 @@ class Vendor < DvmTask
 source "my_imports_path"
 
 # can use environment vars anywhere
-# source "#{ENV['IMPORTS_PATH']}"
+# source "\#{ENV['IMPORTS_PATH']}"
 
 # set IDE version
 uses 'D150'
@@ -28,11 +28,13 @@ import "FastReport", "4.13.1" do
     'dclfrxDB15.bpl', 'dclfrxTee15.bpl', 'dclfrxe15.bpl', 'dclfrxIBX15.bpl')
 end
 
-import "TurboPower", "7.0.0" do
-  ide_install('RegisterTurboPowerAsyncPro.bpl')
-end
+# or if we don't need ide install
 
-# repeat for other sources or IDEs
+import "TurboPower", "7.0.0" 
+
+
+
+# repeat for other sources and/or IDEs
 
 EOS
     end
@@ -40,7 +42,6 @@ EOS
   
   desc "import", "download and install vendor imports"
   method_option :clean,  type: :boolean, aliases: '-c', default: false, desc: "clean cache first"
-  method_option :deploy,  type: :boolean, aliases: '-d', default: false, desc: "deploy after the import"
   def import
     clean_vendor(options) if options.clean?
     prepare

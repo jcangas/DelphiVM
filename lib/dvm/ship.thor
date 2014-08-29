@@ -1,40 +1,50 @@
 
 class Ship < DvmTask
 	require File.dirname(__FILE__) +  '/ship/group'
-	include Thor::Actions
 
 	ShipGroup = ::Ship::FileSet #prefix :: allow escape Thor sandbox
+	DefaultGroups = %w(binary libs hpp source_resources source documentation samples test)
+	
+	def self.ship_groups=(args)
+		@ship_groups = args
+	end
+	
+	def self.ship_groups
+		@ship_groups || DefaultGroups
+	end
 
-	desc  "clean IDE", "remove ship file(s) #{APP_ID}-XXX.zip"
+	desc "clean IDE", "remove ship file(s) #{APP_ID}-IDE.zip"
 	def clean
 		ides_in_prj.each do |idever|
 			do_clean(idever.to_s)
 		end
 	end
 
-	desc "make", "make ship file(s) #{APP_ID}-XXX.zip"
+	desc "make", "make ship file(s) #{APP_ID}-IDE.zip"
+    method_option :groups,  type: :array, aliases: '-g', default: ship_groups, desc: "groups to include"
 	def make
 		ides_in_prj.each do |idever|
 			do_make(idever.to_s)
 		end
 	end
 
-	desc "build", "build ship file(s) #{APP_ID}-XXX.zip"
+	desc "build", "build ship file(s) #{APP_ID}-IDE.zip"
+    method_option :groups,  type: :array, aliases: '-g', default: ship_groups, desc: "groups to include"
 	def build
 		ides_in_prj.each do |idever|
 			do_build(idever.to_s)
 		end
 	end
 
-private
-	def ides_in_prj
-		IDEServices.ides_in_prj
-	end
-
+protected
 	def get_zip_name(idever)
 		ROOT + 'ship' + "#{APP_ID}-#{idever}.zip"
 	end
 	
+	def ides_in_prj
+		IDEServices.ides_in_prj
+	end
+
 	def do_clean(idever)
 		remove_file get_zip_name(idever)
 	end
@@ -44,7 +54,9 @@ private
 		empty_directory zip_fname.dirname
 	
 		groups = [
-			ShipGroup.new(:binary, 'out/' + idever),
+			ShipGroup.new(:binary, 'out/' + idever, '*/*/bin/**{.*,}/*.*'),
+			ShipGroup.new(:libs, 'out/' + idever, '*/*/lib/**{.*,}/*.*'),
+			ShipGroup.new(:hpp, 'out/' + idever, '**{.*,}/*.{h,hpp}'),
 			ShipGroup.new(:source_resources, 'src', '**{.*,}/*.{dfm,fmx,res,dcr}', false),
 			ShipGroup.new(:source, 'src'),
 			ShipGroup.new(:source, '.', '*.*', false),
@@ -53,24 +65,30 @@ private
 			ShipGroup.new(:test, 'test')
 		]
 
-		platform_lib_paths = (ROOT + 'out' + idever + '**/lib/').glob.map{|p| p.relative_path_from p.parent.parent.parent}
+		platform_lib_paths = (ROOT + 'out' + idever + '*/*/lib/').glob.map{|p| p.relative_path_from p.parent.parent.parent}
 		ship_dest = {
 			binary: [Pathname('.')],
+			libs: [Pathname('.')],
+			hpp: [Pathname('.')],
 			source_resources: platform_lib_paths,
 			source: [Pathname('src') + APP_ID],
 			documentation: [Pathname('doc') + APP_ID],
 			samples: [Pathname('samples') + APP_ID],
 			test: [Pathname('test') + APP_ID]
 		}
+
 		ignore_files = ['*.local', '*.~*', '*.identcache']
 		say_status(:create, zip_fname.relative_path_from(ROOT))	
+		valid_groups = (options[:groups] == DefaultGroups) ? self.class.ship_groups : options[:groups]
 		Zip::ZipFile.open(zip_fname, Zip::ZipFile::CREATE) do |zipfile|
 			title = ''
 			groups.each do |group|
+				next unless valid_groups.include?(group.name.to_s)
 				if title != new_title = group.name.to_s.camelize(' ')
 					title = new_title
 					say_status("add", "#{title} files", :yellow)
 				end
+		
 				group.each do |file, origin_path|
 					next if ignore_files.any?{|pattern| file.fnmatch?(pattern)}
 					ship_dest[group.name].each do |dest|
@@ -86,4 +104,5 @@ private
 		do_clean(idever)
 		do_make(idever)		
 	end
+
 end
