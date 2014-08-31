@@ -21,7 +21,7 @@ class Delphivm
 	module Util #:nodoc:
 	    # redefine Thor to search tasks only for this app
 		def self.globs_for(path)
-	  	["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::ROOT}/dvm/**/*.thor"]
+	  		["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::ROOT}/dvm/**/*.thor"]
 		end
 	end
 
@@ -29,7 +29,8 @@ class Delphivm
 		# remove some tasks not needed
 		remove_task :install, :installed, :uninstall, :update
 
-		# default version and banner outputs THOR, so redefine it
+		# default version and banner methods outputs THOR, so redefine both
+
 		def self.banner(task, all = false, subcommand = false)
 			"#{Delphivm::EXE_NAME} " + task.formatted_usage(self, all, subcommand)
 		end    

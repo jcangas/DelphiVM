@@ -14,6 +14,7 @@ class Deploy < BuildTarget
 protected
 
 	def do_make(idetag, cfg)
+		say "make deploy"
 		deploy_environment(idetag, cfg)
 		deploy_imports(idetag, cfg)
 		deploy_other_files(idetag, cfg)
@@ -22,8 +23,8 @@ protected
 	def deploy_imports(idetag, cfg)
 		imports_to_deploy = self.class.deploy_imports_for(idetag)
 
+		say "deploying imports"
 		self.out_path.glob("#{idetag}/*/*/bin/") do |path_target|
-			say "deploying imports"
 			imports_to_deploy.each do |import_to_deploy|
 				catch_product(path_target + import_to_deploy) do |path_to_deploy|
 					path_source = vendor_imports_path + path_target.relative_path_from(out_path) + import_to_deploy

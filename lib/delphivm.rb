@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-
 require 'thor'
 Delphivm = Thor # sure, we are hacking Thor !
 
@@ -33,7 +32,7 @@ class Delphivm
   DEFAULT_CFG_FILE = $0 + '.cfg'
 
  	PATH_TO_VENDOR = ROOT + 'vendor'
-  PATH_TO_VENDOR_CACHE = Pathname($0).dirname + 'dvm-cache' #PATH_TO_VENDOR + 'cache'
+  PATH_TO_VENDOR_CACHE = Pathname($0).dirname + 'dvm-cache'
   PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
   DVM_IMPORTS_FILE = ROOT + 'imports.dvm'
   DELPHIVM_DEFAULTS = 
