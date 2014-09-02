@@ -124,7 +124,11 @@ class Delphivm
 			regkey = Pathname(IDEInfos[idever][:regkey])
 			"HKCU\\#{regkey.parent.parent}\\#{prj_regkey}\\#{regkey.basename}\\Known Packages"
 		end
-
+    
+    def ide_root_path
+      self['RootDir']
+    end
+    
 		def vendor_bin_paths
 		    Pathname.glob(PATH_TO_VENDOR_IMPORTS + idever + '**' + 'bin').map{|p| p.win}
 		end

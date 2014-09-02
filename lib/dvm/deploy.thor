@@ -21,14 +21,32 @@ protected
 	end
 
 	def deploy_imports(idetag, cfg)
-		imports_to_deploy = self.class.deploy_imports_for(idetag)
+
+    ide_root_path = IDEServices.new(idetag).ide_root_path
 
 		say "deploying imports"
 		self.out_path.glob("#{idetag}/*/*/bin/") do |path_target|
-			imports_to_deploy.each do |import_to_deploy|
-				catch_product(path_target + import_to_deploy) do |path_to_deploy|
-					path_source = vendor_imports_path + path_target.relative_path_from(out_path) + import_to_deploy
-					get(path_source.to_s, path_to_deploy, force: true) if path_source.exist?
+
+      config = path_target.parent.basename
+      platform =  path_target.parent.parent.basename
+      
+      import_path = vendor_imports_path + idetag
+    
+      options = {idetag: idetag, 
+                 platform: platform, 
+                 config: config, 
+                 ide_root_path: ide_root_path, 
+                 import_path: import_path,
+                 out_path: out_path + idetag}
+                 
+      
+  		self.class.deploy_imports_for(options).each do |src_path, target_path|
+
+				catch_product(target_path) do |product|
+          if src_path.exist?
+            get(src_path.to_s, product, force: true) if src_path.file?
+            directory(src_path, product) if src_path.directory?
+          end
 				end
 			end
 		end

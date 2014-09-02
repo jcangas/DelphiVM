@@ -13,6 +13,14 @@ class Ship < DvmTask
 		@ship_groups || DefaultGroups
 	end
 
+	def self.publish_to=(value)
+		@publish_to = value
+	end
+
+	def self.publish_to
+		@publish_to || nil
+	end
+
 	desc "clean IDE", "remove ship file(s) #{APP_ID}-IDE.zip"
 	def clean
 		ides_in_prj.each do |idever|
@@ -47,6 +55,10 @@ protected
 
 	def do_clean(idever)
 		remove_file get_zip_name(idever)
+	end
+
+	def publish
+		get(get_zip_name, Pathname(publish_to) + get_zip_name.basename) if publish_to
 	end
 
 	def do_make(idever)

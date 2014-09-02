@@ -85,7 +85,9 @@ end
 # pretty alias to define custom tasks
 class DvmTask < Delphivm
   include Thor::Actions
-  source_root(ROOT)
+	def self.inherited(klass)
+		klass.source_root(ROOT)
+	end
 end
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 

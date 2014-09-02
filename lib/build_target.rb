@@ -29,9 +29,10 @@ class BuildTarget < Delphivm
 	attr_accessor :platforms
 	 	
 	include PathMethods.extension(ROOT)
+  include Thor::Actions
 	
 	def self.inherited(klass)
-		#klass.source_root(ROOT)
+		klass.source_root(ROOT)
 		klass.publish
 	end
 	
