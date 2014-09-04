@@ -1,41 +1,10 @@
-﻿module PathMethods
-	def self.extension(rootpath= '')
-		mod = Module.new do
-			def method_missing(name, *args, &block)
-				(m = name.to_s.match(/(\w+)_path$/)) ? _to_path(m[1], *args) : super
-			end
-		private
-			def _to_path(under_scored_name='', rel: false)
-				paths = under_scored_name.to_s.stripdup('_').split('_')
-				paths.unshift('root') unless (paths[0] == "root") || rel
-				paths = paths.map{|p| respond_to?("_#{p}_path", true) ? send("_#{p}_path") : p}
-				paths.unshift(Pathname('')).inject(:+)
-			end
-		end
-
-		mod.class_eval do 
-			define_method :_root_path do
-				@get_root ||= rootpath.to_s
-			end
-		end
-		mod
-	end
-end
-
-class BuildTarget < Delphivm
+﻿
+class BuildTarget < DvmTask
 	attr_accessor :idetag
 	attr_accessor :config
 	attr_accessor :configs
 	attr_accessor :platforms
-	 	
-	include PathMethods.extension(ROOT)
-  include Thor::Actions
-	
-	def self.inherited(klass)
-		klass.source_root(ROOT)
-		klass.publish
-	end
-	
+	 		
 protected
 	def self.depends(*task_names)
 		@depends ||=[]
@@ -68,7 +37,7 @@ protected
 			do_make(idetag, cfg)
 		end
 		@products.each do |p| 
-			remove_file(p) 
+			remove_file(p, verbose: false) 
 		end
 	end
 	
@@ -76,15 +45,18 @@ protected
 	end
 
 	def do_build(idetag, cfg)
+		say_status "[clean]", ""
 		invoke :clean
+		say_status "[make]", ""
 		invoke :make
 	end
 
-	def invocation
-		_shared_configuration[:invocations][self.class].last
+	def _build_path
+		Pathname('out') + self.idetag
 	end
-
-	def self.publish    
+	
+	def self.publish  
+		super  
 		[:clean, :make, :build].each do |mth|
 			desc "#{mth}", "#{mth} #{self.namespace} products"
 			method_option :ide, type: :array, default: [IDEServices.default_ide], desc: "IDE list or ALL. #{IDEServices.default_ide} by default"
@@ -96,8 +68,7 @@ protected
 					self.idetag = idetag
 					self.config = msbuild_params
 					self.configs =  IDEServices.configs_in_prj(idetag)
-    			self.platforms = IDEServices.platforms_in_prj(idetag)
-
+    				self.platforms = IDEServices.platforms_in_prj(idetag)
 					self.clear_products
 					self.class.depends.each { |task| self.invoke "#{task}:#{mth}" }
 					send("do_#{mth}", idetag, msbuild_params)
@@ -106,9 +77,5 @@ protected
 		end
 	end
 
-	def _build_path
-		Pathname('out') + self.idetag
-	end
-	
 end
  

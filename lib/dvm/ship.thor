@@ -1,26 +1,14 @@
 
-class Ship < DvmTask
+class Ship < ::DvmTask
 	require File.dirname(__FILE__) +  '/ship/group'
 
 	ShipGroup = ::Ship::FileSet #prefix :: allow escape Thor sandbox
-	DefaultGroups = %w(binary libs hpp source_resources source documentation samples test)
+
+	self.configure do |cfg|
+		cfg.ship_groups!  %w(binary libs hpp source_resources source documentation samples test)
+		cfg.publish_to! false
+	end
 	
-	def self.ship_groups=(args)
-		@ship_groups = args
-	end
-	
-	def self.ship_groups
-		@ship_groups || DefaultGroups
-	end
-
-	def self.publish_to=(value)
-		@publish_to = value
-	end
-
-	def self.publish_to
-		@publish_to || nil
-	end
-
 	desc "clean IDE", "remove ship file(s) #{APP_ID}-IDE.zip"
 	def clean
 		ides_in_prj.each do |idever|
@@ -29,7 +17,7 @@ class Ship < DvmTask
 	end
 
 	desc "make", "make ship file(s) #{APP_ID}-IDE.zip"
-    method_option :groups,  type: :array, aliases: '-g', default: ship_groups, desc: "groups to include"
+    method_option :groups,  type: :array, aliases: '-g', default: configuration.ship_groups, desc: "groups to include"
 	def make
 		ides_in_prj.each do |idever|
 			do_make(idever.to_s)
@@ -37,7 +25,7 @@ class Ship < DvmTask
 	end
 
 	desc "build", "build ship file(s) #{APP_ID}-IDE.zip"
-    method_option :groups,  type: :array, aliases: '-g', default: ship_groups, desc: "groups to include"
+    method_option :groups,  type: :array, aliases: '-g', default: configuration.ship_groups, desc: "groups to include"
 	def build
 		ides_in_prj.each do |idever|
 			do_build(idever.to_s)
@@ -57,11 +45,20 @@ protected
 		remove_file get_zip_name(idever)
 	end
 
-	def publish
-		get(get_zip_name, Pathname(publish_to) + get_zip_name.basename) if publish_to
+	def publish(idever)
+		target = self.class.configuration.publish_to
+		return unless target
+		say "publishing #{target}"
+		target = Pathname(target) + get_zip_name(idever).basename
+		get(get_zip_name(idever).to_s, target, force: true)
 	end
 
 	def do_make(idever)
+		buil_zip(idever)
+		publish(idever)
+	end
+
+	def buil_zip(idever)	
 		zip_fname = get_zip_name(idever)
 		empty_directory zip_fname.dirname
 	
@@ -91,7 +88,9 @@ protected
 
 		ignore_files = ['*.local', '*.~*', '*.identcache']
 		say_status(:create, zip_fname.relative_path_from(ROOT))	
-		valid_groups = (options[:groups] == DefaultGroups) ? self.class.ship_groups : options[:groups]
+		
+		valid_groups = options[:groups]
+
 		Zip::ZipFile.open(zip_fname, Zip::ZipFile::CREATE) do |zipfile|
 			title = ''
 			groups.each do |group|

@@ -1,20 +1,16 @@
 class Deploy < BuildTarget
-	def self.environment_to_bin?
-		@environment_to_bin || false
-	end
-	
-	def self.environment_to_bin=(bool)
-		@environment_to_bin = bool
+
+	self.configure do |cfg|
+		cfg.deploy_to_bin! false
 	end
 
-	def self.deploy_imports_for(idetag)
+	def self.deploy_imports_for(options)
 		return []
 	end
 
 protected
 
 	def do_make(idetag, cfg)
-		say "make deploy"
 		deploy_environment(idetag, cfg)
 		deploy_imports(idetag, cfg)
 		deploy_other_files(idetag, cfg)
@@ -22,33 +18,32 @@ protected
 
 	def deploy_imports(idetag, cfg)
 
-    ide_root_path = IDEServices.new(idetag).ide_root_path
+    	ide_root_path = IDEServices.new(idetag).ide_root_path
 
 		say "deploying imports"
 		self.out_path.glob("#{idetag}/*/*/bin/") do |path_target|
 
-      config = path_target.parent.basename
-      platform =  path_target.parent.parent.basename
+            config = path_target.parent.basename
+            platform =  path_target.parent.parent.basename
       
-      import_path = vendor_imports_path + idetag
+            import_path = vendor_imports_path + idetag
     
-      options = {idetag: idetag, 
+            options = {idetag: idetag, 
                  platform: platform, 
                  config: config, 
                  ide_root_path: ide_root_path, 
                  import_path: import_path,
                  out_path: out_path + idetag}
                  
-      
-  		self.class.deploy_imports_for(options).each do |src_path, target_path|
+  		    self.class.deploy_imports_for(options).each do |src_path, target_path|
 
-				catch_product(target_path) do |product|
-          if src_path.exist?
-            get(src_path.to_s, product, force: true) if src_path.file?
-            directory(src_path, product) if src_path.directory?
-          end
-				end
-			end
+                catch_product(target_path) do |product|
+                    if src_path.exist?
+                        get(src_path.to_s, product, force: true) if src_path.file?
+            	       directory(src_path, product) if src_path.directory?
+                    end
+                end
+            end
 		end
 	end
 
@@ -69,7 +64,7 @@ protected
 	end
 
 	def environment_target_path
-		if self.class.environment_to_bin?
+		if self.class.configure.deploy_to_bin
 			self.out_path.glob("#{idetag}/*/*/bin/")
 		else
 			[self.out_path]
