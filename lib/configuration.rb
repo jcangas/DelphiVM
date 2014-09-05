@@ -45,6 +45,43 @@ class Configuration < OpenStruct
 		self
 	end		
 
+	def method_missing(mid, *args, &block)
+	 	mname = mid.id2name
+	    len = args.length
+	    if (mname.chomp!('=') || mname.chomp!('!')) && mid != :[]=
+	     	if len != 1
+	        	raise ArgumentError, "wrong number of arguments (#{len} for 1)", caller(1)
+	      	end
+	    elsif len == 0 && mid != :[]
+			@table[mid] = Configuration.new if block
+	    else
+	      raise NoMethodError, "undefined method `#{mid}' for #{self}", caller(1)
+	    end
+	  	new_ostruct_member(mname)
+      	send(mid, *args, &block)
+	end
+
+	def new_ostruct_member(name)
+	 	name = name.to_sym
+	 	unless respond_to?(name)
+			define_singleton_method(name) do |&block|
+	    		value = @table[name]
+	    		if value.is_a?(Configuration) && block
+	    			block.call(value)
+	    		else
+	    			value
+	    		end
+	    	end
+	    	define_singleton_method("#{name}=") { |x| modifiable[name] = x }
+	    	define_singleton_method("#{name}!") { |x| modifiable[name] = x unless @table.has_key?(name)}
+	  	end
+	  name
+	end
+         
+	def to_s
+		to_h
+	end
+	
 	def to_h
 		result = {}
 		each_pair do |k,v|

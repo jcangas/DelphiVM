@@ -18,8 +18,10 @@ class Ship
 		def each(&block)
 			list = origin.glob(filter)
 			list = list.inject({}) do |hash, path| 
-				key = (relative? ? path.relative_path_from(origin) : path.basename)
-				hash[key] = path
+				unless path.directory?
+					key = (relative? ? path.relative_path_from(origin) : path.basename)
+					hash[key] = path
+				end
 				hash
 			end
 			list.each(&block)

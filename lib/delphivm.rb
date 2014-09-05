@@ -7,8 +7,8 @@ require 'pathname'
 require 'extensions'
 
 require 'version_info'
-
-require 'delphivm/configuration'
+require 'path_methods'
+require 'configuration'
 require 'delphivm/version'
 
 class Delphivm
@@ -29,7 +29,8 @@ class Delphivm
   GEM_ROOT = Pathname(__FILE__).dirname.parent
   EXE_NAME = File.basename($0, '.rb')
 
-  DEFAULT_CFG_FILE = $0 + '.cfg'
+  DEFAULT_CFG_FILE = Pathname($0 + '.cfg')
+  DVM_PRJ_CFG = ROOT + DEFAULT_CFG_FILE.basename
 
  	PATH_TO_VENDOR = ROOT + 'vendor'
   PATH_TO_VENDOR_CACHE = Pathname($0).dirname + 'dvm-cache'
@@ -79,15 +80,78 @@ public
   APPMODULE = self.app_module
   self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE)
   APP_ID = "#{::Delphivm::APPMODULE}-#{::Delphivm::APPMODULE.VERSION.tag}"
+  
+  def self.get_project_cfg
+    unless @dvm_project_cfg ||= nil 
+      @dvm_project_cfg = Configuration.new
+      @dvm_project_cfg.load(DVM_PRJ_CFG) if File.exists?(DVM_PRJ_CFG)
+    end
+    @dvm_project_cfg
+  end
 end
 
 
 # pretty alias to define custom tasks
 class DvmTask < Delphivm
+  include PathMethods.extension(ROOT)
   include Thor::Actions
-	def self.inherited(klass)
-		klass.source_root(ROOT)
-	end
+
+  def self.inherited(klass)
+	   klass.source_root(ROOT)
+     klass.publish
+  end
+  
+protected
+  class << self
+    
+    def configuration
+      Delphivm.get_project_cfg.tasks do |tasks|
+        tasks.send(self.namespace+'!', Configuration.new)
+      end
+      Delphivm.get_project_cfg.tasks[self.namespace]
+    end
+
+    def configure
+      if block_given? 
+        yield(self.configuration)
+      else
+        self.configuration 
+      end
+    end
+
+    def publish
+      [:cfg].each do |mth|
+        desc "#{mth}", "show (--write) #{mth} for #{self.namespace}"
+        method_option :write,  type: :boolean, aliases: '-w', default: false, desc: "write task setup to dvm prj file"
+        define_method mth do
+          do_setup
+        end
+      end
+    end
+  end
+  
+
+  def invocation
+    _shared_configuration[:invocations][self.class].last
+  end
+
+  def meta_option(name)
+    self.class.commands[self.invocation].options[name]
+  end
+
+  def option_invoked?(name)
+    not (meta_option(name).default == options[name])
+  end
+
+  def do_setup
+    say_status "configuration", "for #{self.class.namespace}"
+    say self.class.configuration.to_h
+    if options[:write]
+      Delphivm.get_project_cfg.save(DVM_PRJ_CFG)
+      say_status "writed!!"
+    end
+  end
+
 end
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
