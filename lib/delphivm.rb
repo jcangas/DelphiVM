@@ -45,6 +45,7 @@ class Delphivm
         'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'},
         'D180' => {regkey: 'Software\Embarcadero\BDS\11.0', name: 'XE4', desc: 'Embarcadero RAD Stuido XE4'},
         'D190' => {regkey: 'Software\Embarcadero\BDS\12.0', name: 'XE5', desc: 'Embarcadero RAD Stuido XE5'},
+        'D200' => {regkey: 'Software\Embarcadero\BDS\14.0', name: 'XE6', desc: 'Embarcadero RAD Stuido XE6'},
       },
       msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
     }
@@ -148,7 +149,7 @@ protected
     say self.class.configuration.to_h
     if options[:write]
       Delphivm.get_project_cfg.save(DVM_PRJ_CFG)
-      say_status "writed!!"
+      say_status "writed!!", "file #{DVM_PRJ_CFG}"
     end
   end
 
