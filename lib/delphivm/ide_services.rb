@@ -116,12 +116,17 @@ class Delphivm
 		 	workdir.basename.to_s.upcase
 		end
 		
-		def prj_regkey
-			"DelphiVM\\#{prj_slug}"
+		def prj_regkey(prjslug=nil)
+			prjslug ||= prj_slug
+			"DelphiVM\\#{prjslug}"
+		end
+
+		def ide_regkey
+			IDEInfos[idever][:regkey]
 		end
 
 		def pkg_regkey
-			regkey = Pathname(IDEInfos[idever][:regkey])
+			regkey = Pathname(ide_regkey)
 			"HKCU\\#{regkey.parent.parent}\\#{prj_regkey}\\#{regkey.basename}\\Known Packages"
 		end
     
