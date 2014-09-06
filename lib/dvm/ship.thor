@@ -1,5 +1,5 @@
 
-class Ship < ::DvmTask
+class Ship < DvmTask
 	require File.dirname(__FILE__) +  '/ship/group'
 
 	ShipGroup = ::Ship::FileSet #prefix :: allow escape Thor sandbox
