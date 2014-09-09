@@ -79,7 +79,7 @@ private
   end
 public
   APPMODULE = self.app_module
-  self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE)
+  self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE, create: true)
   APP_ID = "#{::Delphivm::APPMODULE}-#{::Delphivm::APPMODULE.VERSION.tag}"
   
   def self.get_project_cfg
