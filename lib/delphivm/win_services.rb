@@ -1,5 +1,6 @@
 require 'fiddle'
 require 'fiddle/import'
+require 'win32ole'
 
 module User32
 	extend Fiddle::Importer
@@ -14,11 +15,16 @@ module WinServices
 	WM_SETTINGCHANGE = 0x001A
 	SMTO_ABORTIFHUNG = 2
 
+	def self.run_as(program, args, initial_dir=nil)
+		shell = WIN32OLE.new('Shell.Application')
+		# shell.ShellExecute(program, args, initial_dir, operation, show)
+		shell.ShellExecute(program, args, initial_dir, 'runas', 0)
+	end
+
 	def self.winpath=(path)
-		Win32::Registry::HKEY_CURRENT_USER.open('Environment', Win32::Registry::KEY_WRITE) do |r| 
-			r['PATH'] = path
-		end
-		User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, 0)    
+		run_as('reg', %Q{add "HKLM\\#{keyname}" /v PATH /d "#{path}" /f} )
+		User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, 0)
+		path
 	end
 
 	def self.winshell(options = {})
@@ -31,11 +37,11 @@ module WinServices
 				while (line = stm.gets)
 					say "STDERR: #{line}" if err_filter.call(line)
 				end
-			end 
+			end
 
 			out_t = Thread.new(o) do |stm|
 				while (line = stm.gets)
-					say "#{line}" if out_filter.call(line) 
+					say "#{line}" if out_filter.call(line)
 				end
 			end
 
@@ -50,6 +56,6 @@ module WinServices
 				say excep
 			end
 			t.value
-		end      
+		end
 	end
 end

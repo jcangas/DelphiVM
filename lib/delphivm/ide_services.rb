@@ -12,7 +12,7 @@ class Delphivm
 		def self.idelist(kind = :installed)
 			ide_filter_valid?(kind) ? send("ides_in_#{kind}") : []
 		end
-		
+
 		def self.ide_filter_valid?(kind)
 			%W(config installed prj).include?(kind.to_s)
 		end
@@ -20,7 +20,7 @@ class Delphivm
 		def self.default_ide
 		 	(ides_in_prj.last || ides_in_installed.last).to_s
 		end
-			
+
 		def self.ides_in_config
 		 	IDEInfos.to_h.keys.sort
 		end
@@ -44,7 +44,7 @@ class Delphivm
 		def self.ide_in_installed?(ide)
 			(Win32::Registry::HKEY_CURRENT_USER.open(IDEInfos[ide][:regkey]) {|reg| reg} rescue false)
 		end
-		
+
 		def self.ide_in_prj?(ide)
 		 	!ROOT.glob("{src,samples,test}/#{ide.to_s}*/").empty?
 		end
@@ -71,42 +71,30 @@ class Delphivm
 			"#{ide}-#{IDEInfos[ide][:name]}"
 		end
 
-		def self.use(ide_tag)#experimental, aun parece no funcionar
-		 	bin_paths = ide_paths.map{ |p| p + 'bin' }
-		 	bpl_paths = []
-		 	paths_to_remove = [""] + bin_paths + bpl_paths
-		 	paths_to_remove =  paths_to_remove.map{|p| p.upcase}
-	         
-		 	path = Win32::Registry::HKEY_CURRENT_USER.open('Environment'){|r| r['PATH']}
-		 	path = path.split(';')
-		 	path.reject! { |p|  paths_to_remove.include?(p.upcase)  }
-
-		 	new_bin_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bin' }.first
-		  	path.unshift new_bin_path
-
-		 	new_bpl_path = ide_paths(ide_tag.upcase).map{ |p| p + 'bpl' }.first
-		  	path.unshift new_bpl_path
-
-		  	path = path.join(';')
-		  	WinServices.winpath = path
-		  	return path
+		def self.use(ide_tag, activate=true)#experimental, aun parece no funcionar
+			paths_to_remove = []
+			ides_in_installed.each {|tag| paths_to_remove += ide_paths(tag)}
+		 	paths_to_remove.map!{|p| p.win }
+			path = ENV['PATH'].split(';')
+			new_path = ide_paths(ide_tag.upcase) + path - paths_to_remove
+	  	path = new_path.join(';')
+			WinServices.winpath = path if activate
+			path
 		end
-			
+
 		def initialize(idever, workdir=ROOT)
 			@idever = idever.to_s.upcase
 			@workdir = workdir
-			@reg = Win32::Registry::HKEY_CURRENT_USER     
+			@reg = Win32::Registry::HKEY_CURRENT_USER
 			@build_tool = supports_msbuild? ? MSBuild.new(self) : IDETool.new(self)
 		end
-		 
+
 		def [](key)
 		  @reg.open(IDEInfos[idever][:regkey]) {|r| r[key] }
 		end
-		  
+
 		def set_env
-		 	ENV["PATH"] = '$(BDSCOMMONDIR)\bpl;' + ENV["PATH"]
-		 	ENV["PATH"] = self['RootDir'] + 'bin;' + ENV["PATH"]
-		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + ENV["PATH"]
+		 	p ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever,false)
 
 		 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
 		 	ENV["IDEVERSION"] = idever.to_s
@@ -115,7 +103,7 @@ class Delphivm
 		def prj_slug
 		 	workdir.basename.to_s.upcase
 		end
-		
+
 		def prj_regkey(prjslug=nil)
 			prjslug ||= prj_slug
 			"DelphiVM\\#{prjslug}"
@@ -129,11 +117,11 @@ class Delphivm
 			regkey = Pathname(ide_regkey)
 			"HKCU\\#{regkey.parent.parent}\\#{prj_regkey}\\#{regkey.basename}\\Known Packages"
 		end
-    
-    	def ide_root_path
-      		Pathname(self['RootDir'])
-    	end
-    
+
+  	def ide_root_path
+    		Pathname(self['RootDir'])
+  	end
+
 		def vendor_bin_paths
 		    Pathname.glob(PATH_TO_VENDOR_IMPORTS + idever + '**' + 'bin').map{|p| p.win}
 		end
@@ -142,7 +130,7 @@ class Delphivm
 			ide_number = idever[1..-1].to_i
 			ide_number > 140
 		end
-		
+
 		def group_file_ext
 			supports_msbuild? ? 'groupproj' : 'bdsgroup'
 		end
@@ -152,7 +140,7 @@ class Delphivm
 		end
 
 		def get_main_group_file
-			Pathname.glob(workdir + "src/#{idever}**/#{prj_slug}App.#{group_file_ext}").first || 
+			Pathname.glob(workdir + "src/#{idever}**/#{prj_slug}App.#{group_file_ext}").first ||
 			Pathname.glob(workdir + "src/#{idever}**/*.#{group_file_ext}").first ||
 			Pathname.glob(workdir + "src/*.#{group_file_ext}").first ||
 			Pathname.glob(workdir + "*.#{group_file_ext}").first
@@ -167,7 +155,7 @@ class Delphivm
 			say "[#{idever}] ", :green
 			say "started bds #{bds_args.join(" ")}"
 		end
-		
+
 		def call_build_tool(target, config)
 		 	set_env
 			Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.#{group_file_ext}") do |f|
@@ -182,26 +170,26 @@ class Delphivm
 			 	#WinServices.winshell do |i|
 					build_tool.call(i)
 				end
-			end  
-	  	end    	
+			end
+	  	end
   	private
-	
+
 		def self.say(*args)
 			Delphivm.shell.say(*args)
 		end
-			
+
 		def say(*args)
 			self.class.say(*args)
 		end
 
-		def self.ide_paths(idetag=nil)
-			result = []
-			IDEInfos.each do |key, info|
-				Win32::Registry::HKEY_CURRENT_USER.open(info[:regkey]) { |r| 	
-					result << r['RootDir'] if (idetag.nil? || idetag.to_s == key)
-				} rescue true
-			end
-			result
-		end
+		def self.ide_paths(idetag=IDEServices.default_ide)
+			public_path = Pathname(ENV["PUBLIC"]) + 'Documents'
+			ide = IDEServices.new(idetag)
+			base_path = ide.ide_root_path
+			brand_path = Pathname(base_path.each_filename.to_a[1..-1].join('/'))
+			bin_paths = [base_path + 'bin', base_path + 'bin64'].map{|p| Pathname(p.win)}
+			bpl_paths = [public_path + brand_path + 'Bpl', public_path + brand_path + 'Bpl' + 'Win64'].map{|p| Pathname(p.win)}
+			return bin_paths + bpl_paths
   	end
+	end
 end
