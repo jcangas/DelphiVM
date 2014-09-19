@@ -4,7 +4,7 @@ class Deploy < BuildTarget
 		cfg.deploy_to_bin! false
 	end
 
-	def self.deploy_imports_for(options)
+	def self.deploy_files_for(options)
 		return []
 	end
 
@@ -12,63 +12,58 @@ protected
 
 	def do_make(idetag, cfg)
 		deploy_environment(idetag, cfg)
-		deploy_imports(idetag, cfg)
-		deploy_other_files(idetag, cfg)
+		deploy_files(idetag, cfg)
 	end
 
-	def deploy_imports(idetag, cfg)
+	def deploy_files(idetag, cfg)
 
-    	ide_root_path = IDEServices.new(idetag).ide_root_path
+        options = {
+        	idetag: idetag, 
+            ide_root_path:  IDEServices.new(idetag).ide_root_path, 
+            import_path: vendor_imports_path + idetag,
+            out_path: out_path + idetag
+         }
 
-		say "deploying imports"
-		self.out_path.glob("#{idetag}/*/*/bin/") do |path_target|
-
-            config = path_target.parent.basename
-            platform =  path_target.parent.parent.basename
-      
-            import_path = vendor_imports_path + idetag
-    
-            options = {idetag: idetag, 
-                 platform: platform, 
-                 config: config, 
-                 ide_root_path: ide_root_path, 
-                 import_path: import_path,
-                 out_path: out_path + idetag}
-                 
-  		    self.class.deploy_imports_for(options).each do |src_path, target_path|
-
-                catch_product(target_path) do |product|
-                    if src_path.exist?
-                        get(src_path.to_s, product, force: true) if src_path.file?
-            	       directory(src_path, product) if src_path.directory?
-                    end
-                end
-            end
+		say "deploying files"
+		IDEServices.platforms_in_prj(idetag).each do |platform|
+			IDEServices.configs_in_prj(idetag).each do |config|
+	            options[:platform] = platform
+	            options[:config] = config
+	            self.class.deploy_files_for(options).each { |source, destination|  deploy_product(source, destination)	}
+			end
 		end
 	end
 
 	def deploy_environment(idetag, cfg)
 		say "deploying  environment"
-		self.src_RunEnviroment_path.glob('*') do |path_source|
-			environment_target_path.each do |path_target|
-				catch_product(path_target + path_source.relative_path_from(src_RunEnviroment_path)) do |path_to_deploy|
-					get(path_source.to_s, path_to_deploy) if path_source.file?
-					directory(path_source, path_to_deploy) if path_source.directory?
-				end
+		self.src_RunEnviroment_path.glob('*') do |source|
+			environment_target_path.each do |destination|
+				deploy_product(source, destination + source.relative_path_from(src_RunEnviroment_path))
 			end
 		end
 	end
 
-	def deploy_other_files(idetag, cfg)
-		
+	def deploy_product(source, destination)
+		if source.exist?
+			catch_product(destination) do |product|
+		    	get(source.to_s, product, force: true) if source.file?
+		    	directory(source, product) if source.directory?
+		    end
+		end		
 	end
 
 	def environment_target_path
+		result = []
 		if self.class.configure.deploy_to_bin
-			self.out_path.glob("#{idetag}/*/*/bin/")
+			IDEServices.platforms_in_prj(idetag).each do |platform|
+				IDEServices.configs_in_prj(idetag).each do |config|
+					result << self.out_path + idetag + platform + config + 'bin'
+				end
+			end
 		else
-			[self.out_path]
+			result << self.out_path
 		end
+		result
 	end
 
 end

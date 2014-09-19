@@ -11,14 +11,15 @@ class Ide < DvmTask
   def start(idever=nil)
     idever ||= IDEServices.default_ide
     ide = IDEServices.new(idever, ROOT)
-    ide.start 
+    ide.start
   end
 
   desc "use IDE-TAG", "use IDE with IDE-TAG"
   def use(ide_tag)
-    puts "Active path: " + IDEServices.use(ide_tag)
+    say "activating IDE #{ide_tag}"
+    IDEServices.use(ide_tag)
   end
-  
+
 private
 
   def report_ides(ides, kind = :found)
@@ -27,7 +28,7 @@ private
     infos = Delphivm::IDEInfos
     say "+%s-%s-%s+" % ['-'*7, '-'*12, '-'*42]
     say "| %5.5s | %10.10s | %40.40s |" % ['Tag', 'Name', 'Description']
-    ides.map do |ide| 
+    ides.map do |ide|
       say "|%s+%s+%s|" % ['-'*7, '-'*12, '-'*42]
       say "| %5.5s | %10.10s | %40.40s |" % [ide.to_s, infos[ide][:name], infos[ide][:desc]]
     end

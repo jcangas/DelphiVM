@@ -22,7 +22,7 @@ class Delphivm
       Delphivm.shell.say(*args)
     end
   end
-    
+
   include Configurable
 
   ROOT = ::Pathname.getwd
@@ -36,8 +36,8 @@ class Delphivm
   PATH_TO_VENDOR_CACHE = Pathname($0).dirname + 'dvm-cache'
   PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
   DVM_IMPORTS_FILE = ROOT + 'imports.dvm'
-  DELPHIVM_DEFAULTS = 
-    {known_ides: 
+  DELPHIVM_DEFAULTS =
+    {known_ides:
       {
         'D100' => {regkey: 'Software\Borland\BDS\4.0', name: '2006', desc: 'Borland Developer Stuido 4.0'},
         'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE', desc: 'Embarcadero RAD Stuido XE', msbuild_args: "/nologo /consoleloggerparameters:v=quiet"},
@@ -45,6 +45,8 @@ class Delphivm
         'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'},
         'D180' => {regkey: 'Software\Embarcadero\BDS\11.0', name: 'XE4', desc: 'Embarcadero RAD Stuido XE4'},
         'D190' => {regkey: 'Software\Embarcadero\BDS\12.0', name: 'XE5', desc: 'Embarcadero RAD Stuido XE5'},
+        'D200' => {regkey: 'Software\Embarcadero\BDS\14.0', name: 'XE6', desc: 'Embarcadero RAD Stuido XE6'},
+        'D210' => {regkey: 'Software\Embarcadero\BDS\15.0', name: 'XE7', desc: 'Embarcadero RAD Stuido XE7'},
       },
       msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
     }
@@ -63,7 +65,7 @@ private
     @app_module.VERSION.file_name = ROOT + 'VERSION.pas'
     @app_module.VERSION.load
     @app_module.freeze
-  end  
+  end
 
   def self.app_module
     return @app_module if defined?(@app_module) && @app_module
@@ -78,11 +80,11 @@ private
   end
 public
   APPMODULE = self.app_module
-  self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE)
+  self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE, create: true)
   APP_ID = "#{::Delphivm::APPMODULE}-#{::Delphivm::APPMODULE.VERSION.tag}"
-  
+
   def self.get_project_cfg
-    unless @dvm_project_cfg ||= nil 
+    unless @dvm_project_cfg ||= nil
       @dvm_project_cfg = Configuration.new
       @dvm_project_cfg.load(DVM_PRJ_CFG) if File.exists?(DVM_PRJ_CFG)
     end
@@ -98,12 +100,12 @@ class DvmTask < Delphivm
 
   def self.inherited(klass)
 	   klass.source_root(ROOT)
-     klass.publish
+     klass.publish unless klass == BuildTarget
   end
-  
+
 protected
   class << self
-    
+
     def configuration
       Delphivm.get_project_cfg.tasks do |tasks|
         tasks.send(self.namespace+'!', Configuration.new)
@@ -112,10 +114,10 @@ protected
     end
 
     def configure
-      if block_given? 
+      if block_given?
         yield(self.configuration)
       else
-        self.configuration 
+        self.configuration
       end
     end
 
@@ -129,7 +131,7 @@ protected
       end
     end
   end
-  
+
 
   def invocation
     _shared_configuration[:invocations][self.class].last
@@ -148,11 +150,11 @@ protected
     say self.class.configuration.to_h
     if options[:write]
       Delphivm.get_project_cfg.save(DVM_PRJ_CFG)
-      say_status "writed!!"
+      say_status "writed!!", "file #{DVM_PRJ_CFG}"
     end
   end
 
 end
 
-# Runner must be loaded after Delphivm setup, i.e., after Thor is hacked 
+# Runner must be loaded after Delphivm setup, i.e., after Thor is hacked
 require 'delphivm/runner'
