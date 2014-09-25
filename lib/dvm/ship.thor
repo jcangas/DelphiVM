@@ -8,7 +8,7 @@ class Ship < DvmTask
 		cfg.ship_groups!  %w(binary libs hpp source_resources source documentation samples test)
 		cfg.publish_to! false
 	end
-	
+
 	desc "clean IDE", "remove ship file(s) #{APP_ID}-IDE.zip"
 	def clean
 		ides_in_prj.each do |idever|
@@ -36,7 +36,7 @@ protected
 	def get_zip_name(idever)
 		ROOT + 'ship' + "#{APP_ID}-#{idever}.zip"
 	end
-	
+
 	def ides_in_prj
 		IDEServices.ides_in_prj
 	end
@@ -58,10 +58,10 @@ protected
 		publish(idever)
 	end
 
-	def buil_zip(idever)	
+	def buil_zip(idever)
 		zip_fname = get_zip_name(idever)
 		empty_directory zip_fname.dirname
-	
+
 		groups = [
 			ShipGroup.new(:binary, 'out/' + idever, '*/*/bin/**{.*,}/*.*'),
 			ShipGroup.new(:libs, 'out/' + idever, '*/*/lib/**{.*,}/*.*'),
@@ -87,11 +87,11 @@ protected
 		}
 
 		ignore_files = ['*.local', '*.~*', '*.identcache']
-		say_status(:create, zip_fname.relative_path_from(ROOT))	
-		
-		valid_groups = options[:groups]
+		say_status(:create, zip_fname.relative_path_from(ROOT))
 
-		Zip::ZipFile.open(zip_fname, Zip::ZipFile::CREATE) do |zipfile|
+		valid_groups = options[:groups]
+		ziped_files = []
+		Zip::File.open(zip_fname, Zip::File::CREATE) do |zipfile|
 			title = ''
 			groups.each do |group|
 				next unless valid_groups.include?(group.name.to_s)
@@ -99,12 +99,12 @@ protected
 					title = new_title
 					say_status("add", "#{title} files", :yellow)
 				end
-		
 				group.each do |file, origin_path|
 					next if ignore_files.any?{|pattern| file.fnmatch?(pattern)}
 					ship_dest[group.name].each do |dest|
 						zip_entry = dest + file
-						zipfile.get_output_stream(zip_entry) { |f| f.write origin_path.binread }
+						zipfile.add(zip_entry, origin_path) unless ziped_files.include?(zip_entry)
+						ziped_files << zip_entry
 					end
 				end
 			end
@@ -113,7 +113,7 @@ protected
 
 	def do_build(idever)
 		do_clean(idever)
-		do_make(idever)		
+		do_make(idever)
 	end
 
 end

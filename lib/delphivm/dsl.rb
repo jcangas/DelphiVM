@@ -3,13 +3,18 @@ class Delphivm
   module DSL
     def self.run_imports_dvm_script(path_to_file)
       puts path_to_file
-      ImportScript.new(File.read(path_to_file), path_to_file)
+      script = ImportScript.new(File.read(path_to_file), path_to_file)
+      script.imports.each do |imp|
+        imp.send :proccess
+      end
     end
 
     class ImportScript < Object
       attr :idever
+      attr :imports
 
-      def initialize(script, path_to_file)
+      def initialize(script="", path_to_file = __FILE__)
+        @imports = []
         #eval(script, binding, path_to_file, 1) # aparentemente no va
         eval(script)
       end
@@ -24,55 +29,67 @@ class Delphivm
       end
 
       def import(libname, libver, options={}, &block)
-        Importer.new(self, libname, libver, options, &block)
-      end      
+        @imports << Importer.new(self, libname, libver, options, &block)
+      end
     end
 
     class Importer
+      attr :source
       attr :idever
       attr :configs
+      attr :libname
+      attr :libver
 
       def initialize(script, libname, libver, options={}, &block)
-        source_uri = script.source
+        @source = script.source
         @idever = script.idever
+        @libname = libname
+        @libver = libver
         @configs = options[:config]
         @configs ||= ''
         @configs = ['Release', 'Debug'] if configs == '*'
         @configs = [configs] unless configs.is_a?Array
-
-        configs.each do |config|
-          cfg_segment = config.strip
-          cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
-          lib_file = "#{libname}-#{libver}-#{idever}#{cfg_segment}.zip"
-          result = download(source_uri, PATH_TO_VENDOR_CACHE, lib_file)
-          path_to_lib = PATH_TO_VENDOR_CACHE + lib_file
-          unzip(path_to_lib, PATH_TO_VENDOR_IMPORTS + idever) if result        
-        end
-        instance_eval(&block) if block
+        @block = block
       end
 
       private
 
+      def proccess
+        block = @block
+        configs.each do |config|
+          cfg_segment = config.strip
+          cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
+          lib_file = "#{libname}-#{libver}-#{idever}#{cfg_segment}.zip"
+          result = download(source, PATH_TO_VENDOR_CACHE, lib_file)
+          path_to_lib = PATH_TO_VENDOR_CACHE + lib_file
+          unzip(path_to_lib, PATH_TO_VENDOR_IMPORTS + idever) if result
+        end
+        instance_eval(&block) if block
+      end
+
       def ide_install(*packages)
-        ide_prj = IDEServices.new(idever)
         options = packages.pop if packages.last.is_a? Hash
         options ||= {}
 
         prefer_config = options[:config]
-        packages.each do |pkg| 
-          # la trayectoria debe terminar en \idever\platform\config
-          avaiable_files = Pathname.glob(PATH_TO_VENDOR_IMPORTS + idever + '**' + pkg).inject({}) do |mapped, p| 
+        packages.each do |pkg|
+          # El paquete para el IDE debe estar compilado para Win32
+          avaiable_files = Pathname.glob(PATH_TO_VENDOR_IMPORTS + idever + 'Win32' + '*' + 'bin' + pkg).inject({}) do |mapped, p|
             mapped[p.dirname.parent.basename.to_s] = p
             mapped
           end
           avaible_configs = avaiable_files.keys
           use_config = (avaible_configs.include?(prefer_config) ? prefer_config : avaible_configs.first)
           pkg = avaiable_files[use_config]
-          if pkg
-            puts "register IDE library #{pkg.basename} with config: #{use_config}"
-            puts %x(reg add "#{ide_prj.pkg_regkey}" /v "#{pkg.win}" /d "#{ide_prj.prj_slug}" /f)
-          end
+          register(idever, pkg) if pkg
         end
+      end
+
+      def register(idever, pkg)
+        return if pkg
+        ide_prj = IDEServices.new(idever)
+        puts "register IDE library #{pkg.win}"
+        puts %x(reg add "#{ide_prj.pkg_regkey}" /v "#{pkg.win}" /d "#{ide_prj.prj_slug}" /f)
       end
 
       def download(source_uri, dowonlad_root_path, file_name)
@@ -80,7 +97,7 @@ class Delphivm
         to_here = dowonlad_root_path + file_name
         pb = nil
         puts "\nDownloading: #{full_url}"
-        start = lambda do |length, hint=''| 
+        start = lambda do |length, hint=''|
           pb = ProgressBar.create(:title => "#{hint}", :format => "%t %E %w");
         end
 
@@ -91,7 +108,7 @@ class Delphivm
         else
           begin
             content = open(full_url, "rb", content_length_proc: start, progress_proc: progress).read
-            File.open(to_here, "wb") do |wfile| 
+            File.open(to_here, "wb") do |wfile|
               wfile.write(content)
             end
           rescue Exception => e
@@ -106,7 +123,7 @@ class Delphivm
       end
 
       def unzip(file, destination)
-        Zip::ZipFile.open(file) do |zip_file|
+        Zip::File.open(file) do |zip_file|
           pb = ProgressBar.create(:total =>  zip_file.size, :format => "extracting %c/%C %B %t")
           zip_file.each do |f|
             f_path = destination + f.name
@@ -114,7 +131,7 @@ class Delphivm
             f_path.dirname.mkpath
             pb.title = "#{f_path.basename}"
             Pathname(f_path).delete if File.exist?(f_path)
-            zip_file.extract(f, f_path) 
+            zip_file.extract(f, f_path)
           end
           pb.finish
         end

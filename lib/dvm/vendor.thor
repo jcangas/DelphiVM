@@ -1,7 +1,7 @@
 ﻿# encoding: UTF-8
 class Vendor < DvmTask
   include Thor::Actions
-  
+
   desc "init", "create and initialize vendor directory"
   def init
     vendor_path = PATH_TO_VENDOR
@@ -30,7 +30,7 @@ end
 
 # or if we don't need ide install
 
-import "TurboPower", "7.0.0" 
+import "TurboPower", "7.0.0"
 
 
 
@@ -39,14 +39,13 @@ import "TurboPower", "7.0.0"
 EOS
     end
   end
-  
+
   desc "import", "download and install vendor imports"
   method_option :clean,  type: :boolean, aliases: '-c', default: false, desc: "clean cache first"
   def import
     clean_vendor(options) if options.clean?
     prepare
     silence_warnings{DSL.run_imports_dvm_script(DVM_IMPORTS_FILE)}
-    deploy_vendor if options.deploy?
   end
 
   desc "clean", "Clean imports. Use -c (--cache) to also clean downloads cache"
@@ -66,5 +65,5 @@ private
   def prepare
     empty_directory PATH_TO_VENDOR_CACHE
     empty_directory PATH_TO_VENDOR_IMPORTS
-  end	
+  end
 end

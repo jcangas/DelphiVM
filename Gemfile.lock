@@ -1,14 +1,14 @@
 PATH
   remote: .
   specs:
-    delphivm (1.1.0)
+    delphivm (2.0.1)
       bundler
       dnote
       json
       mini_portile
       nokogiri
       ruby-progressbar
-      rubyzip
+      rubyzip (>= 1.0.0)
       thor
       version_info
 
@@ -17,19 +17,26 @@ GEM
   specs:
     dnote (1.7.1)
     json (1.8.1)
-    mini_portile (0.5.2)
-    nokogiri (1.6.1-x86-mingw32)
-      mini_portile (~> 0.5.0)
+    mini_portile (0.6.0)
+    minitest (5.4.1)
+    minitest-rg (5.1.0)
+      minitest (~> 5.0)
+    nokogiri (1.6.3.1)
+      mini_portile (= 0.6.0)
+    nokogiri (1.6.3.1-x86-mingw32)
+      mini_portile (= 0.6.0)
     rake (10.1.0)
-    ruby-progressbar (1.4.1)
-    rubyzip (1.1.0)
-    thor (0.18.1)
+    ruby-progressbar (1.6.0)
+    rubyzip (1.1.6)
+    thor (0.19.1)
     version_info (1.9.0)
 
 PLATFORMS
+  ruby
   x86-mingw32
 
 DEPENDENCIES
   delphivm!
-  dnote
+  minitest
+  minitest-rg
   rake

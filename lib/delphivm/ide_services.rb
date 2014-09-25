@@ -94,7 +94,7 @@ class Delphivm
 		end
 
 		def set_env
-		 	p ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever,false)
+		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever,false)
 
 		 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
 		 	ENV["IDEVERSION"] = idever.to_s
