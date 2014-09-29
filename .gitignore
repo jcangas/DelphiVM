@@ -1,1 +1,6 @@
 /_site
+out
+pkg
+Thumbs.db
+vendor
+bin/dvm-cache

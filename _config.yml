@@ -1,0 +1,21 @@
+# Build settings
+
+markdown: kramdown
+#markdown: redcarpet
+permalink:        pretty
+highlighter:      pygments
+
+# Setup
+title:            DelphiVM
+tagline:          'Delphi version manager'
+description:      'Manage multi-IDE & multi-pltaform delphi projects. Automate many common task and isolate your IDE setup ina a per-project basis'
+url:              http://localhost
+baseurl:          '/'
+paginate:         5
+
+author:
+  name:           'Jorge L. Cangas'
+  url:            https://twitter.com/jcangas
+
+# Custom vars
+version:          0.0.1

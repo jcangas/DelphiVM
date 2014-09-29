@@ -1,0 +1,8 @@
+---
+layout: post
+title: "Annunce v2.0.2pre"
+date: "2014-09-25"
+---
+
+We are proud to announce a new release of Delphivm.
+This is a minor bug fixing release.
