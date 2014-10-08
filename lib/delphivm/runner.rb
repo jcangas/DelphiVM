@@ -2,10 +2,10 @@
 require 'mini_portile' # force OCRA sees it !!
 
 require 'nokogiri'
-require 'zip/zip'
+require 'zip'
 
-require 'open3'
 require 'win32/registry.rb'
+require 'open3'
 require 'open-uri'
 require 'net/http'
 require 'ruby-progressbar'
@@ -17,7 +17,7 @@ require 'delphivm/dsl'
 
 require 'thor/runner'
 
-class Delphivm	
+class Delphivm
 	module Util #:nodoc:
 	    # redefine Thor to search tasks only for this app
 		def self.globs_for(path)
@@ -33,7 +33,7 @@ class Delphivm
 
 		def self.banner(task, all = false, subcommand = false)
 			"#{Delphivm::EXE_NAME} " + task.formatted_usage(self, all, subcommand)
-		end    
+		end
 
 		desc "version", "Show #{Delphivm::EXE_NAME} version"
 		def version

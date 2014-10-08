@@ -1,4 +1,5 @@
 ﻿# -*- encoding: utf-8 -*-
+
 $:.push File.expand_path("../lib", __FILE__)
 require "version_info"
 require "delphivm/version"
@@ -19,16 +20,20 @@ Gem::Specification.new do |s|
 	s.test_files    = `git ls-files -- {test, spec, features}/*`.split("\n")
 	s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
 	s.require_paths = ["lib","templates"]
-	
-	s.add_dependency "thor"  
-	s.add_dependency "version_info"  
-	s.add_dependency "dnote"  
-	s.add_dependency "json"  
-	s.add_dependency "nokogiri"  
-	s.add_dependency "mini_portile"  
-	s.add_dependency "ruby-progressbar"  
-	s.add_dependency "rubyzip"  
-	s.add_dependency "bundler"  
-	s.add_development_dependency "dnote"
-	s.add_development_dependency "rake"  
+
+	s.add_runtime_dependency "thor"
+	s.add_runtime_dependency "version_info"
+	s.add_runtime_dependency "dnote"
+	s.add_runtime_dependency "json"
+	s.add_runtime_dependency "nokogiri", '>=1.6.3.1'
+	s.add_runtime_dependency "psych"
+	s.add_runtime_dependency "mini_portile"
+	s.add_runtime_dependency "ruby-progressbar"
+	s.add_runtime_dependency "rubyzip", '>=1.0.0'
+	s.add_runtime_dependency "bundler"
+
+	s.add_development_dependency "rake"
+	s.add_development_dependency "minitest"
+	s.add_development_dependency "minitest-rg"
+	s.add_development_dependency "ocra"
 end

@@ -1,9 +1,10 @@
 
 /out
-*.zip
+dvm-cache/
 /vendor/cache
 /vendor/imports
 _site
+*.zip
 .DS_Store
 Thumbs.db
 pkg

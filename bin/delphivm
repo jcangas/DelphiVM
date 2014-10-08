@@ -7,7 +7,7 @@ begin
   end
 
   $0 =  ENV["OCRA_EXECUTABLE"] || __FILE__
-  if defined? Ocra 
+  if defined? Ocra
     ARGV << 'vendor:import' << '-c' #to see all requires when compiling
   end
 

@@ -1,10 +1,6 @@
 
 source 'http://home.jcangas.info/ship'
 
-uses 'D150' do
-  import "SummerFW4D", "0.4.6", config: '*'
-end
-
-uses 'D160' do
-  import "SummerFW4D", "0.4.6", config: '*'
+uses 'D200' do
+  import "SummerFW4D", "0.8.5"
 end
