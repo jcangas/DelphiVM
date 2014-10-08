@@ -18,8 +18,8 @@ protected
 	def deploy_files(idetag, cfg)
 
         options = {
-        	idetag: idetag, 
-            ide_root_path:  IDEServices.new(idetag).ide_root_path, 
+        	idetag: idetag,
+            ide_root_path:  IDEServices.new(idetag).ide_root_path,
             import_path: vendor_imports_path + idetag,
             out_path: out_path + idetag
          }
@@ -36,9 +36,9 @@ protected
 
 	def deploy_environment(idetag, cfg)
 		say "deploying  environment"
-		self.src_RunEnviroment_path.glob('*') do |source|
+		self.src_RunEnvironment_path.glob('*') do |source|
 			environment_target_path.each do |destination|
-				deploy_product(source, destination + source.relative_path_from(src_RunEnviroment_path))
+				deploy_product(source, destination + source.relative_path_from(src_RunEnvironment_path))
 			end
 		end
 	end
@@ -49,7 +49,7 @@ protected
 		    	get(source.to_s, product, force: true) if source.file?
 		    	directory(source, product) if source.directory?
 		    end
-		end		
+		end
 	end
 
 	def environment_target_path

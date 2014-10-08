@@ -1,4 +1,5 @@
 ﻿# -*- encoding: utf-8 -*-
+
 $:.push File.expand_path("../lib", __FILE__)
 require "version_info"
 require "delphivm/version"
@@ -33,4 +34,5 @@ Gem::Specification.new do |s|
 	s.add_development_dependency "rake"
 	s.add_development_dependency "minitest"
 	s.add_development_dependency "minitest-rg"
+	s.add_development_dependency "ocra"
 end
