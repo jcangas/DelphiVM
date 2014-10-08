@@ -1,3 +1,4 @@
+require 'thread'
 require 'fiddle'
 require 'fiddle/import'
 require 'win32ole'
@@ -25,6 +26,34 @@ module WinServices
 		run_as('reg', %Q{add "HKLM\\#{keyname}" /v PATH /d "#{path}" /f} )
 		User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, 0)
 		path
+	end
+
+	def self.reg_add(key: nil, value: nil, data: nil, **opts)
+		args = []
+		raise "key arg is nil for reg add" unless key
+		args << %Q("#{key}")
+		args << (value ? %Q(/v "#{value}") : "/ve")
+		args << (data ? %Q(/d "#{data}") : nil)
+		args << (opts[:force] ? "/f" : nil)
+		args.compact!
+		self.run_as('reg', %Q(add #{args.join(' ')}))
+	end
+
+	def self.reg_copy(source: nil, dest: nil, **opts)
+		raise "source key arg is nil for reg copy" unless source
+		raise "dest key arg is nil for reg copy" unless dest
+		args = []
+		args << %Q("#{source}")
+		args << %Q("#{dest}")
+		args << (opts[:recurse] ? "/s" : nil)
+		args << (opts[:force] ? "/f" : nil)
+		args.compact!
+		self.run_as('reg', %Q(copy #{args.join(' ')}))
+		%Q(reg copy #{args.join(' ')})
+	end
+
+	def self.system(cmd)
+		%x(cmd)
 	end
 
 	def self.winshell(options = {})

@@ -25,7 +25,8 @@ Gem::Specification.new do |s|
 	s.add_runtime_dependency "version_info"
 	s.add_runtime_dependency "dnote"
 	s.add_runtime_dependency "json"
-	s.add_runtime_dependency "nokogiri"
+	s.add_runtime_dependency "nokogiri", '>=1.6.3.1'
+	s.add_runtime_dependency "psych"
 	s.add_runtime_dependency "mini_portile"
 	s.add_runtime_dependency "ruby-progressbar"
 	s.add_runtime_dependency "rubyzip", '>=1.0.0'

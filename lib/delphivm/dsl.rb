@@ -86,10 +86,9 @@ class Delphivm
       end
 
       def register(idever, pkg)
-        return if pkg
         ide_prj = IDEServices.new(idever)
         puts "register IDE library #{pkg.win}"
-        puts %x(reg add "#{ide_prj.pkg_regkey}" /v "#{pkg.win}" /d "#{ide_prj.prj_slug}" /f)
+        WinServices.reg_add(key: ide_prj.pkg_regkey, value: pkg.win, data: ide_prj.prj_slug, force: true)
       end
 
       def download(source_uri, dowonlad_root_path, file_name)
