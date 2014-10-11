@@ -33,9 +33,12 @@ class Delphivm
   DVM_PRJ_CFG = ROOT + DEFAULT_CFG_FILE.basename
 
   DVM_IMPORTS_FILE = ROOT + 'imports.dvm'
-  PATH_TO_VENDOR_CACHE = Pathname($0).dirname + 'dvm-cache'
+
+  DVM_ROOT = Pathname($0).dirname
+  PATH_TO_VENDOR_CACHE = DVM_ROOT + 'dvm-cache'
+  PATH_TO_VENDOR_IMPORTS = DVM_ROOT + 'dvm-imports'
+  #PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
   PATH_TO_VENDOR = ROOT + 'vendor'
-  PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
   DELPHIVM_DEFAULTS =
     {known_ides:
       {
@@ -50,10 +53,6 @@ class Delphivm
       },
       msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
     }
-
-  def self.shell
-    @shell ||= Thor::Base.shell.new
-  end
 
 private
   def self.create_app_module

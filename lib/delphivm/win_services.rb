@@ -16,7 +16,7 @@ module WinServices
 	WM_SETTINGCHANGE = 0x001A
 	SMTO_ABORTIFHUNG = 2
 
-	def self.run_as(program, args, initial_dir=nil)
+	def self.run_as(program, args, initial_dir=Dir.pwd)
 		shell = WIN32OLE.new('Shell.Application')
 		# shell.ShellExecute(program, args, initial_dir, operation, show)
 		shell.ShellExecute(program, args, initial_dir, 'runas', 0)
@@ -26,6 +26,19 @@ module WinServices
 		run_as('reg', %Q{add "HKLM\\#{keyname}" /v PATH /d "#{path}" /f} )
 		User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, 0)
 		path
+	end
+
+	def self.mklink(link: nil, target: nil, **opts)
+		raise "link arg is nil for mklink" unless link
+		raise "target arg is nil for mklink" unless target
+		args = []
+		args << %Q("#{link}")
+		args << %Q("#{target}")
+		run_as('cmd', %Q(/c "mklink #{args.join(' ')}"))
+	end
+
+	def self.elevated?
+		winshell(cmd: %Q(reg query "HKU\\S-1-5-19"), out_filter: lambda{|x|}, err_filter: lambda{|x|} ).success?
 	end
 
 	def self.reg_add(key: nil, value: nil, data: nil, **opts)
@@ -57,34 +70,34 @@ module WinServices
 	end
 
 	def self.winshell(options = {})
-		acmd = options[:cmd] || 'cmd /k'
+		acmd = options[:cmd] || 'cmd /c'
 		out_filter = options[:out_filter] || ->(line){true}
 		err_filter = options[:err_filter] || ->(line){true}
 
-		Open3.popen3(acmd) do |i, o, e, t|
-			err_t = Thread.new(e) do |stm|
+		Open3.popen3(acmd) do |stdin, stdout, stderr, wait_thr|
+			err_t = Thread.new(stderr) do |stm|
 				while (line = stm.gets)
 					say "STDERR: #{line}" if err_filter.call(line)
 				end
 			end
 
-			out_t = Thread.new(o) do |stm|
+			out_t = Thread.new(stdout) do |stm|
 				while (line = stm.gets)
 					say "#{line}" if out_filter.call(line)
 				end
 			end
 
 			begin
-				yield i if block_given?
-				i.close
+				yield stdin if block_given?
+				stdin.close
 				err_t.join
 				out_t.join
-				o.close
-				e.close
+				stdout.close
+				stderr.close
 			rescue Exception => excep
 				say excep
 			end
-			t.value
+			wait_thr.value
 		end
 	end
 end

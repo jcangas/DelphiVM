@@ -1,9 +1,9 @@
 
 class Delphivm
   module DSL
-    def self.run_imports_dvm_script(path_to_file)
+    def self.run_imports_dvm_script(path_to_file, options = {})
       puts path_to_file
-      script = ImportScript.new(File.read(path_to_file), path_to_file)
+      script = ImportScript.new(File.read(path_to_file), path_to_file, options)
       script.imports.each do |imp|
         imp.send :proccess
       end
@@ -12,9 +12,11 @@ class Delphivm
     class ImportScript < Object
       attr :idever
       attr :imports
+      attr :options
 
-      def initialize(script="", path_to_file = __FILE__)
+      def initialize(script="", path_to_file = __FILE__, options={})
         @imports = []
+        @options = options
         #eval(script, binding, path_to_file, 1) # aparentemente no va
         eval(script)
       end
@@ -28,8 +30,8 @@ class Delphivm
         instance_eval(&block) if block
       end
 
-      def import(libname, libver, options={}, &block)
-        @imports << Importer.new(self, libname, libver, options, &block)
+      def import(libname, libver, liboptions={}, &block)
+        @imports << Importer.new(self, libname, libver, liboptions, &block)
       end
     end
 
@@ -40,12 +42,13 @@ class Delphivm
       attr :libname
       attr :libver
 
-      def initialize(script, libname, libver, options={}, &block)
+      def initialize(script, libname, libver, liboptions={}, &block)
+        @script = script
         @source = script.source
         @idever = script.idever
         @libname = libname
         @libver = libver
-        @configs = options[:config]
+        @configs = liboptions[:config]
         @configs ||= ''
         @configs = ['Release', 'Debug'] if configs == '*'
         @configs = [configs] unless configs.is_a?Array
@@ -121,16 +124,27 @@ class Delphivm
           pb.finish if pb
       end
 
+      def install_vendor(link, target)
+        link.dirname.mkpath
+        if @script.options.sym?
+          WinServices.mklink(link: link.win, target: target.win)
+        else
+          FileUtils.cp(target, link)
+        end
+      end
+
       def unzip(file, destination)
         Zip::File.open(file) do |zip_file|
-          pb = ProgressBar.create(:total =>  zip_file.size, :format => "extracting %c/%C %B %t")
+          pb = ProgressBar.create(:total =>  zip_file.size, :format => "%J%% %E %B")
           zip_file.each do |f|
             f_path = destination + f.name
-            next if Pathname(f_path).directory?
+            next if f_path.directory?
             f_path.dirname.mkpath
-            pb.title = "#{f_path.basename}"
-            Pathname(f_path).delete if File.exist?(f_path)
+            pb.title =( "%30s" % "#{f_path.basename}")
+            pb.increment
+            f_path.delete if File.exist?(f_path)
             zip_file.extract(f, f_path)
+            install_vendor(PATH_TO_VENDOR + 'imports' + idever + f.name, f_path) if Pathname(f.name).fnmatch?('*/*/{bin,lib}/*', File::FNM_EXTGLOB)
           end
           pb.finish
         end
