@@ -6,7 +6,7 @@ class Ship
 		def initialize(name, origin, filter= '**{.*,}/*.*', relative= true)
 			super()
 			@name = name
-			@origin = Delphivm::ROOT + origin
+			@origin = Delphivm::PRJ_ROOT + origin
 			@filter = filter
 			@relative = relative
 		end

@@ -10,7 +10,7 @@ class Ide < DvmTask
   desc "start IDE-TAG  ", "start IDE with IDE-TAG"
   def start(idever=nil)
     idever ||= IDEServices.default_ide
-    ide = IDEServices.new(idever, ROOT)
+    ide = IDEServices.new(idever, PRJ_ROOT)
     ide.start
   end
 

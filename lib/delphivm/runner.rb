@@ -21,7 +21,7 @@ class Delphivm
 	module Util #:nodoc:
 	    # redefine Thor to search tasks only for this app
 		def self.globs_for(path)
-	  		["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::ROOT}/dvm/**/*.thor"]
+	  		["#{GEM_ROOT}/lib/dvm/**/*.thor", "#{Delphivm::PRJ_ROOT}/dvm/**/*.thor"]
 		end
 	end
 

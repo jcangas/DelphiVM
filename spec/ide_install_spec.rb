@@ -43,7 +43,7 @@ describe "Importer" do
         platform = 'Win32'
         config = 'Debug'
         assert_equal 'D200', idever
-        assert_equal Delphivm::PATH_TO_VENDOR_IMPORTS + idever + platform + config + 'bin' +  'SummerFW.Utils190.bpl', pkg
+        assert_equal Delphivm::DVM_IMPORTS + idever + platform + config + 'bin' +  'SummerFW.Utils190.bpl', pkg
         nil
       end
       importer = script.imports.first

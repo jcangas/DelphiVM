@@ -17,9 +17,9 @@ module WinServices
 	SMTO_ABORTIFHUNG = 2
 
 	def self.run_as(program, args, initial_dir=Dir.pwd)
-		shell = WIN32OLE.new('Shell.Application')
+		@shell ||= WIN32OLE.new('Shell.Application')
 		# shell.ShellExecute(program, args, initial_dir, operation, show)
-		shell.ShellExecute(program, args, initial_dir, 'runas', 0)
+		@shell.ShellExecute(program, args, initial_dir, 'runas', 0)
 	end
 
 	def self.winpath=(path)
@@ -70,7 +70,7 @@ module WinServices
 	end
 
 	def self.winshell(options = {})
-		acmd = options[:cmd] || 'cmd /c'
+		acmd = options[:cmd] || 'cmd /k'
 		out_filter = options[:out_filter] || ->(line){true}
 		err_filter = options[:err_filter] || ->(line){true}
 

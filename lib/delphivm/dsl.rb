@@ -57,71 +57,61 @@ class Delphivm
 
       private
 
-      def proccess
-        block = @block
-        configs.each do |config|
-          cfg_segment = config.strip
-          cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
-          lib_file = "#{libname}-#{libver}-#{idever}#{cfg_segment}.zip"
-          result = download(source, PATH_TO_VENDOR_CACHE, lib_file)
-          path_to_lib = PATH_TO_VENDOR_CACHE + lib_file
-          unzip(path_to_lib, PATH_TO_VENDOR_IMPORTS + idever) if result
-        end
-        instance_eval(&block) if block
-      end
-
       def ide_install(*packages)
         options = packages.pop if packages.last.is_a? Hash
         options ||= {}
 
-        prefer_config = options[:config]
+        prefer_config = options[:config] || 'Release'
         packages.each do |pkg|
           # El paquete para el IDE debe estar compilado para Win32
-          avaiable_files = Pathname.glob(PATH_TO_VENDOR_IMPORTS + idever + 'Win32' + '*' + 'bin' + pkg).inject({}) do |mapped, p|
+          search_pattern = (DVM_IMPORTS + idever + 'Win32' + '*' + 'bin' + pkg)
+          avaiable_files = search_pattern.glob.inject({}) do |mapped, p|
             mapped[p.dirname.parent.basename.to_s] = p
             mapped
           end
           avaible_configs = avaiable_files.keys
           use_config = (avaible_configs.include?(prefer_config) ? prefer_config : avaible_configs.first)
           pkg = avaiable_files[use_config]
-          register(idever, pkg) if pkg
-        end
-      end
-
-      def register(idever, pkg)
-        ide_prj = IDEServices.new(idever)
-        puts "register IDE library #{pkg.win}"
-        WinServices.reg_add(key: ide_prj.pkg_regkey, value: pkg.win, data: ide_prj.prj_slug, force: true)
-      end
-
-      def download(source_uri, dowonlad_root_path, file_name)
-        full_url = Pathname(source_uri) + file_name
-        to_here = dowonlad_root_path + file_name
-        pb = nil
-        puts "\nDownloading: #{full_url}"
-        start = lambda do |length, hint=''|
-          pb = ProgressBar.create(:title => "#{hint}", :format => "%t %E %w");
-        end
-
-        progress = lambda {|s| pb.progress = s; pb.refresh}
-
-        if Pathname(to_here).exist?
-          start.call(0, "(cached) ")
-        else
-          begin
-            content = open(full_url, "rb", content_length_proc: start, progress_proc: progress).read
-            File.open(to_here, "wb") do |wfile|
-              wfile.write(content)
-            end
-          rescue Exception => e
-            puts e
-            Pathname(to_here).delete if File.exist?(to_here)
-            return false
+          if pkg
+            register(idever, pkg)
+            puts "IDE library #{pkg.basename} (#{use_config}) installed"
           end
         end
-        return true
-      ensure
-          pb.finish if pb
+      end
+
+      def proccess
+        block = @block
+        configs.each do |config|
+          cfg_segment = config.strip
+          cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
+          lib_tag = "#{libname}-#{libver}"
+          lib_file = "#{lib_tag}-#{idever}#{cfg_segment}.zip"
+          vendor_files = []
+          destination = DVM_IMPORTS + idever
+
+          exist = (cfg_segment.empty? ? (destination + lib_tag).exist? : (destination + lib_tag + cfg_segment).exist?)
+          puts "\n#{exist ? '(exist) ':''}Importing #{lib_file} to #{destination.win}"
+          unless exist
+            if zip_file = download(source, lib_file)
+              unzip(zip_file, destination) do |file|
+                vendor_files << file if install_in_vendor?(file)
+              end
+            end
+          end
+          # DON'T vendorize: prj can use $(DVM_IMPORTS)\$(idetag)... etc
+          #vendorize(vendor_files)
+        end
+        instance_eval(&block) if block
+      end
+
+      def vendorize(files)
+        puts "Vendorize in #{PRJ_IMPORTS.relative_path_from(PRJ_ROOT).win}"
+        pb = ProgressBar.create(:total =>  files.size, :format => "%J%% %E %B")
+        files.each do |file|
+          install_vendor(PRJ_IMPORTS + file.relative_path_from(DVM_IMPORTS), file)
+          pb.increment
+        end
+        pb.finish
       end
 
       def install_vendor(link, target)
@@ -133,21 +123,52 @@ class Delphivm
         end
       end
 
-      def unzip(file, destination)
-        Zip::File.open(file) do |zip_file|
-          pb = ProgressBar.create(:total =>  zip_file.size, :format => "%J%% %E %B")
-          zip_file.each do |f|
-            f_path = destination + f.name
-            next if f_path.directory?
-            f_path.dirname.mkpath
-            pb.title =( "%30s" % "#{f_path.basename}")
-            pb.increment
-            f_path.delete if File.exist?(f_path)
-            zip_file.extract(f, f_path)
-            install_vendor(PATH_TO_VENDOR + 'imports' + idever + f.name, f_path) if Pathname(f.name).fnmatch?('*/*/{bin,lib}/*', File::FNM_EXTGLOB)
-          end
-          pb.finish
+      def install_in_vendor?(fname)
+        fname.fnmatch?('*/*/{bin,lib}/*', File::FNM_EXTGLOB + File::FNM_CASEFOLD) &&
+        !fname.fnmatch?('*/{IDEServices.prj_paths[:samples], IDEServices.prj_paths[:test]}/{bin,lib}/*', File::FNM_EXTGLOB + File::FNM_CASEFOLD)
+      end
+
+      def register(idever, pkg)
+        ide_prj = IDEServices.new(idever)
+        WinServices.reg_add(key: ide_prj.pkg_regkey, value: pkg.win, data: ide_prj.prj_slug, force: true)
+      end
+
+      def download(source_uri, file_name)
+        full_url = Pathname(source_uri) + file_name
+        to_here = DVM_TEMP + file_name
+        to_here.delete if to_here.exist?
+        pb = nil
+        start = lambda { |length| pb = ProgressBar.create(total: length, title: '  %9s ->' % 'download', format: "%t %J%% %E %B") }
+        progress = lambda {|s| pb.progress = s; pb.refresh}
+
+        begin
+          start.call(full_url.size)
+          content = open(full_url, "rb", content_length_proc: start, progress_proc: progress).read
+          File.open(to_here, "wb") {|wfile|  wfile.write(content) }
+        rescue Exception => e
+          puts e
+          return nil
         end
+
+        return to_here
+      ensure
+          pb.finish if pb
+      end
+
+      def unzip(file, destination)
+        pb = ProgressBar.create(:total =>  file.size, title: '  %9s ->' % 'install', format: "%t %J%% %E %B")
+        Zip::InputStream.open(file) do |zip_file|
+          while (f = zip_file.get_next_entry)
+            f_path = destination + f.name
+            unless f_path.directory?
+              f_path.dirname.mkpath
+              pb.increment
+              f.extract(f_path) unless f_path.exist?
+              yield f_path if block_given?
+            end
+          end
+        end
+        pb.finish
       end
     end
   end

@@ -5,7 +5,7 @@ class Ship < DvmTask
 	ShipGroup = ::Ship::FileSet #prefix :: allow escape Thor sandbox
 
 	self.configure do |cfg|
-		cfg.ship_groups!  %w(binary libs hpp source_resources source documentation samples test)
+		cfg.ship_groups!  %w(binary libs PRJ_ROOT hpp source_resources source documentation samples test)
 		cfg.publish_to! false
 	end
 
@@ -34,7 +34,7 @@ class Ship < DvmTask
 
 protected
 	def get_zip_name(idever)
-		ROOT + 'ship' + "#{APP_ID}-#{idever}.zip"
+		PRJ_ROOT + 'ship' + "#{APP_ID}-#{idever}.zip"
 	end
 
 	def ides_in_prj
@@ -66,28 +66,29 @@ protected
 			ShipGroup.new(:binary, 'out/' + idever, '*/*/bin/**{.*,}/*.*'),
 			ShipGroup.new(:libs, 'out/' + idever, '*/*/lib/**{.*,}/*.*'),
 			ShipGroup.new(:hpp, 'out/' + idever, '**{.*,}/*.{h,hpp}'),
-			ShipGroup.new(:source_resources, 'src', '**{.*,}/*.{dfm,fmx,res,dcr}', false),
-			ShipGroup.new(:source, 'src'),
-			ShipGroup.new(:source, '.', '*.*', false),
-			ShipGroup.new(:documentation, 'doc'),
-			ShipGroup.new(:samples, 'samples'),
-			ShipGroup.new(:test, 'test')
+			ShipGroup.new(:source_resources, IDEServices.prj_paths[:src], '**{.*,}/*.{dfm,fmx,res,dcr}', false),
+			ShipGroup.new(:source, IDEServices.prj_paths[:src]),
+			ShipGroup.new(:PRJ_ROOT, '.', '*.*', false),
+			ShipGroup.new(:documentation, IDEServices.prj_paths[:doc]),
+			ShipGroup.new(:samples, IDEServices.prj_paths[:samples]),
+			ShipGroup.new(:test, IDEServices.prj_paths[:test])
 		]
 
-		platform_lib_paths = (ROOT + 'out' + idever + '*/*/lib/').glob.map{|p| p.relative_path_from p.parent.parent.parent}
+		platform_lib_paths = (PRJ_ROOT + 'out' + idever + '*/*/lib/').glob.map{|p| p.relative_path_from p.parent.parent.parent}
 		ship_dest = {
 			binary: [Pathname('.')],
 			libs: [Pathname('.')],
 			hpp: [Pathname('.')],
 			source_resources: platform_lib_paths,
-			source: [Pathname('src') + APP_ID],
-			documentation: [Pathname('doc') + APP_ID],
-			samples: [Pathname('samples') + APP_ID],
-			test: [Pathname('test') + APP_ID]
+			source: [Pathname(APP_ID) + IDEServices.prj_paths[:src]],
+			PRJ_ROOT: [Pathname(APP_ID)],
+			documentation: [APP_ID + IDEServices.prj_paths[:doc]],
+			samples: [Pathname(APP_ID) + IDEServices.prj_paths[:samples]],
+			test: [Pathname(APP_ID) + IDEServices.prj_paths[:test]]
 		}
 
 		ignore_files = ['*.local', '*.~*', '*.identcache']
-		say_status(:create, zip_fname.relative_path_from(ROOT))
+		say_status(:create, zip_fname.relative_path_from(PRJ_ROOT))
 
 		valid_groups = options[:groups]
 		ziped_files = []

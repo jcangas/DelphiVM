@@ -1,5 +1,6 @@
 ﻿#!/usr/bin/env ruby
 $LOAD_PATH.unshift File.join(File.dirname($0), '..', 'lib')
+
 begin
   if ARGV[0] == 'debug'
     ::BACKTRACE = true
@@ -11,7 +12,7 @@ begin
     ARGV << 'vendor:import' << '-c' #to see all requires when compiling
   end
 
-  require 'Delphivm'
+  require 'delphivm'
   $thor_runner = true
 
   Delphivm::Runner.start(ARGV)

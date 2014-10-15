@@ -3,10 +3,10 @@
 
   desc "init", "create and initialize vendor directory"
   def init
-    vendor_path = PATH_TO_VENDOR
+    vendor_path = PRJ_VENDOR
     empty_directory vendor_path
     empty_directory vendor_path + 'imports'
-    create_file(DVM_IMPORTS_FILE, :skip => true) do <<-EOS
+    create_file(PRJ_IMPORTS_FILE, :skip => true) do <<-EOS
 # sample imports file for delphivm
 
 # set source url
@@ -44,8 +44,8 @@ EOS
   def import
     clean_vendor(options) if options.clean?
     prepare
-    say "WARN: ensure your shared folder supports symlinks!!" if options.sym? && PATH_TO_VENDOR.expand_path.mountpoint?
-    silence_warnings{DSL.run_imports_dvm_script(DVM_IMPORTS_FILE, options)}
+    say "WARN: ensure your shared folder supports symlinks!!" if options.sym? && PRJ_IMPORTS.expand_path.mountpoint?
+    silence_warnings{DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options)}
   end
 
   desc "clean", "Clean vendor imports."
@@ -57,10 +57,10 @@ EOS
 private
 
   def clean_vendor(opts)
-    remove_dir(PATH_TO_VENDOR + 'imports')
+    remove_dir(PRJ_IMPORTS)
   end
 
   def prepare
-    empty_directory PATH_TO_VENDOR + 'imports'
+    empty_directory PRJ_IMPORTS
   end
 end
