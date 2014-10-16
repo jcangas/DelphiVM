@@ -42,7 +42,7 @@ EOS
   def import
     clean_vendor(options) if options.clean?
     prepare
-    say "WARN: ensure your shared folder supports symlinks!!" if options.sym? && PRJ_IMPORTS.expand_path.mountpoint?
+    say "WARN: ensure your project folder supports symlinks!!" if options.sym?
     silence_warnings{DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options)}
   end
 

@@ -96,10 +96,10 @@ class Delphivm
           puts "\n#{exist ? '(exist) ':''}Importing #{lib_file} to #{destination.win}"
           unless exist
             if zip_file = download(source, lib_file)
-              unzip(zip_file, destination)
+              unzip(zip_file, destination) unless defined? Ocra
             end
           end
-          vendorize(get_vendor_files)
+          vendorize(get_vendor_files) unless defined? Ocra
         end
         instance_eval(&block) if block
       end
@@ -149,7 +149,7 @@ class Delphivm
         begin
           start.call(full_url.size)
           content = open(full_url, "rb", content_length_proc: start, progress_proc: progress).read
-          File.open(to_here, "wb") {|wfile|  wfile.write(content) }
+          File.open(to_here, "wb") {|wfile|  wfile.write(content) } unless defined? Ocra
         rescue Exception => e
           puts e
           return nil
