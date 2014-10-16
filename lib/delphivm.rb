@@ -25,12 +25,12 @@ class Delphivm
 
   include Configurable
 
-
-  Dir.chdir ENV["OCRA_PWD"] if ENV["OCRA_EXECUTABLE"]
+  # for Innosetup ->
+  Dir.chdir(ENV["DVM_PWD"]) if ENV["DVM_PWD"]
 
   PRJ_ROOT = ::Pathname.getwd
   GEM_ROOT = Pathname(__FILE__).dirname.parent
-  EXE_NAME = File.basename($0, '.rb')
+  EXE_NAME = File.basename($0, '.*')
 
   DVM_DATA = Pathname(ENV["USERPROFILE"].gsub('\\','/')) + EXE_NAME
   DVM_DATA.mkpath
@@ -39,12 +39,13 @@ class Delphivm
   DVM_TEMP.mkpath
 
   DVM_CFG_FILE =  DVM_DATA + 'DelphiVM.cfg'
-  DVM_IMPORTS = DVM_DATA + 'dvm-imports'
+  DVM_IMPORTS = DVM_DATA + 'imports'
   DVM_IMPORTS.mkpath
 
   PRJ_IMPORTS_FILE = PRJ_ROOT + 'imports.dvm'
   PRJ_CFG_FILE = PRJ_ROOT + 'DelphiVM.cfg'
   PRJ_IMPORTS = PRJ_ROOT + 'vendor' + 'imports'
+  PRJ_IMPORTS.mkpath
 
   DELPHIVM_DEFAULTS =
     {known_ides:
@@ -109,8 +110,8 @@ class DvmTask < Delphivm
   include Thor::Actions
 
   def self.inherited(klass)
-	   klass.source_root(PRJ_ROOT)
-     klass.publish unless klass == BuildTarget
+	  klass.source_root(PRJ_ROOT)
+    klass.publish unless klass == BuildTarget
   end
 
 protected
@@ -163,7 +164,6 @@ protected
       say_status "writed!!", "file #{PRJ_CFG_FILE}"
     end
   end
-
 end
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked

@@ -23,19 +23,19 @@ class Delphivm
 		end
 
 		def self.default_ide
-		 	(ides_in_prj.last || ides_in_installed.last).to_s
+		 	@default_ide ||= (ides_in_prj.last || ides_in_installed.last).to_s
 		end
 
 		def self.ides_in_config
-		 	IDEInfos.to_h.keys.sort
+		 	@ides_in_config ||= IDEInfos.to_h.keys.sort
 		end
 
 		def self.ides_in_installed
-			ides_filter(ides_in_config, :installed)
+			@ides_in_installed ||= ides_filter(ides_in_config, :installed)
 		end
 
 		def self.ides_in_prj
-			ides_filter(ides_in_config, :prj)
+			@ides_in_prj ||= ides_filter(ides_in_config, :prj)
 		end
 
 		def self.ides_filter(ides, kind)
@@ -51,7 +51,7 @@ class Delphivm
 		end
 
 		def self.prj_paths_glob
-			"{#{self.prj_paths.values.join(',')}}"
+			@prj_paths_glob ||= "{#{self.prj_paths.values.join(',')}}"
 		end
 
 		def self.ide_in_prj?(ide)
@@ -104,7 +104,6 @@ class Delphivm
 
 		def set_env
 		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
-			ENV["DVM_IMPORTS"] = DVM_IMPORTS
 		 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
 		 	ENV["IDEVERSION"] = idever.to_s
 		end
@@ -128,11 +127,11 @@ class Delphivm
 		end
 
   	def ide_root_path
-    		Pathname(self['RootDir'])
+    	Pathname(self['RootDir'])
   	end
 
 		def vendor_bin_paths
-		    Pathname.glob(DVM_IMPORTS + idever + '**' + 'bin').map{|p| p.win}
+				Pathname.glob(DVM_IMPORTS + idever + 'Win32/{Debug,Release}/bin').map{|p| p.win}
 		end
 
 		def supports_msbuild?

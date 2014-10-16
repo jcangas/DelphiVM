@@ -79,12 +79,15 @@ class Delphivm
         end
       end
 
+      def lib_tag
+          "#{libname}-#{libver}"
+      end
+
       def proccess
         block = @block
         configs.each do |config|
           cfg_segment = config.strip
           cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
-          lib_tag = "#{libname}-#{libver}"
           lib_file = "#{lib_tag}-#{idever}#{cfg_segment}.zip"
           vendor_files = []
           destination = DVM_IMPORTS + idever
@@ -93,28 +96,30 @@ class Delphivm
           puts "\n#{exist ? '(exist) ':''}Importing #{lib_file} to #{destination.win}"
           unless exist
             if zip_file = download(source, lib_file)
-              unzip(zip_file, destination) do |file|
-                vendor_files << file if install_in_vendor?(file)
-              end
+              unzip(zip_file, destination)
             end
           end
-          # DON'T vendorize: prj can use $(DVM_IMPORTS)\$(idetag)... etc
-          #vendorize(vendor_files)
+          vendorize(get_vendor_files)
         end
         instance_eval(&block) if block
       end
 
+      def get_vendor_files
+        Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'out/**/{Debug,Release}/{bin,lib}/*.*')
+      end
+
       def vendorize(files)
-        puts "Vendorize in #{PRJ_IMPORTS.relative_path_from(PRJ_ROOT).win}"
-        pb = ProgressBar.create(:total =>  files.size, :format => "%J%% %E %B")
+        pb = ProgressBar.create(:total =>  files.size, title: '  %9s ->' % 'vendorize', format: "%t %J%% %E %B")
         files.each do |file|
-          install_vendor(PRJ_IMPORTS + file.relative_path_from(DVM_IMPORTS), file)
+          route = file.relative_path_from(DVM_IMPORTS + idever + lib_tag + 'out')
+          install_vendor(PRJ_IMPORTS + route, file)
           pb.increment
         end
         pb.finish
       end
 
       def install_vendor(link, target)
+        #puts "#{link} --> #{target}";return
         link.dirname.mkpath
         if @script.options.sym?
           WinServices.mklink(link: link.win, target: target.win)

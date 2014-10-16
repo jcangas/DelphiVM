@@ -1,4 +1,7 @@
 @echo off
+
 setlocal
-SET OCRA_PWD=%CD%
+
+SET DVM_PWD=%CD%
+
 DelphiVM.exe %*
