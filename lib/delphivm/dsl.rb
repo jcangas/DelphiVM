@@ -64,8 +64,8 @@ class Delphivm
         prefer_config = options[:config] || 'Release'
         packages.each do |pkg|
           # El paquete para el IDE debe estar compilado para Win32
-          search_pattern = (DVM_IMPORTS + idever + 'Win32' + '*' + 'bin' + pkg)
-          avaiable_files = search_pattern.glob.inject({}) do |mapped, p|
+          search_pattern = (PRJ_IMPORTS + idever + 'Win32' + '{Debug,Release}' + 'bin' + pkg)
+          avaiable_files = Pathname.glob(search_pattern).inject({}) do |mapped, p|
             mapped[p.dirname.parent.basename.to_s] = p
             mapped
           end
