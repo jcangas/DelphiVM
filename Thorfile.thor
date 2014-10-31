@@ -16,9 +16,9 @@ class Prj < Thor
     (root + 'out').mkpath
    # system "ocra --icon delphi_PROJECTICON.ico --debug-extract --output ./out/DelphiVM.exe --no-enc --gem-full=bundler --console bin\\delphivm lib\\**\\*.thor"
    if options.inno?
-     system "ocra --icon delphivm.ico --output ./out/DelphiVM.exe --no-enc --gem-full=bundler --no-lzma --chdir-first --innosetup delphivm.iss --console bin\\delphivm lib\\**\\*.thor"
+     system "ocra --output ./out/DelphiVM.exe --icon installer/delphivm.ico --no-enc --gem-full=bundler --no-lzma --chdir-first --innosetup installer/delphivm.iss --console bin\\delphivm lib\\**\\*.thor"
    else
-     system "ocra --icon delphivm.ico --output ./out/DelphiVM.exe --no-enc --gem-full=bundler --console bin\\delphivm lib\\**\\*.thor"
+     system "ocra --output ./out/DelphiVM.exe --icon installer/delphivm.ico --no-enc --gem-full=bundler --console bin\\delphivm lib\\**\\*.thor"
    end
   end
 

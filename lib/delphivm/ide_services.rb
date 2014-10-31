@@ -55,7 +55,11 @@ class Delphivm
 		end
 
 		def self.ide_in_prj?(ide)
-			!PRJ_ROOT.glob("#{prj_paths_glob}/**/#{ide.to_s}*/").select{|path| /#{ide.to_s}.*/.match(path)}.empty?
+			unless @dproj_paths
+				ide_tags = ::Delphivm::IDEInfos.to_h.keys.join(',')
+				@dproj_paths = PRJ_ROOT.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
+			end
+			!@dproj_paths.select{|path| /#{ide.to_s}.*/.match(path)}.empty?
 		end
 
 		def self.platforms_in_prj(ide)
@@ -76,11 +80,8 @@ class Delphivm
 			result
 		end
 
-		def self.ide_folder(ide)
-			"#{ide}-#{IDEInfos[ide][:name]}"
-		end
-
-		def self.use(ide_tag, activate=true)#experimental, aun parece no funcionar
+		#FIX: parece que falta algun path del ide
+		def self.use(ide_tag, activate=true)
 			paths_to_remove = []
 			ides_in_installed.each {|tag| paths_to_remove += ide_paths(tag)}
 		 	paths_to_remove.map!{|p| p.win }
@@ -104,8 +105,12 @@ class Delphivm
 
 		def set_env
 		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
-		 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
-		 	ENV["IDEVERSION"] = idever.to_s
+			ENV["BDSPROJECTGROUPDIR"] = workdir.win
+			ENV["IDEVERSION"] = idever.to_s
+
+			ENV["DVM_IDETAG"] = idever.to_s
+			ENV["DVM_PRJDIR"] = workdir.win
+			ENV["DVM_PRJIMPORTS"] = ::Delphivm::PRJ_IMPORTS
 		end
 
 		def prj_slug
@@ -131,7 +136,7 @@ class Delphivm
   	end
 
 		def vendor_bin_paths
-				Pathname.glob(DVM_IMPORTS + idever + 'Win32/{Debug,Release}/bin').map{|p| p.win}
+				Pathname.glob(PRJ_IMPORTS + idever + 'Win32/{Debug,Release}/bin').map{|p| p.win}
 		end
 
 		def supports_msbuild?
@@ -160,7 +165,10 @@ class Delphivm
 			main_group_file ||= get_main_group_file
 			#bds_args = IDETool.new(self).args(file: main_group_file.win).cmdln_args
 			bds_args = IDETool.new(self).cmdln_args
-			Process.detach(spawn("#{self['App']}", *bds_args))
+			spawn(%Q(#{self['App']}), *bds_args)
+			#Process.detach(spawn(%Q(#{self['App']}), *bds_args))
+			#WinServices.system(%Q(start "" "#{self['App']}" #{bds_args.join(' ')}) )
+
 			say "[#{idever}] ", :green
 			say "started bds #{bds_args.join(" ")}"
 		end

@@ -2,7 +2,6 @@
 class Delphivm
   module DSL
     def self.run_imports_dvm_script(path_to_file, options = {})
-      puts path_to_file
       script = ImportScript.new(File.read(path_to_file), path_to_file, options)
       script.imports.each do |imp|
         imp.send :proccess
@@ -84,6 +83,7 @@ class Delphivm
       end
 
       def proccess
+        raise "import's source undefined" unless @source
         block = @block
         configs.each do |config|
           cfg_segment = config.strip

@@ -2,6 +2,6 @@
 
 setlocal
 
-SET DVM_PWD=%CD%
+SET DVM_PRJDIR=%CD%
 
 DelphiVM.exe %*

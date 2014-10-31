@@ -1,6 +1,10 @@
 require "dnote"
 
 class Notes < BuildTarget
+
+  self.configure do |cfg|
+  end
+
 protected
   def do_make(idetag, cfg)
     self.src_path.glob('**/{*.dproj}') do |f|

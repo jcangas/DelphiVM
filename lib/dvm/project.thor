@@ -2,18 +2,10 @@
 class Project < BuildTarget
 	namespace :prj
 
-	self.configure do |cfg|
-		cfg.paths_map!({src: 'src', doc: 'doc', samples: 'samples', test: 'test'})
-		cfg.build_args!({BuildGroup: 'All'})
-	end
-
-	IDEServices.prj_paths(self.configure.paths_map.to_h)
-
-	PRODUCT_ID = "#{::Delphivm::APPMODULE}-#{::Delphivm::APPMODULE.VERSION.tag}"
-
 	desc  "clean", "clean #{APP_ID} products", :for => :clean
 	desc  "make", "make #{APP_ID} products", :for => :make
 	desc  "build", "build #{APP_ID} products", :for => :build
+	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "BuildGroup", for: :build
 
 protected
 
@@ -29,6 +21,8 @@ protected
 
 	def do_build(idetag, cfg)
 		ide = IDEServices.new(idetag, PRJ_ROOT)
+		cfg = {} unless cfg
+		cfg['BuildGroup'] = options[:group] if options.group?
 		ide.call_build_tool('Build', cfg)
 	end
 

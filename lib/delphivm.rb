@@ -26,11 +26,11 @@ class Delphivm
   include Configurable
 
   # for Innosetup ->
-  Dir.chdir(ENV["DVM_PWD"]) if ENV["DVM_PWD"]
+  Dir.chdir(ENV["DVM_PRJDIR"]) if ENV["DVM_PRJDIR"]
 
   PRJ_ROOT = ::Pathname.getwd
   GEM_ROOT = Pathname(__FILE__).dirname.parent
-  EXE_NAME = File.basename($0, '.*')
+  EXE_NAME = 'DelphiVM'
 
   DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
   DVM_DATA.mkpath
@@ -45,8 +45,7 @@ class Delphivm
   PRJ_IMPORTS_FILE = PRJ_ROOT + 'imports.dvm'
   PRJ_CFG_FILE = PRJ_ROOT + 'DelphiVM.cfg'
   PRJ_IMPORTS = PRJ_ROOT + 'vendor' + 'imports'
-  PRJ_IMPORTS.mkpath
-
+  
   DELPHIVM_DEFAULTS =
     {known_ides:
       {
@@ -97,7 +96,7 @@ public
   def self.get_project_cfg
     unless @dvm_project_cfg ||= nil
       @dvm_project_cfg = Configuration.new
-      @dvm_project_cfg.load(PRJ_CFG_FILE) if File.exists?(PRJ_CFG_FILE)
+      @dvm_project_cfg.load(PRJ_CFG_FILE) if File.exist?(PRJ_CFG_FILE)
     end
     @dvm_project_cfg
   end

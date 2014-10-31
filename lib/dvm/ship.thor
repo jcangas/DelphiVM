@@ -3,7 +3,7 @@ class Ship < DvmTask
 	require File.dirname(__FILE__) +  '/ship/group'
 
 	self.configure do |cfg|
-		cfg.ship_groups! %w(binary libs root hpp source_resources source documentation samples test)
+		cfg.ship_groups! %w(bin lib source doc samples test)
 		cfg.publish_to! false
 	end
 
@@ -65,7 +65,7 @@ protected
 		progress = lambda{|file| pb.increment}
 		zipping = lambda{pb.finish; say "     zipping ..."}
 		done = lambda{ say "     done!"}
-		spec.build(idever, outdir: 'ship', start: start, progress: progress, zipping: zipping, done: done)
+		spec.build(idever, self.class.configuration.ship_groups, outdir: 'ship', start: start, progress: progress, zipping: zipping, done: done)
 	end
 
 	def spec

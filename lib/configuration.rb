@@ -83,7 +83,7 @@ class Configuration < OpenStruct
 	def to_h
 		result = {}
 		each_pair do |k,v|
-			result[k] = v.respond_to?(:to_h) ? v.to_h : v
+			result[k] = ((v.is_a?(Hash) || v.is_a?(Configuration)) ? v.to_h : v)
 		end
 		result
 	end

@@ -1,17 +1,19 @@
 [Setup]
 AppName=DelphiVM
-AppVersion=0.1
+AppVersion=3.0.0
 DefaultDirName={pf}\DelphiVM
 DefaultGroupName=DelphiVM
 OutputBaseFilename=DelphiVMInstaller
 ChangesEnvironment=true
+OutputDir=out
 
 [Icons]
 Name: "{group}\DelphiVM"; Filename: "{app}\DelphiVM.exe"
 Name: "{group}\Uninstall DelphiVM"; Filename: "{uninstallexe}"
 
 [Files]
-Source: "Z:\Projects\github\DelphiVM\dvm.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "installer\dvm.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "installer\gem.build_complete"; DestDir: "{app}\lib\ruby\gems\2.1.0\extensions\x86-mingw32\2.1.0\psych-2.0.6"; Flags: ignoreversion
 
 [Tasks]
 Name: modifypath; Description: &Add application directory to your system path;
@@ -27,4 +29,4 @@ begin
 	Result[0] := ExpandConstant('{app}');
 	Result[1] := ExpandConstant('{app}\bin');
 end;
-#include "modpath.iss"
+#include "installer\modpath.iss"
