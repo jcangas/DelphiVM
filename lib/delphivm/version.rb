@@ -1,5 +1,5 @@
 ﻿class Delphivm
   include VersionInfo
-  self.VERSION = "2.2.1"
+  self.VERSION = "3.1.0"
   self.VERSION.file_name = __FILE__
 end

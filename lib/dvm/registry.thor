@@ -7,7 +7,7 @@ class Registry < DvmTask
   method_option :key, type: :string, aliases: '-k', desc: "destination prj-key (default: current)"
   def copy(idever=nil)
     idever ||= IDEServices.default_ide
-    ide = IDEServices.new(idever, ROOT)
+    ide = IDEServices.new(idever, PRJ_ROOT)
     regkey = Pathname(ide.ide_regkey)
     version = regkey.basename
 
@@ -28,7 +28,7 @@ class Registry < DvmTask
   desc "show IDE-TAG  ", "show reg keys for IDE-TAG"
   def show(idever=nil)
     idever ||= IDEServices.default_ide
-    ide = IDEServices.new(idever, ROOT)
+    ide = IDEServices.new(idever, PRJ_ROOT)
 
     regkey = Pathname(ide.ide_regkey)
     version = regkey.basename
@@ -44,7 +44,7 @@ class Registry < DvmTask
   method_option :key, type: :string, aliases: '-k', desc: "destination prj-key (default: current)"
   def del(idever=nil)
     idever ||= IDEServices.default_ide
-    ide = IDEServices.new(idever, ROOT)
+    ide = IDEServices.new(idever, PRJ_ROOT)
 
     regkey = Pathname(ide.ide_regkey)
     version = regkey.basename

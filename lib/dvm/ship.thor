@@ -2,10 +2,8 @@
 class Ship < DvmTask
 	require File.dirname(__FILE__) +  '/ship/group'
 
-	ShipGroup = ::Ship::FileSet #prefix :: allow escape Thor sandbox
-
 	self.configure do |cfg|
-		cfg.ship_groups!  %w(binary libs hpp source_resources source documentation samples test)
+		cfg.ship_groups! %w(bin lib source doc samples test)
 		cfg.publish_to! false
 	end
 
@@ -34,7 +32,7 @@ class Ship < DvmTask
 
 protected
 	def get_zip_name(idever)
-		ROOT + 'ship' + "#{APP_ID}-#{idever}.zip"
+		Pathname('ship') + spec.get_zip_name(idever)
 	end
 
 	def ides_in_prj
@@ -48,9 +46,10 @@ protected
 	def publish(idever)
 		target = self.class.configuration.publish_to
 		return unless target
-		say "publishing #{target}"
-		target = Pathname(target) + get_zip_name(idever).basename
-		get(get_zip_name(idever).to_s, target, force: true)
+		target = (Pathname(target) + get_zip_name(idever).basename).to_s
+		target.gsub!(/\$\((\w+)\)/){|m| ENV[$1]}
+		say_status "publish to", target
+		get(get_zip_name(idever).to_s, target, force: true, verbose: false)
 	end
 
 	def do_make(idever)
@@ -59,55 +58,28 @@ protected
 	end
 
 	def buil_zip(idever)
-		zip_fname = get_zip_name(idever)
-		empty_directory zip_fname.dirname
+		zipfname = get_zip_name(idever)
+		remove_file(zipfname.to_s, verbose: false)
+		say "create ship file for #{idever}"
+		pb = ProgressBar.create(title: '  %10s ->' % 'collect files', format: "%t %J%% %E %B")
+		start = lambda{|size| pb.total = size}
+		progress = lambda{|file| pb.increment}
+		zipping = lambda{pb.finish; say "     zipping ..."}
+		done = lambda{ say "     done!"}
+		spec.build(idever, self.class.configuration.ship_groups, outdir: 'ship', start: start, progress: progress, zipping: zipping, done: done)
+	end
 
-		groups = [
-			ShipGroup.new(:binary, 'out/' + idever, '*/*/bin/**{.*,}/*.*'),
-			ShipGroup.new(:libs, 'out/' + idever, '*/*/lib/**{.*,}/*.*'),
-			ShipGroup.new(:hpp, 'out/' + idever, '**{.*,}/*.{h,hpp}'),
-			ShipGroup.new(:source_resources, 'src', '**{.*,}/*.{dfm,fmx,res,dcr}', false),
-			ShipGroup.new(:source, 'src'),
-			ShipGroup.new(:source, '.', '*.*', false),
-			ShipGroup.new(:documentation, 'doc'),
-			ShipGroup.new(:samples, 'samples'),
-			ShipGroup.new(:test, 'test')
-		]
-
-		platform_lib_paths = (ROOT + 'out' + idever + '*/*/lib/').glob.map{|p| p.relative_path_from p.parent.parent.parent}
-		ship_dest = {
-			binary: [Pathname('.')],
-			libs: [Pathname('.')],
-			hpp: [Pathname('.')],
-			source_resources: platform_lib_paths,
-			source: [Pathname('src') + APP_ID],
-			documentation: [Pathname('doc') + APP_ID],
-			samples: [Pathname('samples') + APP_ID],
-			test: [Pathname('test') + APP_ID]
-		}
-
-		ignore_files = ['*.local', '*.~*', '*.identcache']
-		say_status(:create, zip_fname.relative_path_from(ROOT))
-
-		valid_groups = options[:groups]
-		ziped_files = []
-		Zip::File.open(zip_fname, Zip::File::CREATE) do |zipfile|
-			title = ''
-			groups.each do |group|
-				next unless valid_groups.include?(group.name.to_s)
-				if title != new_title = group.name.to_s.camelize(' ')
-					title = new_title
-					say_status("add", "#{title} files", :yellow)
-				end
-				group.each do |file, origin_path|
-					next if ignore_files.any?{|pattern| file.fnmatch?(pattern)}
-					ship_dest[group.name].each do |dest|
-						zip_entry = dest + file
-						zipfile.add(zip_entry, origin_path) unless ziped_files.include?(zip_entry)
-						ziped_files << zip_entry
-					end
-				end
-			end
+	def spec
+		@spec ||= ::Ship::Spec.new do |s|
+			s.name = Delphivm::APPMODULE.name
+			s.version = Delphivm::APPMODULE.VERSION.tag
+			s.ignore_files(['**/*.~*', '**/*.bak', '**/*.local', '**/*.identcache' ,'*.log', '.DS_Store'])
+			s.bin_files("out/%{idever}/*/*/bin/**{.*,}/*.*")
+			s.lib_files("out/%{idever}/*/{Debug,Release}/lib/*.*")
+			s.source_files(["src/**/*.*", "*.*"])
+			s.sample_files("samples/**/*.*")
+			s.test_files("test/**/*.*")
+			s.doc_files("doc/**/*.*")
 		end
 	end
 

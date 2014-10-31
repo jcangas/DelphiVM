@@ -9,6 +9,11 @@ class Delphivm
 		attr :workdir
 		attr :build_tool
 
+		def self.prj_paths(value=nil)
+			return @prj_paths = value if value
+			@prj_paths ||= {src: 'src', samples: 'samples', test: 'test'}
+		end
+
 		def self.idelist(kind = :installed)
 			ide_filter_valid?(kind) ? send("ides_in_#{kind}") : []
 		end
@@ -18,19 +23,19 @@ class Delphivm
 		end
 
 		def self.default_ide
-		 	(ides_in_prj.last || ides_in_installed.last).to_s
+		 	@default_ide ||= (ides_in_prj.last || ides_in_installed.last).to_s
 		end
 
 		def self.ides_in_config
-		 	IDEInfos.to_h.keys.sort
+		 	@ides_in_config ||= IDEInfos.to_h.keys.sort
 		end
 
 		def self.ides_in_installed
-			ides_filter(ides_in_config, :installed)
+			@ides_in_installed ||= ides_filter(ides_in_config, :installed)
 		end
 
 		def self.ides_in_prj
-			ides_filter(ides_in_config, :prj)
+			@ides_in_prj ||= ides_filter(ides_in_config, :prj)
 		end
 
 		def self.ides_filter(ides, kind)
@@ -45,13 +50,21 @@ class Delphivm
 			(Win32::Registry::HKEY_CURRENT_USER.open(IDEInfos[ide][:regkey]) {|reg| reg} rescue false)
 		end
 
+		def self.prj_paths_glob
+			@prj_paths_glob ||= "{#{self.prj_paths.values.join(',')}}"
+		end
+
 		def self.ide_in_prj?(ide)
-		 	!ROOT.glob("{src,samples,test}/#{ide.to_s}*/").empty?
+			unless @dproj_paths
+				ide_tags = ::Delphivm::IDEInfos.to_h.keys.join(',')
+				@dproj_paths = PRJ_ROOT.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
+			end
+			!@dproj_paths.select{|path| /#{ide.to_s}.*/.match(path)}.empty?
 		end
 
 		def self.platforms_in_prj(ide)
 			result = []
-			Pathname.glob(ROOT + "{src,samples,test}/**/*.dproj") do |f|
+			Pathname.glob(PRJ_ROOT + "#{prj_paths_glob}/**/*.dproj") do |f|
 				doc = Nokogiri::XML(File.open(f))
 				result = result | doc.css("Platforms Platform").select{|node| node.content=='True'}.map{|node| node.attr(:value)}
 			end
@@ -60,18 +73,15 @@ class Delphivm
 
 		def self.configs_in_prj(ide)
 			result = []
-			Pathname.glob(ROOT + "{src,samples,test}/**/*.dproj") do |f|
+			Pathname.glob(PRJ_ROOT + "#{prj_paths_glob}/**/*.dproj") do |f|
 				doc = Nokogiri::XML(File.open(f))
 				result = result | doc.css("BuildConfiguration[@Include != 'Base']").map{|node| node.attr('Include')}
 			end
 			result
 		end
 
-		def self.ide_folder(ide)
-			"#{ide}-#{IDEInfos[ide][:name]}"
-		end
-
-		def self.use(ide_tag, activate=true)#experimental, aun parece no funcionar
+		#FIX: parece que falta algun path del ide
+		def self.use(ide_tag, activate=true)
 			paths_to_remove = []
 			ides_in_installed.each {|tag| paths_to_remove += ide_paths(tag)}
 		 	paths_to_remove.map!{|p| p.win }
@@ -82,7 +92,7 @@ class Delphivm
 			path
 		end
 
-		def initialize(idever, workdir=ROOT)
+		def initialize(idever, workdir=PRJ_ROOT)
 			@idever = idever.to_s.upcase
 			@workdir = workdir
 			@reg = Win32::Registry::HKEY_CURRENT_USER
@@ -94,10 +104,13 @@ class Delphivm
 		end
 
 		def set_env
-		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever,false)
+		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
+			ENV["BDSPROJECTGROUPDIR"] = workdir.win
+			ENV["IDEVERSION"] = idever.to_s
 
-		 	ENV["BDSPROJECTGROUPDIR"] = workdir.win
-		 	ENV["IDEVERSION"] = idever.to_s
+			ENV["DVM_IDETAG"] = idever.to_s
+			ENV["DVM_PRJDIR"] = workdir.win
+			ENV["DVM_PRJIMPORTS"] = ::Delphivm::PRJ_IMPORTS
 		end
 
 		def prj_slug
@@ -119,11 +132,11 @@ class Delphivm
 		end
 
   	def ide_root_path
-    		Pathname(self['RootDir'])
+    	Pathname(self['RootDir'])
   	end
 
 		def vendor_bin_paths
-		    Pathname.glob(PATH_TO_VENDOR_IMPORTS + idever + '**' + 'bin').map{|p| p.win}
+				Pathname.glob(PRJ_IMPORTS + idever + 'Win32/{Debug,Release}/bin').map{|p| p.win}
 		end
 
 		def supports_msbuild?
@@ -140,9 +153,10 @@ class Delphivm
 		end
 
 		def get_main_group_file
-			Pathname.glob(workdir + "src/#{idever}**/#{prj_slug}App.#{group_file_ext}").first ||
-			Pathname.glob(workdir + "src/#{idever}**/*.#{group_file_ext}").first ||
-			Pathname.glob(workdir + "src/*.#{group_file_ext}").first ||
+			srcdir = workdir + IDEServices.prj_paths[:src] + '**'
+			Pathname.glob(srcdir + "#{idever}**/#{prj_slug}App.#{group_file_ext}").first ||
+			Pathname.glob(srcdir + "#{idever}**/*.#{group_file_ext}").first ||
+			Pathname.glob(srcdir + "*.#{group_file_ext}").first ||
 			Pathname.glob(workdir + "*.#{group_file_ext}").first
 		end
 
@@ -151,14 +165,17 @@ class Delphivm
 			main_group_file ||= get_main_group_file
 			#bds_args = IDETool.new(self).args(file: main_group_file.win).cmdln_args
 			bds_args = IDETool.new(self).cmdln_args
-			Process.detach(spawn("#{self['App']}", *bds_args))
+			spawn(%Q(#{self['App']}), *bds_args)
+			#Process.detach(spawn(%Q(#{self['App']}), *bds_args))
+			#WinServices.system(%Q(start "" "#{self['App']}" #{bds_args.join(' ')}) )
+
 			say "[#{idever}] ", :green
 			say "started bds #{bds_args.join(" ")}"
 		end
 
 		def call_build_tool(target, config)
 		 	set_env
-			Pathname.glob(workdir + "{src,samples,test}/#{idever}**/*.#{group_file_ext}") do |f|
+			Pathname.glob(workdir + "#{IDEServices.prj_paths_glob}/**/#{idever}**/*.#{group_file_ext}") do |f|
 				f_to_show = f.relative_path_from(workdir)
 				build_tool.args(config: config, target: target, file: f.win)
 				say "[#{idever}] ", :green
