@@ -1,0 +1,13 @@
+---
+layout: post
+title: "Annunce v3.1.0"
+date: "2014-10-31"
+---
+
+We are proud to announce a new release of Delphivm.
+
+## New features
+
+* Can use Enviroment variables in ship.config.publish_to. Ex /dropbox/$(my_env_var)
+
+* New option --group [BuildGroup] in prj:build. Use for invoke build on a BuildGroup defined in the project group file.
