@@ -46,8 +46,9 @@ protected
 	def publish(idever)
 		target = self.class.configuration.publish_to
 		return unless target
-		say_status "publishing", target
-		target = Pathname(target) + get_zip_name(idever).basename
+		target = (Pathname(target) + get_zip_name(idever).basename).to_s
+		target.gsub!(/\$\((\w+)\)/){|m| ENV[$1]}
+		say_status "publish to", target
 		get(get_zip_name(idever).to_s, target, force: true, verbose: false)
 	end
 
