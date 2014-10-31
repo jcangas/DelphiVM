@@ -20,7 +20,7 @@ protected
         options = {
         	idetag: idetag,
             ide_root_path:  IDEServices.new(idetag).ide_root_path,
-            import_path: vendor_imports_path + idetag,
+            import_path: PRJ_IMPORTS + idetag,
             out_path: out_path + idetag
          }
 

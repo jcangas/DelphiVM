@@ -8,7 +8,7 @@ class Delphivm
 			@title = title
 			@ide_prj = ide_prj
 		end
-		 
+
 		def idever
 			@ide_prj.idever
 		end
@@ -41,7 +41,7 @@ class Delphivm
 		end
 
 		def get_default_args
-			{}	
+			{}
 		end
 
 		def arg_to_cmdln(arg_name, arg_value=args[arg_name])
@@ -49,14 +49,14 @@ class Delphivm
 			when :file
 				%Q["#{arg_value}"]
 			else
-				"#{arg_value}"			
+				"#{arg_value}"
 			end
 		end
 	end
 
 	class MSBuild < Tool
 		def initialize(ide_prj)
-			super(app: 'msbuild', title: 'MS-Build', ide_prj: ide_prj)		
+			super(app: 'msbuild', title: 'MS-Build', ide_prj: ide_prj)
 		end
 
 		def call(out)
@@ -65,7 +65,7 @@ class Delphivm
 		end
 
 		def get_default_args
-			{ msbuild_args:  (IDEInfos[idever].msbuild_args || Delphivm.configuration.msbuild_args || '').strip	}			
+			{ msbuild_args:  (IDEInfos[idever].msbuild_args || Delphivm.configuration.msbuild_args || '').strip	}
 		end
 
 		def arg_to_cmdln(arg_name, arg_value)
@@ -107,6 +107,5 @@ class Delphivm
 				super
 			end
 		end
-
 	end
 end

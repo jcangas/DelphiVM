@@ -1,5 +1,5 @@
 
-source 'http://home.jcangas.info/ship'
+source 'z:\Dropbox\@ASSOFT\tg\librerias'
 
 uses 'D200' do
   import "SummerFW4D", "0.8.5"

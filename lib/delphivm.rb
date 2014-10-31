@@ -25,17 +25,27 @@ class Delphivm
 
   include Configurable
 
-  ROOT = ::Pathname.getwd
+  # for Innosetup ->
+  Dir.chdir(ENV["DVM_PRJDIR"]) if ENV["DVM_PRJDIR"]
+
+  PRJ_ROOT = ::Pathname.getwd
   GEM_ROOT = Pathname(__FILE__).dirname.parent
-  EXE_NAME = File.basename($0, '.rb')
+  EXE_NAME = 'DelphiVM'
 
-  DEFAULT_CFG_FILE = Pathname($0 + '.cfg')
-  DVM_PRJ_CFG = ROOT + DEFAULT_CFG_FILE.basename
+  DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
+  DVM_DATA.mkpath
 
-  DVM_IMPORTS_FILE = ROOT + 'imports.dvm'
-  PATH_TO_VENDOR_CACHE = Pathname($0).dirname + 'dvm-cache'
-  PATH_TO_VENDOR = ROOT + 'vendor'
-  PATH_TO_VENDOR_IMPORTS = PATH_TO_VENDOR + 'imports'
+  DVM_TEMP = Pathname(ENV["TEMP"].gsub('\\','/')).realpath
+  DVM_TEMP.mkpath
+
+  DVM_CFG_FILE =  DVM_DATA + 'DelphiVM.cfg'
+  DVM_IMPORTS = DVM_DATA + 'imports'
+  DVM_IMPORTS.mkpath
+
+  PRJ_IMPORTS_FILE = PRJ_ROOT + 'imports.dvm'
+  PRJ_CFG_FILE = PRJ_ROOT + 'DelphiVM.cfg'
+  PRJ_IMPORTS = PRJ_ROOT + 'vendor' + 'imports'
+  
   DELPHIVM_DEFAULTS =
     {known_ides:
       {
@@ -61,15 +71,15 @@ private
       VersionInfo.file_format = :module
       include VersionInfo
     end
-    Object.const_set(ROOT.basename.to_s.snake_case.camelize, @app_module)
-    @app_module.VERSION.file_name = ROOT + 'VERSION.pas'
+    Object.const_set(PRJ_ROOT.basename.to_s.snake_case.camelize, @app_module)
+    @app_module.VERSION.file_name = PRJ_ROOT + 'VERSION.pas'
     @app_module.VERSION.load
     @app_module.freeze
   end
 
   def self.app_module
     return @app_module if defined?(@app_module) && @app_module
-    if ROOT.basename.to_s.casecmp(EXE_NAME) == 0
+    if PRJ_ROOT.basename.to_s.casecmp(EXE_NAME) == 0
       @app_module = self
       VersionInfo.file_format = :module # para reportar la propia
     else
@@ -80,13 +90,13 @@ private
   end
 public
   APPMODULE = self.app_module
-  self.configure(DELPHIVM_DEFAULTS).load(DEFAULT_CFG_FILE, create: true)
+  self.configure(DELPHIVM_DEFAULTS).load(DVM_CFG_FILE, create: true)
   APP_ID = "#{::Delphivm::APPMODULE}-#{::Delphivm::APPMODULE.VERSION.tag}"
 
   def self.get_project_cfg
     unless @dvm_project_cfg ||= nil
       @dvm_project_cfg = Configuration.new
-      @dvm_project_cfg.load(DVM_PRJ_CFG) if File.exists?(DVM_PRJ_CFG)
+      @dvm_project_cfg.load(PRJ_CFG_FILE) if File.exist?(PRJ_CFG_FILE)
     end
     @dvm_project_cfg
   end
@@ -95,12 +105,12 @@ end
 
 # pretty alias to define custom tasks
 class DvmTask < Delphivm
-  include PathMethods.extension(ROOT)
+  include PathMethods.extension(PRJ_ROOT)
   include Thor::Actions
 
   def self.inherited(klass)
-	   klass.source_root(ROOT)
-     klass.publish unless klass == BuildTarget
+	  klass.source_root(PRJ_ROOT)
+    klass.publish unless klass == BuildTarget
   end
 
 protected
@@ -149,11 +159,10 @@ protected
     say_status "configuration", "for #{self.class.namespace}"
     say self.class.configuration.to_h
     if options[:write]
-      Delphivm.get_project_cfg.save(DVM_PRJ_CFG)
-      say_status "writed!!", "file #{DVM_PRJ_CFG}"
+      Delphivm.get_project_cfg.save(PRJ_CFG_FILE)
+      say_status "writed!!", "file #{PRJ_CFG_FILE}"
     end
   end
-
 end
 
 # Runner must be loaded after Delphivm setup, i.e., after Thor is hacked

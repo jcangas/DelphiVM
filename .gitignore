@@ -8,3 +8,5 @@ _site
 .DS_Store
 Thumbs.db
 pkg
+bin/dvm-cache/
+bin/dvm-imports/
