@@ -1,9 +1,11 @@
+# define VERSION "3.1.0"
 [Setup]
 AppName=DelphiVM
-AppVersion=3.0.0
+AppVersion={#VERSION}
 DefaultDirName={pf}\DelphiVM
 DefaultGroupName=DelphiVM
-OutputBaseFilename=DelphiVMInstaller
+OutputBaseFilename={# 'DelphiVMInstaller-' + VERSION}
+
 ChangesEnvironment=true
 OutputDir=out
 
