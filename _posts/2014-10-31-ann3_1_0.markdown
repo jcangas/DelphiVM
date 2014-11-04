@@ -1,12 +1,14 @@
 ---
 layout: post
-title: "Annunce v3.1.0"
-date: "2014-10-31"
+title: "Annunce v3.1.1"
+date: "2014-11-04"
 ---
 
 We are proud to announce a new release of Delphivm.
 
 ## New features
+
+* Minor bug fixing
 
 * Can use Enviroment variables in ship.config.publish_to. Ex /dropbox/$(my_env_var)
 
