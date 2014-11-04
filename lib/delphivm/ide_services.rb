@@ -104,12 +104,12 @@ class Delphivm
 		end
 
 		def set_env
-		 	ENV["PATH"] = vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
+		 	ENV["PATH"] = prj_bin_paths.join(';')  +  ';' + vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
 			ENV["BDSPROJECTGROUPDIR"] = workdir.win
 			ENV["IDEVERSION"] = idever.to_s
 
 			ENV["DVM_IDETAG"] = idever.to_s
-			ENV["DVM_PRJDIR"] = workdir.win
+		p	ENV["DVM_PRJDIR"] = workdir.win
 			ENV["DVM_PRJIMPORTS"] = ::Delphivm::PRJ_IMPORTS
 		end
 
@@ -137,6 +137,10 @@ class Delphivm
 
 		def vendor_bin_paths
 				Pathname.glob(PRJ_IMPORTS + idever + 'Win32/{Debug,Release}/bin').map{|p| p.win}
+		end
+
+		def prj_bin_paths
+				Pathname.glob(workdir + 'out' + idever + 'Win32/{Debug,Release}/bin').map{|p| p.win}
 		end
 
 		def supports_msbuild?
