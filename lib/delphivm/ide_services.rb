@@ -149,7 +149,7 @@ class Delphivm
 		end
 
 		def group_file_ext
-			supports_msbuild? ? 'groupproj' : 'bdsgroup'
+			supports_msbuild? ? 'groupproj' : '{bdsgroup,bpg}'
 		end
 
 		def proj_file_ext

@@ -1,5 +1,7 @@
 # BUGS
 
+## ide:start remove the '\' character from IDE caption
+
 # FEATURES
 
 ## BrickSpec.dvm

@@ -34,6 +34,7 @@ EOS
   end
 
   desc "import", "download and install vendor imports"
+  method_option :force,  type: :boolean, aliases: '-f', default: false, desc: "force download when already in local cache"
   method_option :clean,  type: :boolean, aliases: '-c', default: false, desc: "clean prj vendor before import"
   method_option :sym,  type: :boolean, aliases: '-s', default: false, desc: "use symlinks"
   def import

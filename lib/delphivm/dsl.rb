@@ -35,6 +35,7 @@ class Delphivm
     end
 
     class Importer
+      attr :script
       attr :source
       attr :idever
       attr :configs
@@ -89,11 +90,14 @@ class Delphivm
           cfg_segment = config.strip
           cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
           lib_file = "#{lib_tag}-#{idever}#{cfg_segment}.zip"
-          vendor_files = []
           destination = DVM_IMPORTS + idever
-
-          exist = (cfg_segment.empty? ? (destination + lib_tag).exist? : (destination + lib_tag + cfg_segment).exist?)
-          puts "\n#{exist ? '(exist) ':''}Importing #{lib_file} to #{destination.win}"
+          cache_folder = destination + lib_tag
+          exist = cache_folder.exist?
+          if exist && script.options.force?
+            exist = false
+            FileUtils.remove_dir(cache_folder.win, true)
+          end
+          puts "#{exist ? '(exist) ':''}Importing #{lib_file} to #{destination.win}"
           unless exist
             if zip_file = download(source, lib_file)
               unzip(zip_file, destination) unless defined? Ocra
@@ -165,12 +169,11 @@ class Delphivm
         Zip::InputStream.open(file) do |zip_file|
           while (f = zip_file.get_next_entry)
             f_path = destination + f.name
-            unless f_path.directory?
-              f_path.dirname.mkpath
-              pb.increment
-              f.extract(f_path) unless f_path.exist?
-              yield f_path if block_given?
-            end
+            next if f_path.directory? || f.name =~ /\/$/
+            f_path.dirname.mkpath
+            pb.increment
+            f.extract(f_path) unless f_path.exist?
+            yield f_path if block_given?
           end
         end
         pb.finish
