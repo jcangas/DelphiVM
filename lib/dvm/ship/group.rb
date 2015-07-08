@@ -30,7 +30,7 @@ class Ship
 		end
 
 		def sample_files(patterns)
-				@files[:sample] = [patterns].flatten
+				@files[:samples] = [patterns].flatten
 		end
 
 		def test_files(patterns)
@@ -81,8 +81,6 @@ class Ship
 
 		def all_files
 			return @all_files if @all_files
-			@groups
-			@files
 			self.vars
 			ignore_files = @ignore.inject([]){|files, pattern| files + Pathname.glob(pattern % self.vars) }.uniq
 			use_files = @files.select { |key, value| @groups.empty? || @groups.include?(key.to_s)}
