@@ -165,12 +165,11 @@ class Delphivm
         Zip::InputStream.open(file) do |zip_file|
           while (f = zip_file.get_next_entry)
             f_path = destination + f.name
-            unless f_path.directory?
-              f_path.dirname.mkpath
-              pb.increment
-              f.extract(f_path) unless f_path.exist?
-              yield f_path if block_given?
-            end
+            next if f_path.directory? || f.name =~ /\/$/
+            f_path.dirname.mkpath
+            pb.increment
+            f.extract(f_path) unless f_path.exist?
+            yield f_path if block_given?
           end
         end
         pb.finish
