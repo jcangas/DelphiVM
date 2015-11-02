@@ -9,16 +9,9 @@ http://jcangas.github.io/DelphiVM[]
 
 === Install
 
-Download last version from https://github.com/jcangas/DelphiVM/releases and install on your local disk!.
+Download last version from https://github.com/jcangas/DelphiVM/releases/latest and install on your local disk!.
 
 === Usage
 
 [source.console]
 ----
-
-c:\myrpoject> delphivm help  // show avaiable commands
-
-c:\myrpoject> delphivm prj:help  // show usage for commands in prj
-
-c:\myrpoject> delphivm help prj:make  // show usage for command prj:make
-
