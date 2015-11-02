@@ -1,0 +1,25 @@
+---
+layout: post
+title: "New Release 3.5.0"
+date: "2015-11-02"
+---
+
+We are proud to announce a new 3.5.0 release of Delphivm.
+
+## Changes to vendor
+
+We now use a more flexible and lightweight vendor management.
+
+* First: vendor/out is dead!!. Now, vendor binary and lib files are installed in the global out directory, like the output for your product. This way, you only have a search path for dcus, dcps etc.
+* Second: vendor is now a buiid target, like prj, but for build or make your vendor projects. Vendor projects are compiled in same order found in imports.dvm, so you can control the build order. Of course, you can pass the vendor the same options of prj. So all these are valid commands
+
+      dvm vendor:make -g all
+      dvm vendor:build --ide D210 -p platform:Win32 Config:Release
+
+* This new estrategy allow you to open a project from the vendor directory and user a target you have setup in the IDE or change compiler directives.
+
+## Changes to ship
+
+* Now ship is also a build target, like prj. So, by default, it only build the ship for current IDE. You can pass --ide all in orde to build the zip for all IDE's in your project.
+
+* By default, ship command don't zip bin and lib groups. This is coherent with the above vendor estrategy. You include these groups optionally, and then the command vendorize these files in the global out, as if you just have done a vendor:build invocation.
