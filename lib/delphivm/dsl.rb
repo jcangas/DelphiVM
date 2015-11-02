@@ -8,6 +8,10 @@ class Delphivm
       end
     end
 
+    def self.read_imports_dvm_script(path_to_file, options = {})
+      script = ImportScript.new(File.read(path_to_file), path_to_file, options)
+    end
+
     class ImportScript < Object
       attr :idever
       attr :imports
@@ -55,6 +59,10 @@ class Delphivm
         @block = block
       end
 
+      def lib_tag
+          "#{libname}-#{libver}"
+      end
+
       private
 
       def ide_install(*packages)
@@ -79,10 +87,6 @@ class Delphivm
         end
       end
 
-      def lib_tag
-          "#{libname}-#{libver}"
-      end
-
       def proccess
         raise "import's source undefined" unless @source
         block = @block
@@ -97,26 +101,51 @@ class Delphivm
             exist = false
             FileUtils.remove_dir(cache_folder.win, true)
           end
-          puts "#{exist ? '(exist) ':''}Importing #{lib_file} to #{destination.win}"
+          puts "#{exist ? '(cached) ':''}Importing #{lib_file} to #{destination.win}"
           unless exist
             if zip_file = download(source, lib_file)
               unzip(zip_file, destination) unless defined? Ocra
             end
           end
-          vendorize(get_vendor_files) unless defined? Ocra
+          unless defined? Ocra
+            if vendorized?(get_vendor_files_check)
+              puts "(skip) #{lib_file}, already in vendor"
+            else
+              vendorize(get_vendor_files)
+            end
+          end
         end
         instance_eval(&block) if block
       end
 
+      def get_vendor_files_check
+        Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'src/**/*.{dpr,dpk}')
+      end
+
       def get_vendor_files
-        Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'out/**/{Debug,Release}/{bin,lib}/*.*')
+        Pathname.glob(DVM_IMPORTS + idever + lib_tag + '**/*')
+      end
+
+      def vendorized?(files)
+        return false if files.empty?
+        file = files.first
+        route = file.relative_path_from(DVM_IMPORTS + idever)
+        link = PRJ_IMPORTS + route
+        link.exist?
       end
 
       def vendorize(files)
         pb = ProgressBar.create(:total =>  files.size, title: '  %9s ->' % 'vendorize', format: "%t %J%% %E %B")
         files.each do |file|
-          route = file.relative_path_from(DVM_IMPORTS + idever + lib_tag + 'out')
-          install_vendor(PRJ_IMPORTS + route, file)
+          next if file.directory?
+          if file.each_filename.include?('out')
+            route = file.relative_path_from(DVM_IMPORTS + idever + lib_tag + 'out')
+            link = PRJ_ROOT + 'out' + route
+          else
+            route = file.relative_path_from(DVM_IMPORTS + idever)
+            link = PRJ_IMPORTS + route
+          end
+          install_vendor(link, file)
           pb.increment
         end
         pb.finish
@@ -130,11 +159,6 @@ class Delphivm
         else
           FileUtils.cp(target, link)
         end
-      end
-
-      def install_in_vendor?(fname)
-        fname.fnmatch?('*/*/{bin,lib}/*', File::FNM_EXTGLOB + File::FNM_CASEFOLD) &&
-        !fname.fnmatch?('*/{IDEServices.prj_paths[:samples], IDEServices.prj_paths[:test]}/{bin,lib}/*', File::FNM_EXTGLOB + File::FNM_CASEFOLD)
       end
 
       def register(idever, pkg)

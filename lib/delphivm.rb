@@ -44,23 +44,70 @@ class Delphivm
 
   PRJ_IMPORTS_FILE = PRJ_ROOT + 'imports.dvm'
   PRJ_CFG_FILE = PRJ_ROOT + 'DelphiVM.cfg'
-  PRJ_IMPORTS = PRJ_ROOT + 'vendor' + 'imports'
-  
-  DELPHIVM_DEFAULTS =
-    {known_ides:
-      {
-        'D100' => {regkey: 'Software\Borland\BDS\4.0', name: '2006', desc: 'Borland Developer Stuido 4.0'},
-        'D150' => {regkey: 'Software\Embarcadero\BDS\8.0', name: 'XE', desc: 'Embarcadero RAD Stuido XE', msbuild_args: "/nologo /consoleloggerparameters:v=quiet"},
-        'D160' => {regkey: 'Software\Embarcadero\BDS\9.0', name: 'XE2', desc: 'Embarcadero RAD Stuido XE2'},
-        'D170' => {regkey: 'Software\Embarcadero\BDS\10.0', name: 'XE3', desc: 'Embarcadero RAD Stuido XE3'},
-        'D180' => {regkey: 'Software\Embarcadero\BDS\11.0', name: 'XE4', desc: 'Embarcadero RAD Stuido XE4'},
-        'D190' => {regkey: 'Software\Embarcadero\BDS\12.0', name: 'XE5', desc: 'Embarcadero RAD Stuido XE5'},
-        'D200' => {regkey: 'Software\Embarcadero\BDS\14.0', name: 'XE6', desc: 'Embarcadero RAD Stuido XE6'},
-        'D210' => {regkey: 'Software\Embarcadero\BDS\15.0', name: 'XE7', desc: 'Embarcadero RAD Stuido XE7'},
-      },
-      msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
+  PRJ_IMPORTS = PRJ_ROOT + 'vendor'
+  DELPHIVM_DEFAULTS = {
+        known_ides: {
+            D70: {
+                desc: "Borland Delphi 7",
+                name: "Delphi 7",
+                regkey: "Software\\Borland\\Delphi\\7.0"
+            },
+            D100: {
+                desc: "Borland Developer Stuido 4.0",
+                name: "2006",
+                regkey: "Software\\Borland\\BDS\\4.0"
+            },
+            D150: {
+                desc: "Embarcadero RAD Stuido XE",
+                msbuild_args: "/nologo /consoleloggerparameters:v=quiet",
+                name: "XE",
+                regkey: "Software\\Embarcadero\\BDS\\8.0"
+            },
+            D160: {
+                desc: "Embarcadero RAD Stuido XE2",
+                name: "XE2",
+                regkey: "Software\\Embarcadero\\BDS\\9.0"
+            },
+            D170: {
+                desc: "Embarcadero RAD Stuido XE3",
+                name: "XE3",
+                regkey: "Software\\Embarcadero\\BDS\\10.0"
+            },
+            D180: {
+                desc: "Embarcadero RAD Stuido XE4",
+                name: "XE4",
+                regkey: "Software\\Embarcadero\\BDS\\11.0"
+            },
+            D190: {
+                desc: "Embarcadero RAD Stuido XE5",
+                name: "XE5",
+                regkey: "Software\\Embarcadero\\BDS\\12.0"
+            },
+            D200: {
+                desc: "Embarcadero RAD Stuido XE6",
+                name: "XE6",
+                regkey: "Software\\Embarcadero\\BDS\\14.0"
+            },
+            D210: {
+                desc: "Embarcadero RAD Stuido XE7",
+                name: "XE7",
+                regkey: "Software\\Embarcadero\\BDS\\15.0"
+            },
+            D220: {
+                desc: "Embarcadero RAD Stuido XE8",
+                name: "XE8",
+                regkey: "Software\\Embarcadero\\BDS\\16.0"
+            },
+            D230: {
+                desc: "Embarcadero RAD Stuido X10",
+                name: "X10",
+                regkey: "Software\\Embarcadero\\BDS\\17.0"
+            },
+        },
+        msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
     }
-
+        
+  
   def self.shell
     @shell ||= Thor::Base.shell.new
   end
@@ -81,7 +128,7 @@ private
     return @app_module if defined?(@app_module) && @app_module
     if PRJ_ROOT.basename.to_s.casecmp(EXE_NAME) == 0
       @app_module = self
-      VersionInfo.file_format = :module # para reportar la propia
+      VersionInfo.file_format = :module # para reportar la propia vinfo
     else
       create_app_module
     end

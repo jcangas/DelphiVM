@@ -1,26 +1,35 @@
+GIT
+  remote: https://github.com/jcangas/ocra.git
+  revision: 9983f3113ed01f04087f600473f65885b223f577
+  ref: 9983f3113ed01f04087f600473f65885b223f577
+  specs:
+    ocra (1.3.5)
+
 GEM
   remote: http://rubygems.org/
   specs:
     dnote (1.7.1)
-    json (1.8.1)
-    mini_portile (0.6.0)
-    minitest (5.4.2)
+    json (1.8.3)
+    mini_portile (0.6.2)
+    minitest (5.7.0)
     minitest-rg (5.1.0)
       minitest (~> 5.0)
-    nokogiri (1.6.3.1)
-      mini_portile (= 0.6.0)
-    nokogiri (1.6.3.1-x86-mingw32)
-      mini_portile (= 0.6.0)
-    ocra (1.3.3)
-    psych (2.0.6)
-    rake (10.3.2)
-    ruby-progressbar (1.6.0)
-    rubyzip (1.1.6)
+    nokogiri (1.6.6.2)
+      mini_portile (~> 0.6.0)
+    nokogiri (1.6.6.2-x64-mingw32)
+      mini_portile (~> 0.6.0)
+    nokogiri (1.6.6.2-x86-mingw32)
+      mini_portile (~> 0.6.0)
+    psych (2.0.13)
+    rake (10.4.2)
+    ruby-progressbar (1.7.5)
+    rubyzip (1.1.7)
     thor (0.19.1)
     version_info (1.9.0)
 
 PLATFORMS
   ruby
+  x64-mingw32
   x86-mingw32
 
 DEPENDENCIES
@@ -30,10 +39,13 @@ DEPENDENCIES
   minitest
   minitest-rg
   nokogiri (>= 1.6.3.1)
-  ocra
+  ocra (= 1.3.5)!
   psych
   rake
   ruby-progressbar
   rubyzip (>= 1.0.0)
   thor
   version_info
+
+BUNDLED WITH
+   1.10.6

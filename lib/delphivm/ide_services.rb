@@ -23,7 +23,7 @@ class Delphivm
 		end
 
 		def self.default_ide
-		 	@default_ide ||= (ides_in_prj.last || ides_in_installed.last).to_s
+		 	@default_ide ||= (ides_in_prj & ides_in_installed).last.to_s
 		end
 
 		def self.ides_in_config
@@ -49,9 +49,23 @@ class Delphivm
 		def self.ide_in_installed?(ide)
 			(Win32::Registry::HKEY_CURRENT_USER.open(IDEInfos[ide][:regkey]) {|reg| reg} rescue false)
 		end
+    
+    def self.report_ides(ides, kind = :found)
+      say
+      say "%30s IDEs: %d" % ["#{kind.to_s.upcase}", ides.size], :green, true
+      infos = Delphivm::IDEInfos
+      say "+%s-%s-%s+" % ['-'*7, '-'*12, '-'*42]
+      say "| %5.5s | %10.10s | %40.40s |" % ['Tag', 'Name', 'Description']
+      ides.map do |ide|
+        say "|%s+%s+%s|" % ['-'*7, '-'*12, '-'*42]
+        say "| %5.5s | %10.10s | %40.40s |" % [ide.to_s, infos[ide][:name], infos[ide][:desc]]
+      end
+      say "+%s-%s-%s+" % ['-'*7, '-'*12, '-'*42]
+    end
+
 
 		def self.prj_paths_glob
-			@prj_paths_glob ||= "{#{self.prj_paths.values.join(',')}}"
+			@prj_paths_glob = "{#{self.prj_paths.values.join(',')}}"
 		end
 
 		def self.ide_in_prj?(ide)
@@ -93,7 +107,7 @@ class Delphivm
 		end
 
 		def initialize(idever, workdir=PRJ_ROOT)
-			@idever = idever.to_s.upcase
+			p @idever = idever.to_s.upcase
 			@workdir = workdir
 			@reg = Win32::Registry::HKEY_CURRENT_USER
 			@build_tool = supports_msbuild? ? MSBuild.new(self) : IDETool.new(self)
@@ -105,12 +119,9 @@ class Delphivm
 
 		def set_env
 		 	ENV["PATH"] = prj_bin_paths.join(';')  +  ';' + vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
-			ENV["BDSPROJECTGROUPDIR"] = workdir.win
-			ENV["IDEVERSION"] = idever.to_s
 
 			ENV["DVM_IDETAG"] = idever.to_s
-		p	ENV["DVM_PRJDIR"] = workdir.win
-			ENV["DVM_PRJIMPORTS"] = ::Delphivm::PRJ_IMPORTS
+		  ENV["DVM_PRJDIR"] = workdir.win
 		end
 
 		def prj_slug
@@ -131,8 +142,12 @@ class Delphivm
 			"HKCU\\#{regkey.parent.parent}\\#{prj_regkey}\\#{regkey.basename}\\Known Packages"
 		end
 
-  	def ide_root_path
+		def ide_root_path
     	Pathname(self['RootDir'])
+  	end
+
+		def ide_app_path
+    	Pathname(self['App'])
   	end
 
 		def vendor_bin_paths
@@ -167,19 +182,19 @@ class Delphivm
 		def start(main_group_file=nil)
 			set_env
 			main_group_file ||= get_main_group_file
-			#bds_args = IDETool.new(self).args(file: main_group_file.win).cmdln_args
-			bds_args = IDETool.new(self).cmdln_args
-			spawn(%Q(#{self['App']}), *bds_args)
-			#Process.detach(spawn(%Q(#{self['App']}), *bds_args))
-			#WinServices.system(%Q(start "" "#{self['App']}" #{bds_args.join(' ')}) )
+			#ideexe_args = IDETool.new(self).args(file: main_group_file.win).cmdln_args
+			ide_tool = IDETool.new(self)
+			ideexe_args = ide_tool.cmdln_args
 
-			say "[#{idever}] ", :green
-			say "started bds #{bds_args.join(" ")}"
+			spawn(%Q(#{ide_tool.app}), *ideexe_args)
+			say "[#{idever}] IDE start with #{ideexe_args.join(" ")}"
 		end
 
-		def call_build_tool(target, config)
+  		def call_build_tool(target, config)
 		 	set_env
-			Pathname.glob(workdir + "#{IDEServices.prj_paths_glob}/**/#{idever}**/*.#{group_file_ext}") do |f|
+			buildidr = workdir + "#{IDEServices.prj_paths_glob}/**/#{idever}**/*.#{group_file_ext}"
+      
+  		Pathname.glob(buildidr) do |f|
 				f_to_show = f.relative_path_from(workdir)
 				build_tool.args(config: config, target: target, file: f.win)
 				say "[#{idever}] ", :green

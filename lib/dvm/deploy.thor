@@ -8,6 +8,10 @@ class Deploy < BuildTarget
 		return []
 	end
 
+	method_option :env, type: :string, aliases: '-e', default: 'deve', desc: "deploy run [ENV]", for: :clean
+	method_option :env, type: :string, aliases: '-e', default: 'deve', desc: "deploy run [ENV]", for: :make
+	method_option :env, type: :string, aliases: '-e', default: 'deve', desc: "deploy run [ENV]", for: :build
+
 protected
 
 	def do_make(idetag, cfg)
@@ -35,10 +39,11 @@ protected
 	end
 
 	def deploy_environment(idetag, cfg)
-		say "deploying  environment"
-		self.src_RunEnvironment_path.glob('*') do |source|
+	  say "deploying environment #{options["env"]}"
+    source_env_path = self.send("runenv_#{options["env"]}_path")
+  	source_env_path.glob('**') do |source|
 			environment_target_path.each do |destination|
-				deploy_product(source, destination + source.relative_path_from(src_RunEnvironment_path))
+				deploy_product(source, destination + source.relative_path_from(source_env_path))
 			end
 		end
 	end

@@ -30,7 +30,7 @@ class Delphivm
 		end
 
 		def call(out)
-			cmd = %Q[#{app} #{cmdln_args.join(" ").strip}].encode(Encoding.default_external)
+			cmd = %Q["#{app}" #{cmdln_args.join(" ").strip}].encode(Encoding.default_external)
 			out.puts cmd
 		end
 
@@ -84,7 +84,8 @@ class Delphivm
 
 	class IDETool < Tool
 		def initialize(ide_prj)
-			super(app: 'bds', title: 'IDE Compiler', ide_prj: ide_prj)
+			ideexe = ide_prj.ide_app_path
+			super(app: ideexe, title: 'IDE Compiler', ide_prj: ide_prj)
 		end
 
 		def get_default_args
@@ -96,7 +97,7 @@ class Delphivm
 			when :reg
 				%Q[-r#{arg_value}]
 			when :idecaption
-				%Q[-idecaption="#{arg_value}"]
+				%Q[-idecaption=#{arg_value}]
 			when :personality
 				%Q[-p#{arg_value}]
 			when :target
