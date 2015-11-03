@@ -28,6 +28,19 @@ We now use a more flexible and lightweight vendor management.
 
 * By default, ship command don't zip bin and lib groups. This is coherent with the above vendor estrategy. You include these groups optionally, and then the command vendorize these files in the global out, as if you just have done a vendor:build invocation.
 
+## Changes to deploy
+
+Deploy command is now compatible with de multienvironment convenion estructure:
+
+        - c:\myproject>
+              +-----\RunEvn
+                  +---\deve
+                  +---\prod
+                  +---\test
+
+By default, deploys copy RunEvn\deve to out
+
+
 ## dvmsetup.bat invocation
 
 When you call dvm, it trys to call a file named dvmsetup.bat in your working directory. This allows configure environment variables or perform some custom task before dvm command is executed.
