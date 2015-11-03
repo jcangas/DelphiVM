@@ -5,10 +5,11 @@ class Project < BuildTarget
 	desc  "clean", "clean #{APP_ID} products", :for => :clean
 	desc  "make", "make #{APP_ID} products", :for => :make
 	desc  "build", "build #{APP_ID} products", :for => :build
+
 	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :clean
 	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :make
 	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :build
-  
+
 protected
 
 	def do_clean(idetag, cfg)
