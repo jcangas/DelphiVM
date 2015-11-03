@@ -107,7 +107,7 @@ class Delphivm
 		end
 
 		def initialize(idever, workdir=PRJ_ROOT)
-			p @idever = idever.to_s.upcase
+			@idever = idever.to_s.upcase
 			@workdir = workdir
 			@reg = Win32::Registry::HKEY_CURRENT_USER
 			@build_tool = supports_msbuild? ? MSBuild.new(self) : IDETool.new(self)
