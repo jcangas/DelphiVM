@@ -1,34 +1,124 @@
-= ToDo 
+= ToDo
 
 === BUGS
 
 
 === FEATURES
- 
+
 * [ ] generate docs
- 
+
 
 * [ ] BrickSpec.dvm
 imitar gemspec para shipping:
 
-        Brick:Definition.new("D200") do |brick|
-            brick.name        = "delphivm"
-            brick.platforms   = ['Win32']
-            brick.authors     = ["Jorge L. Cangas"]
-            brick.email       = ["jorge.cangas@gmail.com"]
-            brick.homepage    = "http://github.com/jcangas/delphivm"
-            brick.summary     = %q{A Ruby gem to manage your multi-IDE delphi projects: build, genenrate docs, and any custom task you want}
-            brick.description = %q{Easy way to invoke tasks for all your IDE versions from the command line}
-            brick.licence   =
-            brick.src   =
-            brick.bin   =
-            brick.lib   =
-            brick.res   =
-            brick.test  =  
-            brick.doc   =
-            brick.samples     =
-            brick.s.add_runtime_dependency "PureMVC", '>=1.6.3.1'
-        end
+[source,ruby]
+----
+    Brick:Definition.new("D200") do |brick|
+        brick.name        = "delphivm"
+        brick.platforms   = ['Win32']
+        brick.authors     = ["Jorge L. Cangas"]
+        brick.email       = ["jorge.cangas@gmail.com"]
+        brick.homepage    = "http://github.com/jcangas/delphivm"
+        brick.summary     = %q{A Ruby gem to manage your multi-IDE delphi projects: build, genenrate docs, and any custom task you want}
+        brick.description = %q{Easy way to invoke tasks for all your IDE versions from the command line}
+        brick.licence   =
+        brick.src   =
+        brick.bin   =
+        brick.lib   =
+        brick.res   =
+        brick.test  =
+        brick.doc   =
+        brick.samples     =
+        brick.s.add_runtime_dependency "PureMVC", '>=1.6.3.1'
+    end
+----
+
+=== Notas (Eder)
+
+==== Quitar los ficheros:
+
+- DelphiVM.cfg
+- imports.dvm
+- version.pas
+
+==== Unificamos en los 3 fichero en un unico "Packages.json"
+
+.Referencias
+[NOTE]
+====
+* http://browsenpm.org/package.json#author
+* https://docs.npmjs.com/files/package.json
+====
+
+.Ejemplo de fichero
+[source,json]
+----
+	{
+	  "name": "Cuadro de Mandos",
+	  "version": "1.0.0",
+	  "description": "Servidor Dsnap Rest y Web para el Cuadro de Mandos",
+	  "author": "Infomed <Infomed@Infomed.es>",
+
+	  "bin": {
+	    "module-name": "./bin/module-name"
+	  },
+
+	  "scripts": {
+	  	 "init": "vendor:import; deploy:make; res:make",
+	    "test": "vows --spec --isolate",
+	    "start": "node index.js",
+	    "predeploy": "echo im about to deploy",
+	    "postdeploy": "echo ive deployed",
+	    "prepublish": "coffee --bare --compile --output lib/foo src/foo/*.coffee"
+	  },
+
+	  "repository": {
+	    "type": "git",
+	    "url": "https://github.com/nodejitsu/browsenpm.org"
+	  },
+
+	  "dependencies": {
+	    "primus": "*",
+	    "async": "~0.8.0",
+	    "express": "4.2.x",
+	    "winston": "git://github.com/flatiron/winston#master",
+	    "bigpipe": "bigpipe/pagelet",
+	    "plates": "https://github.com/flatiron/plates/tarball/master"
+	  },
+
+	  "devDependencies": {
+	    "vows": "^0.7.0",
+	    "assume": "<1.0.0 || >=2.3.1 <2.4.5 || >=2.5.2 <3.0.0",
+	    "pre-commit": "*"
+	  },
+
+	  "publishConfig": {
+	    "registry": "https://your-private-hosted-npm.registry.nodejitsu.com"
+	  }
+	}
+----
+
+
+==== Cambias en tasks 
+
+* ide:start 
+
+que al arrancar la primera vez en un proyecto tambien ejecute el comando "dvm reg:copy" para que copie la clave completa
+de la instalación standar.
+
+* Nueva tarea "init" 
+
+seria un comando para ejecutar tras descargar el proyecto del Git que en principio contendria los comandos:
+
+[source,ruby]
+----
+vendor:import
+vendor:build
+res:make
+deploy:make
+----
+
+Asi el out quedaria lista para compilar nuestro proyecto. Seria interesante que pudesemos customizar es comando "init" para poder extender lo con otras cosas.
 
 === REFACTOR
 
