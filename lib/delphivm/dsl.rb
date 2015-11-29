@@ -2,10 +2,11 @@
 class Delphivm
   module DSL
     def self.run_imports_dvm_script(path_to_file, options = {})
-      script = ImportScript.new(File.read(path_to_file), path_to_file, options)
-      script.imports.each do |imp|
-        imp.send :proccess
-      end
+      read_imports_dvm_script(path_to_file, options).foreach_do :proccess
+    end
+
+    def self.register_imports_dvm_script(path_to_file, options = {})
+      read_imports_dvm_script(path_to_file, options).foreach_do :proccess_ide_install
     end
 
     def self.read_imports_dvm_script(path_to_file, options = {})
@@ -36,6 +37,12 @@ class Delphivm
       def import(libname, libver, liboptions={}, &block)
         @imports << Importer.new(self, libname, libver, liboptions, &block)
       end
+
+      def foreach_do(method)
+        self.imports.each do |imp|
+          imp.send method
+        end
+      end
     end
 
     class Importer
@@ -45,6 +52,7 @@ class Delphivm
       attr :configs
       attr :libname
       attr :libver
+      attr :ide_pkgs
 
       def initialize(script, libname, libver, liboptions={}, &block)
         @script = script
@@ -57,32 +65,40 @@ class Delphivm
         @configs = ['Release', 'Debug'] if configs == '*'
         @configs = [configs] unless configs.is_a?Array
         @block = block
+        instance_eval(&block) if block
       end
 
       def lib_tag
-          "#{libname}-#{libver}"
+        "#{libname}-#{libver}"
       end
 
       private
 
       def ide_install(*packages)
+        @ide_pkgs = packages
+      end
+
+      def proccess_ide_install
+        packages = @ide_pkgs
         options = packages.pop if packages.last.is_a? Hash
         options ||= {}
 
         prefer_config = options[:config] || 'Release'
         packages.each do |pkg|
           # El paquete para el IDE debe estar compilado para Win32
-          search_pattern = (PRJ_IMPORTS + idever + 'Win32' + '{Debug,Release}' + 'bin' + pkg)
+          search_pattern = (PRJ_ROOT + 'out' + idever + 'Win32' + '{Debug,Release}' + 'bin' + pkg)
           avaiable_files = Pathname.glob(search_pattern).inject({}) do |mapped, p|
             mapped[p.dirname.parent.basename.to_s] = p
             mapped
           end
           avaible_configs = avaiable_files.keys
           use_config = (avaible_configs.include?(prefer_config) ? prefer_config : avaible_configs.first)
-          pkg = avaiable_files[use_config]
-          if pkg
-            register(idever, pkg)
-            puts "IDE library #{pkg.basename} (#{use_config}) installed"
+          target = avaiable_files[use_config]
+          if target
+            register(idever, target)
+            puts "IDE library {target.basename} (#{use_config}) installed"
+          else
+            puts "IDE library #{pkg} not found !!"
           end
         end
       end
@@ -115,7 +131,7 @@ class Delphivm
             end
           end
         end
-        instance_eval(&block) if block
+        proccess_ide_install
       end
 
       def get_vendor_files_check
@@ -171,11 +187,11 @@ class Delphivm
         to_here = DVM_TEMP + file_name
         to_here.delete if to_here.exist?
         pb = nil
-        start = lambda { |length| pb = ProgressBar.create(total: length, title: '  %9s ->' % 'download', format: "%t %J%% %E %B") }
+        start = lambda { |length| pb = ProgressBar.create(total: length, title: '  %9s ->' % 'download', format: "%t %J%% %E %B"); pb.file_transfer_mode }
         progress = lambda {|s| pb.progress = s; pb.refresh}
 
         begin
-          start.call(full_url.size)
+          #start.call(full_url.size)
           content = open(full_url, "rb", content_length_proc: start, progress_proc: progress).read
           File.open(to_here, "wb") {|wfile|  wfile.write(content) } unless defined? Ocra
         rescue Exception => e

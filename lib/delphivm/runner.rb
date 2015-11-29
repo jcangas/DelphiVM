@@ -4,7 +4,6 @@ require 'mini_portile' # force OCRA sees it !!
 require 'nokogiri'
 require 'zip'
 
-require 'win32/registry.rb'
 require 'open3'
 require 'open-uri'
 require 'net/http'

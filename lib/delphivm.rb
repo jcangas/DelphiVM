@@ -32,10 +32,18 @@ class Delphivm
   GEM_ROOT = Pathname(__FILE__).dirname.parent
   EXE_NAME = 'DelphiVM'
 
-  DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
+  if ENV["APPDATA"]
+    DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
+  else
+    DVM_DATA = Pathname(__FILE__).dirname.parent + 'bin'
+  end
   DVM_DATA.mkpath
 
-  DVM_TEMP = Pathname(ENV["TEMP"].gsub('\\','/')).realpath
+  if ENV["TEMP"]
+    DVM_TEMP = Pathname(ENV["TEMP"].gsub('\\','/')).realpath
+  else
+    DVM_TEMP = Pathname(__FILE__).dirname.parent + 'temp'
+  end
   DVM_TEMP.mkpath
 
   DVM_CFG_FILE =  DVM_DATA + 'DelphiVM.cfg'
@@ -106,8 +114,8 @@ class Delphivm
         },
         msbuild_args: "/nologo /consoleloggerparameters:v=quiet /filelogger /flp:v=detailed"
     }
-        
-  
+
+
   def self.shell
     @shell ||= Thor::Base.shell.new
   end

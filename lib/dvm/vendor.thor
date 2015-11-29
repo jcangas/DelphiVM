@@ -54,7 +54,12 @@ EOS
     do_reset
     prepare
   end
-  
+
+	desc "reg", "IDE register vendor packages"
+	def reg
+		silence_warnings{DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE)}
+	end
+
 protected
 
   def do_clean(idetag, cfg)
@@ -67,8 +72,9 @@ protected
 
   def do_build(idetag, cfg)
   	do_build_action(idetag, cfg, 'Build')
+		silence_warnings{DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE)}
   end
-  
+
   def do_reset
     remove_dir(PRJ_IMPORTS)
   end
@@ -81,9 +87,9 @@ protected
     vendor_prj_paths = {}
     vendor_path = PRJ_IMPORTS.relative_path_from(PRJ_ROOT)
     prj_paths.each{|key, val| vendor_prj_paths[key] = "#{vendor_path}/#{import}/#{val}"}
-    IDEServices.prj_paths(vendor_prj_paths)  
+    IDEServices.prj_paths(vendor_prj_paths)
   end
-  
+
   def do_build_action(idetag, cfg, action)
     cfg = {} unless cfg
   	cfg['BuildGroup'] = options[:group] if options.group?
@@ -92,7 +98,7 @@ protected
   	prj_paths = IDEServices.prj_paths
     script.imports.map{|imp| imp.lib_tag}.each do |import|
       adjust_prj_paths(prj_paths, import)
-    	ide.call_build_tool(action, cfg)    
+    	ide.call_build_tool(action, cfg)
     end
   end
 

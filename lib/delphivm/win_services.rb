@@ -2,6 +2,7 @@ require 'thread'
 require 'fiddle'
 require 'fiddle/import'
 require 'win32ole'
+require 'win32/registry.rb'
 
 module User32
 	extend Fiddle::Importer
