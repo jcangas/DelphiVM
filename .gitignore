@@ -1,8 +1,7 @@
 
-/out
+out
 dvm-cache/
-/vendor/cache
-/vendor/imports
+vendor
 _site
 *.zip
 .DS_Store

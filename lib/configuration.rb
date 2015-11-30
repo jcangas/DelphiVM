@@ -96,7 +96,7 @@ class Configuration < OpenStruct
 			io = File.open(io_or_filename.to_s, 'r')
 			owned_io = true
 		end
-		save(io_or_filename) if !File.exists?(io_or_filename.to_s) && options[:create]
+		save(io_or_filename) if !File.exist?(io_or_filename.to_s) && options[:create]
 		r = io.read
 		opts = Configuration.from_json(r)
 		io.close if owned_io

@@ -1,99 +1,113 @@
 ﻿class Vendor < BuildTarget
+   desc 'clean', 'clean vendor products', for: :clean
+   desc 'make',  'make vendor products', for: :make
+   desc 'build', 'build vendor products', for: :build
+   method_option :group, type: :string, aliases: '-g',
+                         default: configuration.build_args, desc: 'Use BuildGroup', for: :clean
+   method_option :group,
+                 type: :string,
+                 aliases: '-g',
+                 default: configuration.build_args,
+                 desc: 'Use BuildGroup',
+                 for: :make
+   method_option :group,
+                 type: :string,
+                 aliases: '-g',
+                 default: configuration.build_args,
+                 desc: 'Use BuildGroup', for: :build
 
-	desc  "clean", "clean vendor products", :for => :clean
-	desc  "make", "make vendor products", :for => :make
-	desc  "build", "build vendor products", :for => :build
-	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :clean
-	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :make
-	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :build
+   desc 'init', 'create and initialize vendor directory'
+   def init
+     create_file(PRJ_IMPORTS_FILE, skip: true) do
+       <<-EOS
+      # sample imports file for delphivm
 
+      # set source url
+      source "my_imports_path"
 
-  desc "init", "create and initialize vendor directory"
-  def init
-    create_file(PRJ_IMPORTS_FILE, :skip => true) do <<-EOS
-# sample imports file for delphivm
+      # can use environment vars anywhere
+      # source "\#{ENV['IMPORTS_PATH']}"
 
-# set source url
-source "my_imports_path"
+      # set IDE version
+      uses 'D150'
 
-# can use environment vars anywhere
-# source "\#{ENV['IMPORTS_PATH']}"
+      # now, you can declare some imports
 
-# set IDE version
-uses 'D150'
+      import "FastReport", "4.13.1" do
+        ide_install('dclfs15.bpl','dclfsADO15.bpl', 'dclfrxIBX15.bpl')
+      end
 
-# now, you can declare some imports
+      # or if we don't need ide install
 
-import "FastReport", "4.13.1" do
-  ide_install('dclfs15.bpl','dclfsADO15.bpl', 'dclfrxIBX15.bpl')
-end
+      import "TurboPower", "7.0.0"
 
-# or if we don't need ide install
+      # repeat for other sources and/or IDEs
 
-import "TurboPower", "7.0.0"
+      EOS
+     end
+   end
 
-# repeat for other sources and/or IDEs
+   desc 'import', 'download and install vendor imports'
+   method_option :force, type: :boolean, aliases: '-f', default: false, desc: 'force download when already in local cache'
+   method_option :reset, type: :boolean, aliases: '-r', default: false, desc: 'clean prj vendor before import'
+   method_option :sym, type: :boolean, aliases: '-s', default: false, desc: 'use symlinks'
+   def import
+     say 'WARN: ensure your project folder supports symlinks!!' if options.sym?
+     do_reset if options.reset?
+     prepare
+     silence_warnings { DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options) }
+   end
 
-EOS
-    end
-  end
+   desc 'reset', 'erase vendor imports.'
+   def reset
+     do_reset
+     prepare
+   end
 
-  desc "import", "download and install vendor imports"
-  method_option :force,  type: :boolean, aliases: '-f', default: false, desc: "force download when already in local cache"
-  method_option :reset,  type: :boolean, aliases: '-r', default: false, desc: "clean prj vendor before import"
-  method_option :sym,  type: :boolean, aliases: '-s', default: false, desc: "use symlinks"
-  def import
-    say "WARN: ensure your project folder supports symlinks!!" if options.sym?
-    do_reset if options.reset?
-    prepare
-    silence_warnings{DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options)}
-  end
+   desc 'reg', 'IDE register vendor packages'
+   def reg
+     silence_warnings { DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE) }
+   end
 
-  desc "reset", "erase vendor imports."
-  def reset
-    do_reset
-    prepare
-  end
-  
-protected
+   protected
 
-  def do_clean(idetag, cfg)
-  	do_build_action(idetag, cfg, 'Clean')
-  end
+   def do_clean(idetag, cfg)
+     do_build_action(idetag, cfg, 'Clean')
+   end
 
-  def do_make(idetag, cfg)
-  	do_build_action(idetag, cfg, 'Make')
-  end
+   def do_make(idetag, cfg)
+     do_build_action(idetag, cfg, 'Make')
+   end
 
-  def do_build(idetag, cfg)
-  	do_build_action(idetag, cfg, 'Build')
-  end
-  
-  def do_reset
-    remove_dir(PRJ_IMPORTS)
-  end
+   def do_build(idetag, cfg)
+     do_build_action(idetag, cfg, 'Build')
+     silence_warnings { DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE) }
+   end
 
-  def prepare
-    PRJ_IMPORTS.mkpath
-  end
+   def do_reset
+     remove_dir(PRJ_IMPORTS)
+   end
 
-  def adjust_prj_paths(prj_paths, import)
-    vendor_prj_paths = {}
-    vendor_path = PRJ_IMPORTS.relative_path_from(PRJ_ROOT)
-    prj_paths.each{|key, val| vendor_prj_paths[key] = "#{vendor_path}/#{import}/#{val}"}
-    IDEServices.prj_paths(vendor_prj_paths)  
-  end
-  
-  def do_build_action(idetag, cfg, action)
-    cfg = {} unless cfg
-  	cfg['BuildGroup'] = options[:group] if options.group?
-    script = DSL.read_imports_dvm_script(PRJ_IMPORTS_FILE, options)
-  	ide = IDEServices.new(idetag)
-  	prj_paths = IDEServices.prj_paths
-    script.imports.map{|imp| imp.lib_tag}.each do |import|
-      adjust_prj_paths(prj_paths, import)
-    	ide.call_build_tool(action, cfg)    
-    end
-  end
+   def prepare
+     PRJ_IMPORTS.mkpath
+   end
 
+   def adjust_prj_paths(prj_paths, import)
+     vendor_prj_paths = {}
+     vendor_path = PRJ_IMPORTS.relative_path_from(PRJ_ROOT)
+     prj_paths.each { |key, val| vendor_prj_paths[key] = "#{vendor_path}/#{import}/#{val}" }
+     IDEServices.prj_paths(vendor_prj_paths)
+   end
+
+   def do_build_action(idetag, cfg, action)
+     cfg = {} unless cfg
+     cfg['BuildGroup'] = options[:group] if options.group?
+     script = DSL.read_imports_dvm_script(PRJ_IMPORTS_FILE, options)
+     ide = IDEServices.new(idetag)
+     prj_paths = IDEServices.prj_paths
+     script.imports.map(&:lib_tag).each do |import|
+       adjust_prj_paths(prj_paths, import)
+       ide.call_build_tool(action, cfg)
+     end
+   end
 end
