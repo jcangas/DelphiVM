@@ -21,6 +21,9 @@ class Delphivm
     def say(*args)
       Delphivm.shell.say(*args)
     end
+    def say_status(*args)
+      Delphivm.shell.say_status(*args)
+    end
   end
 
   include Configurable
@@ -32,13 +35,6 @@ class Delphivm
   GEM_ROOT = Pathname(__FILE__).dirname.parent
   EXE_NAME = 'DelphiVM'
 
-  if ENV["APPDATA"]
-    DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
-  else
-    DVM_DATA = Pathname(__FILE__).dirname.parent + 'bin'
-  end
-  DVM_DATA.mkpath
-
   if ENV["TEMP"]
     DVM_TEMP = Pathname(ENV["TEMP"].gsub('\\','/')).realpath
   else
@@ -46,9 +42,21 @@ class Delphivm
   end
   DVM_TEMP.mkpath
 
+  if ENV["APPDATA"]
+    DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
+  else
+    DVM_DATA = Pathname(__FILE__).dirname.parent + 'bin'
+  end
+  DVM_DATA.mkpath
+
   DVM_CFG_FILE =  DVM_DATA + 'DelphiVM.cfg'
-  DVM_IMPORTS = DVM_DATA + 'imports'
-  DVM_IMPORTS.mkpath
+
+  if defined? ::TEST
+    DVM_IMPORTS = DVM_TEMP + 'imports'
+  else
+    DVM_IMPORTS = DVM_DATA + 'imports'
+  end
+    DVM_IMPORTS.mkpath
 
   PRJ_IMPORTS_FILE = PRJ_ROOT + 'imports.dvm'
   PRJ_CFG_FILE = PRJ_ROOT + 'DelphiVM.cfg'
