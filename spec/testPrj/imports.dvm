@@ -2,7 +2,7 @@
 source File.join(File.dirname(__FILE__), 'imports')
 
 uses 'D210' do
-  import "Summer", "1.2.1" do
-    ide_install('SummerD210.bpl')
-  end
+  import "Dido", "0.9.4"
+  # using uri fails for security issues
+  # import 'ics', '3.2.0', uri: 'http://git-lab.rido.es/infomedvendors/ics/repository/archive.zip?ref=v3.2.0'
 end

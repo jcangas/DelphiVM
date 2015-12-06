@@ -10,7 +10,7 @@ class Delphivm
     end
 
     def self.read_imports_dvm_script(path_to_file, options = {})
-      ImportScript.new(File.read(path_to_file), path_to_file, options)
+      ImportScript.new(File.read(path_to_file), options)
     end
 
     class ImportScript < Object
@@ -18,10 +18,9 @@ class Delphivm
       attr_reader :imports
       attr_reader :options
 
-      def initialize(script = '', _path_to_file = __FILE__, options = {})
-        @imports = []
+      def initialize(script = '', options = {})
+        @imports = {}
         @options = options
-        # eval(script, binding, path_to_file, 1) # aparentemente no va
         eval(script)
       end
 
@@ -35,21 +34,26 @@ class Delphivm
       end
 
       def import(libname, libver, liboptions = {}, &block)
-        @imports << Importer.new(self, libname, libver, liboptions, &block)
+        key = "#{libname}-#{libver}".to_sym
+        unless @imports.has_key?(key)
+          @imports[key] = Importer.new(self, libname, libver, liboptions, &block)
+        end
       end
 
       def foreach_do(method)
-        imports.each do |imp|
+        imports.values.each do |imp|
           imp.send method
         end
       end
     end
 
     class Importer
+      include Delphivm::Talk
       attr_reader :script
       attr_reader :source
+      attr_reader :source_uri
       attr_reader :idever
-      attr_reader :configs
+      attr_reader :libopts
       attr_reader :libname
       attr_reader :libver
       attr_reader :ide_pkgs
@@ -60,15 +64,18 @@ class Delphivm
         @idever = script.idever
         @libname = libname
         @libver = libver
-        @configs = liboptions[:config]
-        @configs ||= ''
-        @configs = %w(Release Debug) if configs == '*'
-        @configs = [configs] unless configs.is_a? Array
+        @libopts = liboptions
+        @source_uri = libopts[:uri] || Pathname(source) + lib_file
+        @ide_pkgs = []
         instance_eval(&block) if block
       end
 
       def lib_tag
         "#{libname}-#{libver}"
+      end
+
+      def lib_file
+        "#{lib_tag}-#{idever}.zip"
       end
 
       private
@@ -96,59 +103,69 @@ class Delphivm
           target = avaiable_files[use_config]
           if target
             register(idever, target)
-            puts "IDE library {target.basename} (#{use_config}) installed"
+            say "IDE library {target.basename} (#{use_config}) installed"
           else
-            puts "IDE library #{pkg} not found !!"
+            say "IDE library #{pkg} not found !!"
           end
         end
       end
 
       def proccess
         fail "import's source undefined" unless @source
-        configs.each do |config|
-          cfg_segment = config.strip
-          cfg_segment = "-#{cfg_segment}" unless cfg_segment.empty?
-          lib_file = "#{lib_tag}-#{idever}#{cfg_segment}.zip"
-          destination = DVM_IMPORTS + idever
-          cache_folder = destination + lib_tag
-          exist = cache_folder.exist?
-          if exist && script.options.force?
-            exist = false
-            FileUtils.remove_dir(cache_folder.win, true)
-          end
-          puts "#{exist ? '(cached) ' : ''}Importing #{lib_file} to #{destination.win}"
-          unless exist
-            if zip_file = download(source, lib_file)
-              unzip(zip_file, destination) unless defined? Ocra
-            end
-          end
-          next if defined? Ocra
-          if vendorized?(get_vendor_files_check)
-            puts "(skip) #{lib_file}, already in vendor"
-          else
-            vendorize(get_vendor_files)
-          end
+        destination = DVM_IMPORTS + idever
+        cache_folder = destination + lib_tag
+        exist = cache_folder.exist?
+        if exist && script.options.force?
+          exist = false
+          FileUtils.remove_dir(cache_folder.win, true)
         end
+        status = exist ? :cached : :fetch
+        puts # for easy console reading
+        say_status status, "Importing #{lib_file} to #{destination.win}", :green
+
+        zip_file = download(source_uri, lib_file) unless exist
+        return if defined? Ocra
+        unzip(zip_file, destination) if zip_file
+        exist ||= zip_file
+        return unless exist
+        vendorize
+        proccess_dependences
         proccess_ide_install
+        say_status :done, lib_file, :green
       end
 
-      def get_vendor_files_check
-        Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'src/**/*.{dpr,dpk}')
+      def proccess_dependences
+        dvm_file = Pathname(PRJ_IMPORTS  + lib_tag + 'imports.dvm')
+        DSL.run_imports_dvm_script(dvm_file, script.options) if dvm_file.exist?
       end
 
       def get_vendor_files
         Pathname.glob(DVM_IMPORTS + idever + lib_tag + '**/*')
       end
 
-      def vendorized?(files)
+      def vendorized?
+        # check any src file is present
+        files = Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'src/**/*.{dpr,dpk}')
         return false if files.empty?
         file = files.first
         route = file.relative_path_from(DVM_IMPORTS + idever)
         link = PRJ_IMPORTS + route
+        return true if link.exist?
+        # check any bin file is present
+        files = Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'out/**/*.{exe,bpl,dll}')
+        return false if files.empty?
+        file = files.first
+        route = file.relative_path_from(DVM_IMPORTS + idever)
+        link = PRJ_ROOT + 'out' + idever + route
         link.exist?
       end
 
-      def vendorize(files)
+      def vendorize
+        if vendorized?
+          say_status :skip, "#{lib_file}, already in vendor", :yellow
+          return
+        end
+        files = get_vendor_files
         pb = ProgressBar.create(total: files.size, title: '  %9s ->' % 'vendorize', format: '%t %J%% %E %B')
         files.each do |file|
           next if file.directory?
@@ -166,7 +183,6 @@ class Delphivm
       end
 
       def install_vendor(link, target)
-        # puts "#{link} --> #{target}";return
         link.dirname.mkpath
         if @script.options.sym?
           WinServices.mklink(link: link.win, target: target.win)
@@ -181,19 +197,21 @@ class Delphivm
       end
 
       def download(source_uri, file_name)
-        full_url = Pathname(source_uri) + file_name
+        #  Esto solo es valido para ficheros, no uris en gral        
+        # unless source_uri.exist?
+        #   say_status :ERROR, "#{file_name} not found", :red
+        #   return nil
+        # end
         to_here = DVM_TEMP + file_name
         to_here.delete if to_here.exist?
         pb = nil
-        start = lambda { |length| pb = ProgressBar.create(total: length, title: '  %9s ->' % 'download', format: '%t %J%% %E %B'); pb.file_transfer_mode }
+        start = lambda { |length| pb = ProgressBar.create(total: length, title: '  %9s ->' % 'download', format: '%t %J%% %E %B')}
         progress = lambda { |s| pb.progress = s; pb.refresh }
-
         begin
-          # start.call(full_url.size)
-          content = open(full_url, 'rb', content_length_proc: start, progress_proc: progress).read
-          File.open(to_here, 'wb') { |wfile| wfile.write(content) } unless defined? Ocra
+          content = open(source_uri, 'rb', content_length_proc: start, progress_proc: progress).read
+          File.open(to_here, 'wb') { |wfile| wfile.write(content)} unless defined? Ocra
         rescue Exception => e
-          puts e
+          say_status :ERROR, e, :red
           return nil
         end
 

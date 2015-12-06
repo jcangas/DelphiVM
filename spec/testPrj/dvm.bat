@@ -1,1 +1,2 @@
-ruby ..\..\bin\delphivm %*
+set DVMCATALOG=%~dp0imports
+ruby ..\..\bin\delphivm test %*
