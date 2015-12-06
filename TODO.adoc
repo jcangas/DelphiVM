@@ -118,7 +118,8 @@ res:make
 deploy:make
 ----
 
-Asi el out quedaria lista para compilar nuestro proyecto. Seria interesante que pudesemos customizar es comando "init" para poder extender lo con otras cosas.
+Asi el out quedaria lista para compilar nuestro proyecto. Seria interesante que pudesemos customizar es comando "init" 
+para poder extender lo con otras cosas.
 
 === REFACTOR
 
