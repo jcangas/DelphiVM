@@ -102,10 +102,10 @@
    def do_build_action(idetag, cfg, action)
      cfg = {} unless cfg
      cfg['BuildGroup'] = options[:group] if options.group?
-     script = DSL.read_imports_dvm_script(PRJ_IMPORTS_FILE, options)
+     script = DSL.load_dvm_script(PRJ_IMPORTS_FILE, options)
      ide = IDEServices.new(idetag)
      prj_paths = IDEServices.prj_paths
-     script.imports.map(&:lib_tag).each do |import|
+     script.imports.values.map(&:lib_tag).each do |import|
        adjust_prj_paths(prj_paths, import)
        ide.call_build_tool(action, cfg)
      end

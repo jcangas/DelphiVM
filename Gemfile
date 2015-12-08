@@ -18,5 +18,5 @@ group :development do
   gem "minitest"
   gem "minitest-rg"
   gem 'ocra', '1.3.6'
-  # gem 'ocra', '1.3.5', :git => 'https://github.com/jcangas/ocra.git', :ref => '9983f3113ed01f04087f600473f65885b223f577'
+#  gem 'ocra', :git => 'https://github.com/jcangas/ocra.git', :ref => '9983f3113ed01f04087f600473f65885b223f577'
 end

@@ -2,26 +2,35 @@
 class Delphivm
   module DSL
     def self.run_imports_dvm_script(path_to_file, options = {})
-      read_imports_dvm_script(path_to_file, options).foreach_do :proccess
+      load_dvm_script(path_to_file, options).foreach_do :proccess
     end
 
     def self.register_imports_dvm_script(path_to_file, options = {})
-      read_imports_dvm_script(path_to_file, options).foreach_do :proccess_ide_install
+      load_dvm_script(path_to_file, options).foreach_do :proccess_ide_install
     end
 
-    def self.read_imports_dvm_script(path_to_file, options = {})
-      ImportScript.new(File.read(path_to_file), options)
+    def self.load_dvm_script(path_to_file, options = {})
+      if path_to_file.exist?
+        content = File.read(path_to_file)
+      else
+        content = nil
+      end
+      ImportScript.new(content, options)
     end
 
     class ImportScript < Object
       attr_reader :idever
       attr_reader :imports
       attr_reader :options
+      attr_reader :loaded
 
-      def initialize(script = '', options = {})
+      def initialize(content = nil, options = {})
         @imports = {}
         @options = options
-        eval(script)
+        @loaded = (content != nil)
+        return unless @loaded
+        eval(content)
+        collect_dependences
       end
 
       def source(value = nil)
@@ -35,12 +44,24 @@ class Delphivm
 
       def import(libname, libver, liboptions = {}, &block)
         key = "#{libname}-#{libver}".to_sym
-        unless @imports.has_key?(key)
-          @imports[key] = Importer.new(self, libname, libver, liboptions, &block)
+        return if @imports.key?(key)
+        @imports[key] = Importer.new(self, libname, libver, liboptions, &block)
+      end
+
+      def collect_dependences
+        ordered_imports = {}
+        imports.each do |lib_tag, importer|
+          importer.dependences_script.collect_dependences
+          importer.dependences_script.imports.each do |key, val|
+            ordered_imports[key] = val unless ordered_imports.key?(key)
+          end
+          ordered_imports[lib_tag] = importer unless ordered_imports.key?(lib_tag)
         end
+        @imports = ordered_imports
       end
 
       def foreach_do(method)
+        return unless method
         imports.values.each do |imp|
           imp.send method
         end
@@ -50,6 +71,8 @@ class Delphivm
     class Importer
       include Delphivm::Talk
       attr_reader :script
+      attr_reader :dependences_script
+      attr_reader :dependences_scriptname
       attr_reader :source
       attr_reader :source_uri
       attr_reader :idever
@@ -67,6 +90,7 @@ class Delphivm
         @libopts = liboptions
         @source_uri = libopts[:uri] || Pathname(source) + lib_file
         @ide_pkgs = []
+        @dependences_scriptname = Pathname(PRJ_IMPORTS + lib_tag + 'imports.dvm')
         instance_eval(&block) if block
       end
 
@@ -76,6 +100,21 @@ class Delphivm
 
       def lib_file
         "#{lib_tag}-#{idever}.zip"
+      end
+
+      def ensure_dependences_script
+        # import.dvm file must exist in vendor
+        fname = dependences_scriptname
+        return if fname.exist?
+        fname.dirname.mkpath
+        fname.open('w')
+      end
+
+      def dependences_script
+        unless @dependences_script && @dependences_script.loaded
+          @dependences_script = DSL.load_dvm_script(dependences_scriptname, script.options)
+        end
+        @dependences_script
       end
 
       private
@@ -129,14 +168,10 @@ class Delphivm
         exist ||= zip_file
         return unless exist
         vendorize
-        proccess_dependences
+        ensure_dependences_script
+        dependences_script.foreach_do(:proccess)
         proccess_ide_install
         say_status :done, lib_file, :green
-      end
-
-      def proccess_dependences
-        dvm_file = Pathname(PRJ_IMPORTS  + lib_tag + 'imports.dvm')
-        DSL.run_imports_dvm_script(dvm_file, script.options) if dvm_file.exist?
       end
 
       def get_vendor_files
@@ -144,20 +179,7 @@ class Delphivm
       end
 
       def vendorized?
-        # check any src file is present
-        files = Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'src/**/*.{dpr,dpk}')
-        return false if files.empty?
-        file = files.first
-        route = file.relative_path_from(DVM_IMPORTS + idever)
-        link = PRJ_IMPORTS + route
-        return true if link.exist?
-        # check any bin file is present
-        files = Pathname.glob(DVM_IMPORTS + idever + lib_tag + 'out/**/*.{exe,bpl,dll}')
-        return false if files.empty?
-        file = files.first
-        route = file.relative_path_from(DVM_IMPORTS + idever)
-        link = PRJ_ROOT + 'out' + idever + route
-        link.exist?
+        dependences_scriptname.exist?
       end
 
       def vendorize
@@ -197,7 +219,7 @@ class Delphivm
       end
 
       def download(source_uri, file_name)
-        #  Esto solo es valido para ficheros, no uris en gral        
+        #  Esto solo es valido para ficheros, no uris en gral
         # unless source_uri.exist?
         #   say_status :ERROR, "#{file_name} not found", :red
         #   return nil
