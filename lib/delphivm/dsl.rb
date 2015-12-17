@@ -2,32 +2,35 @@
 class Delphivm
   module DSL
     def self.run_imports_dvm_script(path_to_file, options = {})
-      load_dvm_script(path_to_file, options).foreach_do :proccess
+      load_dvm_script(path_to_file, options).send(:foreach_do, :proccess)
     end
 
     def self.register_imports_dvm_script(path_to_file, options = {})
-      load_dvm_script(path_to_file, options).foreach_do :proccess_ide_install
+      load_dvm_script(path_to_file, options).send(:foreach_do, :proccess_ide_install)
     end
 
-    def self.load_dvm_script(path_to_file, options = {})
+    def self.load_dvm_script(path_to_file, options = {}, required_by = nil)
       if path_to_file.exist?
         content = File.read(path_to_file)
       else
         content = nil
       end
-      ImportScript.new(content, options)
+      ImportScript.new(content, options, required_by)
     end
 
     class ImportScript < Object
+      include Delphivm::Talk
+      attr_reader :required_by
       attr_reader :idever
       attr_reader :imports
       attr_reader :options
       attr_reader :loaded
 
-      def initialize(content = nil, options = {})
-        @imports = {}
-        @options = options
+      def initialize(content = nil, options = {}, required_by = nil)
         @loaded = (content != nil)
+        @options = options
+        @required_by = required_by
+        @imports = {}
         return unless @loaded
         eval(content)
         collect_dependences
@@ -44,8 +47,21 @@ class Delphivm
 
       def import(libname, libver, liboptions = {}, &block)
         key = "#{libname}-#{libver}".to_sym
-        return if @imports.key?(key)
+        if @imports.key?(key)
+          @imports[key].idevers << @idever
+          return
+        end
         @imports[key] = Importer.new(self, libname, libver, liboptions, &block)
+      end
+
+      def level
+        required_by ? required_by.script.level + 1 : 0
+      end
+
+      protected
+
+      def tree
+        foreach_do :tree, true
       end
 
       def collect_dependences
@@ -60,16 +76,18 @@ class Delphivm
         @imports = ordered_imports
       end
 
-      def foreach_do(method)
+      def foreach_do(method, owned = false)
         return unless method
-        imports.values.each do |imp|
-          imp.send method
+        imports.values.each do |importdef|
+          next if owned && importdef.script != self
+          importdef.send method
         end
       end
     end
 
     class Importer
       include Delphivm::Talk
+      attr_reader :idevers
       attr_reader :script
       attr_reader :dependences_script
       attr_reader :dependences_scriptname
@@ -83,6 +101,8 @@ class Delphivm
 
       def initialize(script, libname, libver, liboptions = {}, &block)
         @script = script
+        @index = script.imports.size
+        @idevers = [script.idever]
         @source = script.source
         @idever = script.idever
         @libname = libname
@@ -102,8 +122,8 @@ class Delphivm
         "#{lib_tag}-#{idever}.zip"
       end
 
+      # import.dvm file must exist in vendor
       def ensure_dependences_script
-        # import.dvm file must exist in vendor
         fname = dependences_scriptname
         return if fname.exist?
         fname.dirname.mkpath
@@ -112,7 +132,7 @@ class Delphivm
 
       def dependences_script
         unless @dependences_script && @dependences_script.loaded
-          @dependences_script = DSL.load_dvm_script(dependences_scriptname, script.options)
+          @dependences_script = DSL.load_dvm_script(dependences_scriptname, script.options, self)
         end
         @dependences_script
       end
@@ -124,6 +144,7 @@ class Delphivm
       end
 
       def proccess_ide_install
+        report = {ok: [], fail: []}
         packages = @ide_pkgs
         options = packages.pop if packages.last.is_a? Hash
         options ||= {}
@@ -141,16 +162,18 @@ class Delphivm
           use_config = (use_prefer_config ? prefer_config : avaible_configs.first)
           target = avaiable_files[use_config]
           if target
+            report[:ok] << pkg
             register(idever, target)
-            say "IDE library {target.basename} (#{use_config}) installed"
           else
-            say "IDE library #{pkg} not found !!"
+            report[:fail] << pkg
           end
         end
+        report
       end
 
       def proccess
         fail "import's source undefined" unless @source
+        return if (idevers & script.options[:idevers]).empty?
         destination = DVM_IMPORTS + idever
         cache_folder = destination + lib_tag
         exist = cache_folder.exist?
@@ -158,9 +181,10 @@ class Delphivm
           exist = false
           FileUtils.remove_dir(cache_folder.win, true)
         end
-        status = exist ? :cached : :fetch
-        puts # for easy console reading
-        say_status status, "Importing #{lib_file} to #{destination.win}", :green
+        status = exist ? :'cached in' : :'fetch to'
+        say
+        say "[#{script.level}] Importing #{lib_file}", [:blue, :bold]
+        say_status status, "#{destination.win}", :green
 
         zip_file = download(source_uri, lib_file) unless exist
         return if defined? Ocra
@@ -169,9 +193,14 @@ class Delphivm
         return unless exist
         vendorize
         ensure_dependences_script
-        dependences_script.foreach_do(:proccess)
-        proccess_ide_install
-        say_status :done, lib_file, :green
+        dependences_script.send(:foreach_do, :proccess)
+        report = proccess_ide_install
+        say_status(:IDE, "installed packages: #{report[:ok].count}", :green) unless report[:ok].empty?
+        unless report[:fail].empty?
+          say_status :IDE, 'missing packages:', :red
+          say report[:fail].join("\n")
+        end
+        #say "[#{script.level}] Import #{lib_file} done!", [:blue, :bold]
       end
 
       def get_vendor_files
@@ -213,6 +242,24 @@ class Delphivm
         end
       end
 
+      def tree
+        if script.level == 0
+          indent = ''
+        else
+          #p @index
+          if @index == script.imports.size - 1
+            head = "\u2514"
+          else
+            head = "\u251C"
+          end
+          indent = ' ' * 2 * (script.level - 1) + ' ' * (script.level - 1) + head + "\u2500 "
+        end
+        say "-#{"%2s" % script.level}:  ", [:red, :bold]
+        say "#{indent}#{lib_tag} ", [:green, :bold]
+        say "#{idevers.join(', ')}", [:blue, :bold]
+        dependences_script.send :tree
+      end
+
       def register(idever, pkg)
         ide_prj = IDEServices.new(idever)
         WinServices.reg_add(key: ide_prj.pkg_regkey, value: pkg.win, data: ide_prj.prj_slug, force: true)
@@ -251,7 +298,6 @@ class Delphivm
             f_path.dirname.mkpath
             pb.increment
             f.extract(f_path) unless f_path.exist?
-            yield f_path if block_given?
           end
         end
         pb.finish

@@ -21,8 +21,13 @@ class Delphivm
     def say(*args)
       Delphivm.shell.say(*args)
     end
+
     def say_status(*args)
       Delphivm.shell.say_status(*args)
+    end
+
+    def set_color(*args)
+      Delphivm.shell.set_color(*args)
     end
   end
 

@@ -51,11 +51,14 @@
    method_option :force, type: :boolean, aliases: '-f', default: false, desc: 'force download when already in local cache'
    method_option :reset, type: :boolean, aliases: '-r', default: false, desc: 'clean prj vendor before import'
    method_option :sym, type: :boolean, aliases: '-s', default: false, desc: 'use symlinks'
-   def import
+   def import(*idevers)
+     ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
+     idevers =  ides_in_prj if idevers.empty?
+     idevers &= ides_in_prj
      say 'WARN: ensure your project folder supports symlinks!!' if options.sym?
      do_reset if options.reset?
      prepare
-     silence_warnings { DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options) }
+     silence_warnings { DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options.merge(idevers: idevers)) }
    end
 
    desc 'reset', 'erase vendor imports.'
@@ -64,6 +67,10 @@
      prepare
    end
 
+   desc 'tree', 'show dependencs tree. Use after import'
+   def tree
+     silence_warnings { DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :tree }     
+   end
    desc 'reg', 'IDE register vendor packages'
    def reg
      silence_warnings { DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE) }

@@ -1,4 +1,4 @@
-# define VERSION "3.5.3+pre"
+# define VERSION "3.5.6+pre"
 [Setup]
 AppName=DelphiVM
 AppVersion={#VERSION}
