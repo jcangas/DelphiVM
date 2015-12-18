@@ -1,14 +1,6 @@
 
 class Delphivm
   module DSL
-    def self.run_imports_dvm_script(path_to_file, options = {})
-      load_dvm_script(path_to_file, options).send(:foreach_do, :proccess)
-    end
-
-    def self.register_imports_dvm_script(path_to_file, options = {})
-      load_dvm_script(path_to_file, options).send(:foreach_do, :proccess_ide_install)
-    end
-
     def self.load_dvm_script(path_to_file, options = {}, required_by = nil)
       if path_to_file.exist?
         content = File.read(path_to_file)
@@ -62,6 +54,14 @@ class Delphivm
 
       def tree
         foreach_do :tree, true
+      end
+
+      def proccess
+        foreach_do :proccess
+      end
+
+      def ide_register
+        foreach_do :do_ide_install
       end
 
       def collect_dependences
@@ -143,7 +143,7 @@ class Delphivm
         @ide_pkgs = packages
       end
 
-      def proccess_ide_install
+      def do_ide_install
         report = {ok: [], fail: []}
         packages = @ide_pkgs
         options = packages.pop if packages.last.is_a? Hash
@@ -194,7 +194,7 @@ class Delphivm
         vendorize
         ensure_dependences_script
         dependences_script.send(:foreach_do, :proccess)
-        report = proccess_ide_install
+        report = do_ide_install
         say_status(:IDE, "installed packages: #{report[:ok].count}", :green) unless report[:ok].empty?
         unless report[:fail].empty?
           say_status :IDE, 'missing packages:', :red

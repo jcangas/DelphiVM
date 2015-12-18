@@ -2,8 +2,11 @@
    desc 'clean', 'clean vendor products', for: :clean
    desc 'make',  'make vendor products', for: :make
    desc 'build', 'build vendor products', for: :build
-   method_option :group, type: :string, aliases: '-g',
-                         default: configuration.build_args, desc: 'Use BuildGroup', for: :clean
+   method_option :group,
+                 type: :string, aliases: '-g',
+                 default: configuration.build_args,
+                 desc: 'Use BuildGroup',
+                 for: :clean
    method_option :group,
                  type: :string,
                  aliases: '-g',
@@ -58,7 +61,9 @@
      say 'WARN: ensure your project folder supports symlinks!!' if options.sym?
      do_reset if options.reset?
      prepare
-     silence_warnings { DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options.merge(idevers: idevers)) }
+     silence_warnings do
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE, options.merge(idevers: idevers)).send :proccess
+     end
    end
 
    desc 'reset', 'erase vendor imports.'
@@ -69,11 +74,14 @@
 
    desc 'tree', 'show dependencs tree. Use after import'
    def tree
-     silence_warnings { DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :tree }     
+     silence_warnings do
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :tree
+     end
    end
+
    desc 'reg', 'IDE register vendor packages'
    def reg
-     silence_warnings { DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE) }
+     do_reg
    end
 
    protected
@@ -88,7 +96,13 @@
 
    def do_build(idetag, cfg)
      do_build_action(idetag, cfg, 'Build')
-     silence_warnings { DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE) }
+     do_reg
+   end
+
+   def do_reg
+     silence_warnings do
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :ide_register
+     end
    end
 
    def do_reset
@@ -107,14 +121,28 @@
    end
 
    def do_build_action(idetag, cfg, action)
+     idetag = [idetag] unless idetag.is_a? Array
      cfg = {} unless cfg
      cfg['BuildGroup'] = options[:group] if options.group?
      script = DSL.load_dvm_script(PRJ_IMPORTS_FILE, options)
-     ide = IDEServices.new(idetag)
+     ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
+     ides_installed = IDEServices.idelist(:installed).map(&:to_s)
      prj_paths = IDEServices.prj_paths
-     script.imports.values.map(&:lib_tag).each do |import|
-       adjust_prj_paths(prj_paths, import)
-       ide.call_build_tool(action, cfg)
+
+     need_ides = script.imports.values.map(&:idevers).flatten.uniq
+     need_ides &= idetag unless idetag.empty?
+     missing_ides = need_ides - (ides_installed & need_ides)
+     say_status(:WARN, "#{missing_ides} not installed!", :red) unless missing_ides.empty?
+
+     script.imports.values.each do |import|
+       adjust_prj_paths(prj_paths, import.lib_tag)
+       use_ides = import.idevers & ides_in_prj
+       use_ides &= idetag unless idetag.empty?
+       use_ides &= ides_installed
+       use_ides.each do |use_ide|
+         ide = IDEServices.new(use_ide)
+         ide.call_build_tool(action, cfg)
+       end
      end
    end
 end

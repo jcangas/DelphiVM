@@ -66,7 +66,7 @@ protected
 				ides_to_call = options[:ide].any?{ |s| s.casecmp('all')==0 } ? IDEServices.ides_in_prj : IDEServices.ides_filter(options[:ide], :prj)
         if ides_to_call.empty?
           IDEServices.report_ides(IDEServices.idelist(:prj), :prj)
-          say "Error: no IDE files found at this project folder" 
+          say "Error: cannot build for #{options[:ide]} IDEs" 
         end
 				ides_to_call.each do |idetag|
 					self.idetag = idetag
