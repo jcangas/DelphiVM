@@ -246,7 +246,6 @@ class Delphivm
         if script.level == 0
           indent = ''
         else
-          #p @index
           if @index == script.imports.size - 1
             head = "\u2514"
           else
@@ -254,9 +253,14 @@ class Delphivm
           end
           indent = ' ' * 2 * (script.level - 1) + ' ' * (script.level - 1) + head + "\u2500 "
         end
-        say "-#{"%2s" % script.level}:  ", [:red, :bold]
-        say "#{indent}#{lib_tag} ", [:green, :bold]
-        say "#{idevers.join(', ')}", [:blue, :bold]
+        ides_installed = IDEServices.idelist(:installed).map(&:to_s)
+        say "-#{"%2s" % script.level}:  ", [:yellow, :bold]
+        say "#{indent}#{lib_tag} ", [:blue, :bold]
+        idevers.each do |idever|
+          ide_color = ides_installed.include?(idever) ? :green : :red
+          say "#{idever} ", [ide_color, :bold]
+        end
+        say
         dependences_script.send :tree
       end
 
@@ -266,11 +270,6 @@ class Delphivm
       end
 
       def download(source_uri, file_name)
-        #  Esto solo es valido para ficheros, no uris en gral
-        # unless source_uri.exist?
-        #   say_status :ERROR, "#{file_name} not found", :red
-        #   return nil
-        # end
         to_here = DVM_TEMP + file_name
         to_here.delete if to_here.exist?
         pb = nil
