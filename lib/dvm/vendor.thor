@@ -2,8 +2,11 @@
    desc 'clean', 'clean vendor products', for: :clean
    desc 'make',  'make vendor products', for: :make
    desc 'build', 'build vendor products', for: :build
-   method_option :group, type: :string, aliases: '-g',
-                         default: configuration.build_args, desc: 'Use BuildGroup', for: :clean
+   method_option :group,
+                 type: :string, aliases: '-g',
+                 default: configuration.build_args,
+                 desc: 'Use BuildGroup',
+                 for: :clean
    method_option :group,
                  type: :string,
                  aliases: '-g',
@@ -51,11 +54,16 @@
    method_option :force, type: :boolean, aliases: '-f', default: false, desc: 'force download when already in local cache'
    method_option :reset, type: :boolean, aliases: '-r', default: false, desc: 'clean prj vendor before import'
    method_option :sym, type: :boolean, aliases: '-s', default: false, desc: 'use symlinks'
-   def import
+   def import(*idevers)
+     ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
+     idevers =  ides_in_prj if idevers.empty?
+     idevers &= ides_in_prj
      say 'WARN: ensure your project folder supports symlinks!!' if options.sym?
      do_reset if options.reset?
      prepare
-     silence_warnings { DSL.run_imports_dvm_script(PRJ_IMPORTS_FILE, options) }
+     silence_warnings do
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE, options.merge(idevers: idevers)).send :proccess
+     end
    end
 
    desc 'reset', 'erase vendor imports.'
@@ -64,9 +72,16 @@
      prepare
    end
 
+   desc 'tree', 'show dependencs tree. Use after import'
+   def tree
+     silence_warnings do
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :tree
+     end
+   end
+
    desc 'reg', 'IDE register vendor packages'
    def reg
-     silence_warnings { DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE) }
+     do_reg
    end
 
    protected
@@ -81,7 +96,13 @@
 
    def do_build(idetag, cfg)
      do_build_action(idetag, cfg, 'Build')
-     silence_warnings { DSL.register_imports_dvm_script(PRJ_IMPORTS_FILE) }
+     do_reg
+   end
+
+   def do_reg
+     silence_warnings do
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :ide_install
+     end
    end
 
    def do_reset
@@ -100,14 +121,45 @@
    end
 
    def do_build_action(idetag, cfg, action)
-     cfg = {} unless cfg
+     idetag = [idetag] unless idetag.is_a? Array
+     cfg ||= {}
      cfg['BuildGroup'] = options[:group] if options.group?
-     script = DSL.read_imports_dvm_script(PRJ_IMPORTS_FILE, options)
-     ide = IDEServices.new(idetag)
+     script = DSL.load_dvm_script(PRJ_IMPORTS_FILE, options)
+     ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
+     ides_installed = IDEServices.idelist(:installed).map(&:to_s)
      prj_paths = IDEServices.prj_paths
-     script.imports.map(&:lib_tag).each do |import|
-       adjust_prj_paths(prj_paths, import)
-       ide.call_build_tool(action, cfg)
+
+     need_ides = script.imports.values.map(&:idevers).flatten.uniq
+     need_ides &= idetag unless idetag.empty?
+     missing_ides = need_ides - (ides_installed & need_ides)
+     say_status(:WARN, "#{missing_ides} not installed!", :red) unless missing_ides.empty?
+
+     script.imports.values.each do |import|
+       adjust_prj_paths(prj_paths, import.lib_tag)
+       use_ides = import.idevers & ides_in_prj
+       use_ides &= idetag unless idetag.empty?
+       use_ides &= ides_installed
+       use_ides.each do |use_ide|
+         next if build_as_copy(import.lib_tag, use_ide, action)
+         ide = IDEServices.new(use_ide)
+         ide.call_build_tool(action, cfg)
+       end
      end
+   end
+
+   def build_as_copy(lib_tag, ide_tag, action)
+     import_out_path = PRJ_IMPORTS + lib_tag + 'out' + ide_tag
+     return unless import_out_path.exist?
+     say_status(:WARN, "#{action} using #{import_out_path.relative_path_from PRJ_IMPORTS}", :yellow)
+     Pathname(import_out_path).glob('**/*.*').each do |file|
+       rel_route = file.relative_path_from(import_out_path)
+       dest_route = PRJ_ROOT + 'out' + ide_tag + rel_route
+       if action == 'Clean'
+         remove_file(dest_route, verbose: false)
+       else
+         copy_file(file, dest_route, verbose: false)
+       end
+     end
+     true
    end
 end

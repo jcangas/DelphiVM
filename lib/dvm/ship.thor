@@ -10,10 +10,10 @@ class Ship < BuildTarget
 	desc  "clean", "remove ship file #{APP_ID}-#{IDEServices.default_ide}.zip", :for => :clean
 	desc  "make", "make ship file(s) #{APP_ID}-#{IDEServices.default_ide}.zip", :for => :make
 	desc  "build", "build ship file(s) #{APP_ID}-#{IDEServices.default_ide}.zip", :for => :build
-  
+
   method_option :groups,  type: :array, aliases: '-g', default: configuration.ship_groups, desc: "use groups: bin lib source doc samples test", for: :make
   method_option :groups,  type: :array, aliases: '-g', default: configuration.ship_groups, desc: "use groups: bin lib source doc samples test", for: :build
-  
+
 protected
 	def get_zip_name(idetag)
 		Pathname('ship') + spec.get_zip_name(idetag)
@@ -57,7 +57,7 @@ protected
 		@spec ||= ::Ship::Spec.new do |s|
 			s.name = Delphivm::APPMODULE.name
 			s.version = Delphivm::APPMODULE.VERSION.tag
-			s.ignore_files(['**/*.~*', '**/*.bak', '**/*.local', '**/*.identcache' ,'*.log', '.DS_Store'])
+			s.ignore_files(['**/*.~*', '**/*.{bak,local,dsk,tvsconfig,identcache}', '**/ModelSupport_*/**/*.*', '**/LibrarySupport/**/*.*', '**/__history/*.*', '*.log', '.DS_Store'])
 			s.bin_files("out/%{idetag}/*/*/bin/**{.*,}/*.*")
 			s.lib_files("out/%{idetag}/*/{Debug,Release}/lib/*.*")
 			s.source_files(["src/**/*.*", "*.*"])
