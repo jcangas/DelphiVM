@@ -1,0 +1,70 @@
+= DelphiVM CHANGELOG
+
+== v3.6.0
+
+== vendor:import
+
+Copia todo el contenido del .zip al directorio vendor, inlcuido el out si el zip lo contiene.
+
+Ahora solo se envia salida al prj out durante vendor:make o vendor:build.
+
+=== "build_as_copy" feature para vendor:build/make
+
+Si el zip contiene un out, en lugar de invocar MSBuild, se copia la versión ya compilada en vendor al
+project out.
+
+=== dvm vendor:tree
+
+Mejorado esqeuma de colores: para cada IDE en cada import indica si cada version del
+IDE esta instalada (verde) o no lo está (rojo). De esta forma, en un vistazo podemos
+ver si se podrá completar una determinada build.
+
+== v3.5.6
+
+=== Mejorado comando vendor:tree
+
+Mejora colores y dibuja las ramas.
+
+=== Mejorada opción vendor:build --ide
+
+Ahora se soporta la opcion --ide. Admite una lista de ide tags (D200, D210, etc).
+Advierte si algun IDE necesario para el build requerido en algún importA no esta instalado.
+
+== v3.5.5
+
+=== General
+
+* Corrige {idetag} error
+
+=== dvm vendor:import command
+
+* mejora de los mensajes de progreso (nivel de indirección, colores, indentacion) para facilitar lectura
+* al importar paquetes, solo se importan los que son para algun IDE usado en el proyecto
+* Nuevo argumento IDEVERS
+
+----
+dvm vendor:import D200 D210
+----
+
+restringe la importacion solo a paqquetes para esos IDEs. Si pasamos IDEs no usados en el prj,
+se ignoran.
+
+=== Nuevo comando vendor:tree
+
+----
+dvm vendor:tree
+- 0:  Dido-0.9.4 D210, D200
+- 1:    Summer-1.2.1 D210
+- 0:  ics-3.2.0 D200
+----
+
+Una vez hecho el import, nos permite visualizar de forma resumida y coloreada el arbol de
+dependencias, incluyendo el nivel de indirección. Si no se ha invocado vendor:import solo muestra
+las dependencias definidas en imports.dvm
+
+== v3.5.4
+
+=== vendor:import recursivo. Al fin!
+
+Invoca import.dvm recursivamente para cada dependencia. Por tanto, por fin,
+en cada proyecto basta poner tus dependencias directas, sin preocuparse de las que esos imports tengan a su vez.

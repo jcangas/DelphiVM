@@ -47,11 +47,11 @@ class Delphivm
     end
 
     def self.ide_in_installed?(ide)
-      (begin
-      Win32::Registry::HKEY_CURRENT_USER.open(IDEInfos[ide][:regkey]) { |reg| reg }
+      Win32::Registry::HKEY_CURRENT_USER.open(IDEInfos[ide][:regkey]) do |reg|
+        reg
+      end
     rescue
       false
-    end)
     end
 
     def self.report_ides(ides, kind = :found)
@@ -216,7 +216,7 @@ class Delphivm
       end
     end
 
-  private
+    private
 
     def self.say(*args)
       Delphivm.shell.say(*args)
