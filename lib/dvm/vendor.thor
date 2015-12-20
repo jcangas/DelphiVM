@@ -101,7 +101,7 @@
 
    def do_reg
      silence_warnings do
-       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :ide_register
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :ide_install
      end
    end
 
@@ -122,7 +122,7 @@
 
    def do_build_action(idetag, cfg, action)
      idetag = [idetag] unless idetag.is_a? Array
-     cfg = {} unless cfg
+     cfg ||= {}
      cfg['BuildGroup'] = options[:group] if options.group?
      script = DSL.load_dvm_script(PRJ_IMPORTS_FILE, options)
      ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
@@ -140,9 +140,26 @@
        use_ides &= idetag unless idetag.empty?
        use_ides &= ides_installed
        use_ides.each do |use_ide|
+         next if build_as_copy(import.lib_tag, use_ide, action)
          ide = IDEServices.new(use_ide)
          ide.call_build_tool(action, cfg)
        end
      end
+   end
+
+   def build_as_copy(lib_tag, ide_tag, action)
+     import_out_path = PRJ_IMPORTS + lib_tag + 'out' + ide_tag
+     return unless import_out_path.exist?
+     say_status(:WARN, "#{action} using #{import_out_path.relative_path_from PRJ_IMPORTS}", :yellow)
+     Pathname(import_out_path).glob('**/*.*').each do |file|
+       rel_route = file.relative_path_from(import_out_path)
+       dest_route = PRJ_ROOT + 'out' + ide_tag + rel_route
+       if action == 'Clean'
+         remove_file(dest_route, verbose: false)
+       else
+         copy_file(file, dest_route, verbose: false)
+       end
+     end
+     true
    end
 end

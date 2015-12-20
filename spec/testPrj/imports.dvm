@@ -2,6 +2,9 @@
 source File.join(File.dirname(__FILE__), 'imports')
 
 uses 'D210' do
+  import "Cipher", "5.3.0" do
+    ide_install('CipherD210.bpl')
+  end
   import "Dido", "0.9.4"
   import "Lord", "0.9.4"
   # using uri fails for security issues

@@ -1,5 +1,6 @@
 
 class Delphivm
+  # Domain specific language for imports script
   module DSL
     def self.load_dvm_script(path_to_file, options = {}, required_by = nil)
       if path_to_file.exist?
@@ -10,6 +11,7 @@ class Delphivm
       ImportScript.new(content, options, required_by)
     end
 
+    # unmarshalled script as Object
     class ImportScript < Object
       include Delphivm::Talk
       attr_reader :required_by
@@ -19,7 +21,7 @@ class Delphivm
       attr_reader :loaded
 
       def initialize(content = nil, options = {}, required_by = nil)
-        @loaded = (content != nil)
+        @loaded = !content.nil?
         @options = options
         @required_by = required_by
         @imports = {}
@@ -60,20 +62,20 @@ class Delphivm
         foreach_do :proccess
       end
 
-      def ide_register
+      def ide_install
         foreach_do :do_ide_install
       end
 
       def collect_dependences
-        ordered_imports = {}
+        sorted_imports = {}
         imports.each do |lib_tag, importer|
           importer.dependences_script.collect_dependences
           importer.dependences_script.imports.each do |key, val|
-            ordered_imports[key] = val unless ordered_imports.key?(key)
+            sorted_imports[key] = val unless sorted_imports.key?(key)
           end
-          ordered_imports[lib_tag] = importer unless ordered_imports.key?(lib_tag)
+          sorted_imports[lib_tag] = importer unless sorted_imports.key?(lib_tag)
         end
-        @imports = ordered_imports
+        @imports = sorted_imports
       end
 
       def foreach_do(method, owned = false)
@@ -85,6 +87,7 @@ class Delphivm
       end
     end
 
+    # Each import statement
     class Importer
       include Delphivm::Talk
       attr_reader :idevers
@@ -144,22 +147,23 @@ class Delphivm
       end
 
       def do_ide_install
-        report = {ok: [], fail: []}
+        report = { ok: [], fail: [] }
         packages = @ide_pkgs
         options = packages.pop if packages.last.is_a? Hash
         options ||= {}
 
-        prefer_config = options[:config] || 'Release'
+        pref_cfg = options[:config] || 'Release'
         packages.each do |pkg|
           # El paquete para el IDE debe estar compilado para Win32
-          search_pattern = (PRJ_ROOT + 'out' + idever + 'Win32' + '{Debug,Release}' + 'bin' + pkg)
+          search_pattern = (PRJ_IMPORTS + lib_tag + 'out' + idever + 'Win32' + '{Debug,Release}' + 'bin' + pkg)
+
           avaiable_files = Pathname.glob(search_pattern).inject({}) do |mapped, p|
             mapped[p.dirname.parent.basename.to_s] = p
             mapped
           end
           avaible_configs = avaiable_files.keys
-          use_prefer_config = avaible_configs.include?(prefer_config)
-          use_config = (use_prefer_config ? prefer_config : avaible_configs.first)
+          use_pref_cfg = avaible_configs.include?(pref_cfg)
+          use_config = (use_pref_cfg ? pref_cfg : avaible_configs.first)
           target = avaiable_files[use_config]
           if target
             report[:ok] << pkg
@@ -168,7 +172,7 @@ class Delphivm
             report[:fail] << pkg
           end
         end
-        report
+        show_ide_install_report(report)
       end
 
       def proccess
@@ -194,7 +198,10 @@ class Delphivm
         vendorize
         ensure_dependences_script
         dependences_script.send(:foreach_do, :proccess)
-        report = do_ide_install
+        do_ide_install
+      end
+
+      def show_ide_install_report(report)
         say_status(:IDE, "installed packages: #{report[:ok].count}", :green) unless report[:ok].empty?
         unless report[:fail].empty?
           say_status :IDE, 'missing packages:', :red
@@ -220,13 +227,8 @@ class Delphivm
         pb = ProgressBar.create(total: files.size, title: '  %9s ->' % 'vendorize', format: '%t %J%% %E %B')
         files.each do |file|
           next if file.directory?
-          if file.each_filename.include?('out')
-            route = file.relative_path_from(DVM_IMPORTS + idever + lib_tag + 'out')
-            link = PRJ_ROOT + 'out' + route
-          else
-            route = file.relative_path_from(DVM_IMPORTS + idever)
-            link = PRJ_IMPORTS + route
-          end
+          route = file.relative_path_from(DVM_IMPORTS + idever)
+          link = PRJ_IMPORTS + route
           install_vendor(link, file)
           pb.increment
         end

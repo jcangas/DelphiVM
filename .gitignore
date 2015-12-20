@@ -9,3 +9,4 @@ Thumbs.db
 pkg
 bin/dvm-cache/
 bin/dvm-imports/
+*.log

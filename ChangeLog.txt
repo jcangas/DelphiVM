@@ -1,6 +1,17 @@
 = DelphiVM CHANGELOG
 
-== v3.5.7
+== v3.6.0
+
+== vendor:import
+
+Copia todo el contenido del .zip al directorio vendor, inlcuido el out si el zip lo contiene.
+
+Ahora solo se envia salida al prj out durante vendor:make o vendor:build.
+
+=== "build_as_copy" feature para vendor:build/make
+
+Si el zip contiene un out, en lugar de invocar MSBuild, se copia la versión ya compilada en vendor al
+project out.
 
 === dvm vendor:tree
 
