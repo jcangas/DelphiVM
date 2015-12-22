@@ -54,8 +54,8 @@ class Delphivm
 
       protected
 
-      def tree
-        foreach_do :tree, true
+      def tree(max_level)
+        foreach_do :tree, max_level, true
       end
 
       def proccess
@@ -78,12 +78,23 @@ class Delphivm
         @imports = sorted_imports
       end
 
-      def foreach_do(method, owned = false)
+      def foreach_do(method, args = [], owned = false)
         return unless method
         imports.values.each do |importdef|
           next if owned && importdef.script != self
-          importdef.send method
+          importdef.send method, *args
         end
+      end
+
+      def satisfied(lib_tag)
+        lib_tag = lib_tag.to_sym
+        result = false
+        parent_result = false
+        result = true if @imports.has_key?(lib_tag) && @imports[lib_tag].satisfied?
+        parent_result = true if required_by && required_by.script.satisfied(lib_tag)
+        result ||= parent_result
+        #say "check #{level} satisfied #{lib_tag} = #{result};"
+        result
       end
     end
 
@@ -114,6 +125,7 @@ class Delphivm
         @source_uri = libopts[:uri] || Pathname(source) + lib_file
         @ide_pkgs = []
         @dependences_scriptname = Pathname(PRJ_IMPORTS + lib_tag + 'imports.dvm')
+        @satisfied = false
         instance_eval(&block) if block
       end
 
@@ -138,6 +150,10 @@ class Delphivm
           @dependences_script = DSL.load_dvm_script(dependences_scriptname, script.options, self)
         end
         @dependences_script
+      end
+
+      def satisfied?
+        @satisfied
       end
 
       private
@@ -181,7 +197,8 @@ class Delphivm
         destination = DVM_IMPORTS + idever
         cache_folder = destination + lib_tag
         exist = cache_folder.exist?
-        if exist && script.options.force?
+        already_in_tree = script.send(:satisfied, lib_tag)
+        if exist && script.options.force? && !already_in_tree
           exist = false
           FileUtils.remove_dir(cache_folder.win, true)
         end
@@ -191,9 +208,11 @@ class Delphivm
         say_status status, "#{destination.win}", :green
 
         zip_file = download(source_uri, lib_file) unless exist
-        return if defined? Ocra
-        unzip(zip_file, destination) if zip_file
         exist ||= zip_file
+        exist ? @satisfied = true : @satisfied = false
+        return if defined? Ocra
+
+        unzip(zip_file, destination) if zip_file
         return unless exist
         vendorize
         ensure_dependences_script
@@ -207,7 +226,6 @@ class Delphivm
           say_status :IDE, 'missing packages:', :red
           say report[:fail].join("\n")
         end
-        #say "[#{script.level}] Import #{lib_file} done!", [:blue, :bold]
       end
 
       def get_vendor_files
@@ -244,7 +262,7 @@ class Delphivm
         end
       end
 
-      def tree
+      def tree(max_level)
         if script.level == 0
           indent = ''
         else
@@ -263,7 +281,7 @@ class Delphivm
           say "#{idever} ", [ide_color, :bold]
         end
         say
-        dependences_script.send :tree
+        dependences_script.send(:tree, max_level) if (max_level > script.level)
       end
 
       def register(idever, pkg)
@@ -275,11 +293,21 @@ class Delphivm
         to_here = DVM_TEMP + file_name
         to_here.delete if to_here.exist?
         pb = nil
-        start = lambda { |length| pb = ProgressBar.create(total: length, title: '  %9s ->' % 'download', format: '%t %J%% %E %B')}
-        progress = lambda { |s| pb.progress = s; pb.refresh }
+        start = lambda do |length|
+          pb = ProgressBar.create(total: length, title: '  %9s ->' % 'download', format: '%t %J%% %E %B')
+        end
+        progress = lambda do |s|
+          pb.progress = s
+          #pb.refresh
+        end
         begin
-          content = open(source_uri, 'rb', content_length_proc: start, progress_proc: progress).read
-          File.open(to_here, 'wb') { |wfile| wfile.write(content)} unless defined? Ocra
+          open(source_uri, 'rb', content_length_proc: start, progress_proc: progress) do |reader|
+            File.open(to_here, 'wb') do |wfile|
+              while chunk = reader.read(1024)
+                wfile.write(chunk) unless defined? Ocra
+              end
+            end
+          end
         rescue Exception => e
           say_status :ERROR, e, :red
           return nil

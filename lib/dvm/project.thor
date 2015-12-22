@@ -10,7 +10,16 @@ class Project < BuildTarget
 	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :make
 	method_option :group, type: :string, aliases: '-g', default: self.configuration.build_args, desc: "Use BuildGroup", for: :build
 
+	desc 'reset', 'erase prj out'
+	def reset
+		do_reset
+	end
+
 protected
+
+	def do_reset
+		remove_dir(root_out_path)
+	end
 
 	def do_clean(idetag, cfg)
 		do_build_action(idetag, cfg, 'Clean')
