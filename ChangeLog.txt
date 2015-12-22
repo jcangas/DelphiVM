@@ -2,11 +2,30 @@
 
 == v3.6.0
 
+== Nueva opción prj:reset
+
+Borra el out del proyecto
+
+== Nueva opción vendor:tree MAX_LEVEL
+
+Muestra el árbol de dependencias solo hasta un nivel máximo de profundidad.
+
+Util para revisar las dependencias directas (MAX_LEVEL = 0) o depurar las dependencias en general
+
 == vendor:import
 
-Copia todo el contenido del .zip al directorio vendor, inlcuido el out si el zip lo contiene.
-
+* Copia todo el contenido del .zip al directorio vendor, inlcuido el out si el zip lo contiene.
 Ahora solo se envia salida al prj out durante vendor:make o vendor:build.
+
+* fetch: optimizado:
+** En lugar de descargar el import entero a memoria y luego crear el fichero
+local en disco, la descarga se produce en bloques, lo que permite descargar ficheros grandes
+con menos consumo de memoria.
+
+** optimizada la opción -f. Esta opción borra la copia local del import en el cache, par forzar una
+descarga fresca. Si el import aparecia varias veces en el árbol, se borraba cada vez, ahora solo se
+borra la primera vez que aparece en el árbol, las siguientes apariciones, reusan la copia recien
+descargada.
 
 === "build_as_copy" feature para vendor:build/make
 

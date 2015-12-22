@@ -72,10 +72,10 @@
      prepare
    end
 
-   desc 'tree', 'show dependencs tree. Use after import'
-   def tree
+   desc 'tree MAX_LEVEL', 'show dependencs tree. defaul MAX_LEVEL = 100'
+   def tree(max_level = 100)
      silence_warnings do
-       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :tree
+       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send(:tree, max_level.to_i)
      end
    end
 
@@ -149,17 +149,19 @@
 
    def build_as_copy(lib_tag, ide_tag, action)
      import_out_path = PRJ_IMPORTS + lib_tag + 'out' + ide_tag
-     return unless import_out_path.exist?
-     say_status(:WARN, "#{action} using #{import_out_path.relative_path_from PRJ_IMPORTS}", :yellow)
+     return false unless import_out_path.exist?
+     say_status(action.to_sym, "using imported #{import_out_path.relative_path_from PRJ_IMPORTS}", :yellow)
      Pathname(import_out_path).glob('**/*.*').each do |file|
        rel_route = file.relative_path_from(import_out_path)
        dest_route = PRJ_ROOT + 'out' + ide_tag + rel_route
        if action == 'Clean'
          remove_file(dest_route, verbose: false)
+       elsif action == 'Make'
+         copy_file(file, dest_route, verbose: false, force: true)
        else
-         copy_file(file, dest_route, verbose: false)
+         copy_file(file, dest_route, verbose: false, force: true)
        end
      end
-     true
+     return true
    end
 end
