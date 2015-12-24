@@ -164,28 +164,23 @@ class Delphivm
 
       def do_ide_install
         report = { ok: [], fail: [] }
-        packages = @ide_pkgs
-        options = packages.pop if packages.last.is_a? Hash
-        options ||= {}
-
-        pref_cfg = options[:config] || 'Release'
-        packages.each do |pkg|
+        ide_pkgs.each do |ide_pkg|
           # El paquete para el IDE debe estar compilado para Win32
-          search_pattern = (PRJ_IMPORTS + lib_tag + 'out' + idever + 'Win32' + '{Debug,Release}' + 'bin' + pkg)
+          # Preferir Release
+          search = (PRJ_ROOT + 'out' + idever + 'Win32' + '{Release,Debug}' + 'bin' + ide_pkg)
 
-          avaiable_files = Pathname.glob(search_pattern).inject({}) do |mapped, p|
-            mapped[p.dirname.parent.basename.to_s] = p
-            mapped
+          pkg_by_cfg = {}
+          Pathname.glob(search).each_with_object(pkg_by_cfg) do |pkg, groups|
+            groups[pkg.dirname.parent.basename.to_s] = pkg
           end
-          avaible_configs = avaiable_files.keys
-          use_pref_cfg = avaible_configs.include?(pref_cfg)
-          use_config = (use_pref_cfg ? pref_cfg : avaible_configs.first)
-          target = avaiable_files[use_config]
+
+          target = pkg_by_cfg.values.first
+
           if target
-            report[:ok] << pkg
+            report[:ok] << ide_pkg
             register(idever, target)
           else
-            report[:fail] << pkg
+            report[:fail] << ide_pkg
           end
         end
         show_ide_install_report(report)
@@ -217,11 +212,10 @@ class Delphivm
         vendorize
         ensure_dependences_script
         dependences_script.send(:foreach_do, :proccess)
-        do_ide_install
       end
 
       def show_ide_install_report(report)
-        say_status(:IDE, "installed packages: #{report[:ok].count}", :green) unless report[:ok].empty?
+        say_status(:IDE, "#{lib_tag} installed #{report[:ok].count} packages", :green) unless report[:ok].empty?
         unless report[:fail].empty?
           say_status :IDE, 'missing packages:', :red
           say report[:fail].join("\n")
