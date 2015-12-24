@@ -1,6 +1,18 @@
 = DelphiVM CHANGELOG
 :sectnums!:
 
+== v3.6.2
+
+=== vendor:import
+
+*  Corrige: no debe registrar paquetes IDE
+
+=== vendor:reg
+
+* Corrige: debe mostrar el nombre del import que registra paquetes IDE
+
+* refactorización: implmentación más simple y rápida
+
 == v3.6.1
 
 === Nueva opción prj:reset
