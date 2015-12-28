@@ -1,6 +1,28 @@
 = DelphiVM CHANGELOG
 :sectnums!:
 
+=== Mejoras en vendor:tree
+
+* Nueva opción --multi
+
+Permite invocar desde una carpeta que contiene multiples proyectos. Construye el árbol de dependencias conjunto
+para todos los proyectos.
+
+* Nueva opción --format
+
+Especifica el formato de salida del árbol. Actualmente admite dos valores
+
+draw::
+
+Es el valor por defecto. Renderiza el árbol en forma de gráfica en la consola.
+
+uml::
+
+Renderiza el árbol en usando la sintaxis de http://plantuml.com[PlantUML] en la consola.
+Esto permite redireccionar la salida a fichero de texto para procesar la salida PlnatUML con otras herramientas, como
+http://asciidoctor.org[AscciDoctor]. De esta forma, podemos fácilmente incluir el diagrama UML de dependencias en
+otros documentos.
+
 == v3.6.2
 
 === vendor:import

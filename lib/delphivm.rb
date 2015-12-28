@@ -63,7 +63,8 @@ class Delphivm
   end
     DVM_IMPORTS.mkpath
 
-  PRJ_IMPORTS_FILE = PRJ_ROOT + 'imports.dvm'
+  IMPORTS_FNAME = 'imports.dvm'
+  PRJ_IMPORTS_FILE = PRJ_ROOT + IMPORTS_FNAME
   PRJ_CFG_FILE = PRJ_ROOT + 'DelphiVM.cfg'
   PRJ_IMPORTS = PRJ_ROOT + 'vendor'
   DELPHIVM_DEFAULTS = {

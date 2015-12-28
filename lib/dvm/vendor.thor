@@ -73,9 +73,15 @@
    end
 
    desc 'tree MAX_LEVEL', 'show dependencs tree. defaul MAX_LEVEL = 100'
+   method_option :multi, type: :boolean, aliases: '-m', default: false, desc: 'multi-project aware mode'
+   method_option :format, type: :string, required: true, aliases: '-f', default: 'draw', desc: 'render format: draw, uml'
    def tree(max_level = 100)
      silence_warnings do
-       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send(:tree, max_level.to_i)
+       if options.multi?
+         DSL.multi_dvm_scripts(PRJ_ROOT + '*' + IMPORTS_FNAME, options).send(:tree, max_level.to_i, options.format)
+       else
+         DSL.load_dvm_script(PRJ_IMPORTS_FILE, options).send(:tree, max_level.to_i, options.format)
+       end
      end
    end
 

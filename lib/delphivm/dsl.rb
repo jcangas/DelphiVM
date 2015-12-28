@@ -3,31 +3,52 @@ class Delphivm
   # Domain specific language for imports script
   module DSL
     def self.load_dvm_script(path_to_file, options = {}, required_by = nil)
-      if path_to_file.exist?
-        content = File.read(path_to_file)
-      else
-        content = nil
+      ImportScript.new(path_to_file, options, required_by)
+    end
+
+    def self.multi_dvm_scripts(pattern, options = {}, required_by = nil)
+      group_script = ImportScript.new(PRJ_IMPORTS_FILE)
+      group_script.source(PRJ_ROOT)
+      Pathname.glob(pattern).each do |subprj|
+        libname = subprj.dirname.basename
+        version_fname = subprj.dirname + 'version.pas'
+        if version_fname.exist?
+          lib_module = Module.new
+          lib_module.module_eval(File.read(version_fname))
+          version = lib_module::VERSION
+        else
+          version = '?.?.?'
+        end
+        prjdef = group_script.import(libname, version)
+        prjdef.dependences_scriptname = subprj
       end
-      ImportScript.new(content, options, required_by)
+      group_script
     end
 
     # unmarshalled script as Object
     class ImportScript < Object
       include Delphivm::Talk
+      attr_reader :file_name
       attr_reader :required_by
       attr_reader :idever
       attr_reader :imports
       attr_reader :options
       attr_reader :loaded
 
-      def initialize(content = nil, options = {}, required_by = nil)
-        @loaded = !content.nil?
+      def initialize(file_name, options = {}, required_by = nil)
         @options = options
         @required_by = required_by
         @imports = {}
-        return unless @loaded
-        eval(content)
-        collect_dependences
+        load(file_name)
+      end
+
+      def load(file_name)
+        @file_name = file_name
+        @loaded = file_name.exist?
+        if @loaded
+          eval(File.read(file_name))
+          collect_dependences
+        end
       end
 
       def source(value = nil)
@@ -54,8 +75,8 @@ class Delphivm
 
       protected
 
-      def tree(max_level)
-        foreach_do :tree, max_level, true
+      def tree(max_level, format, visited = [])
+        foreach_do :tree, [max_level, format, visited], true
       end
 
       def proccess
@@ -93,7 +114,6 @@ class Delphivm
         result = true if @imports.has_key?(lib_tag) && @imports[lib_tag].satisfied?
         parent_result = true if required_by && required_by.script.satisfied(lib_tag)
         result ||= parent_result
-        #say "check #{level} satisfied #{lib_tag} = #{result};"
         result
       end
     end
@@ -104,7 +124,7 @@ class Delphivm
       attr_reader :idevers
       attr_reader :script
       attr_reader :dependences_script
-      attr_reader :dependences_scriptname
+      attr_accessor :dependences_scriptname
       attr_reader :source
       attr_reader :source_uri
       attr_reader :idever
@@ -124,7 +144,7 @@ class Delphivm
         @libopts = liboptions
         @source_uri = libopts[:uri] || Pathname(source) + lib_file
         @ide_pkgs = []
-        @dependences_scriptname = Pathname(PRJ_IMPORTS + lib_tag + 'imports.dvm')
+        @dependences_scriptname =  script.file_name.dirname + 'vendor' + lib_tag + IMPORTS_FNAME
         @satisfied = false
         instance_eval(&block) if block
       end
@@ -256,7 +276,20 @@ class Delphivm
         end
       end
 
-      def tree(max_level)
+      def tree(max_level, format, visited)
+        send("tree_#{format}", max_level, visited)
+        dependences_script.send(:tree, max_level, format, visited) if (max_level > script.level)
+      end
+
+      def tree_uml(max_level, visited)
+        if script.required_by
+          link = "[#{script.required_by.lib_tag}] --> [#{lib_tag}]"
+          say link unless visited.include?(link)
+          visited << link
+        end
+      end
+
+      def tree_draw(max_level, visited)
         if script.level == 0
           indent = ''
         else
@@ -275,7 +308,6 @@ class Delphivm
           say "#{idever} ", [ide_color, :bold]
         end
         say
-        dependences_script.send(:tree, max_level) if (max_level > script.level)
       end
 
       def register(idever, pkg)
@@ -292,7 +324,6 @@ class Delphivm
         end
         progress = lambda do |s|
           pb.progress = s
-          #pb.refresh
         end
         begin
           open(source_uri, 'rb', content_length_proc: start, progress_proc: progress) do |reader|
