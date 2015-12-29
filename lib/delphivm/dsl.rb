@@ -6,9 +6,12 @@ class Delphivm
       ImportScript.new(path_to_file, options, required_by)
     end
 
-    def self.multi_dvm_scripts(pattern, options = {}, required_by = nil)
-      group_script = ImportScript.new(PRJ_IMPORTS_FILE)
-      group_script.source(PRJ_ROOT)
+    def self.new_dvm_script(root_path, options = {}, required_by = nil)
+      path_to_file = Pathname(root_path) + IMPORTS_FNAME
+      root_script = ImportScript.new(path_to_file, options, required_by)
+      return root_script unless options.multi?
+      root_script.source(root_path)
+      pattern = Pathname(root_path) + '*' + IMPORTS_FNAME
       Pathname.glob(pattern).each do |subprj|
         libname = subprj.dirname.basename
         version_fname = subprj.dirname + 'version.pas'
@@ -19,10 +22,10 @@ class Delphivm
         else
           version = '?.?.?'
         end
-        prjdef = group_script.import(libname, version)
+        prjdef = root_script.import(libname, version)
         prjdef.dependences_scriptname = subprj
       end
-      group_script
+      root_script
     end
 
     # unmarshalled script as Object
@@ -43,12 +46,57 @@ class Delphivm
       end
 
       def load(file_name)
-        @file_name = file_name
+        # p "#{self.class}.load #{file_name}"
+        @file_name = Pathname(file_name)
         @loaded = file_name.exist?
-        if @loaded
-          eval(File.read(file_name))
-          collect_dependences
+        return self unless @loaded
+        eval(File.read(file_name))
+        collect_dependences
+      end
+
+      def script_path
+        file_name.dirname
+      end
+
+      def root_path
+        return @root_path if @root_path
+        if multi_root || multi_top_prj
+          file_name.dirname
+        else
+          required_by.script.root_path
         end
+      end
+
+      def prj_tag
+        @prj_tag ||= "#{prj_name}-#{prj_version}"
+      end
+
+      def prj_version
+        return @prj_version if @prj_version
+        version_fname = root_path + 'version.pas'
+        if version_fname.exist?
+          lib_module = Module.new
+          lib_module.module_eval(File.read(version_fname))
+          @prj_version = lib_module::VERSION
+        else
+          @prj_version = '?.?.?'
+        end
+      end
+
+      def prj_name
+        root_path.basename
+      end
+
+      def vendor_path
+        root_path + 'vendor'
+      end
+
+      def multi_root
+        options.multi? && required_by.nil?
+      end
+
+      def multi_top_prj
+        options.multi? && (required_by && required_by.script.multi_root) || required_by.nil?
       end
 
       def source(value = nil)
@@ -73,6 +121,27 @@ class Delphivm
         required_by ? required_by.script.level + 1 : 0
       end
 
+      def idevers_filter
+        return @idevers_filter if @idevers_filter
+        IDEServices.root_path = script_path
+        if multi_root
+          ides_in_prj = IDEServices.idelist(:installed).map(&:to_s)
+        else
+          ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
+        end
+        @idevers_filter = options.idevers || []
+        @idevers_filter =  ides_in_prj if @idevers_filter.empty?
+        @idevers_filter &= ides_in_prj
+      end
+
+      def reset
+        FileUtils.rm_r(vendor_path, verbose: false, force: true)
+      end
+
+      def prepare
+        FileUtils.mkpath(vendor_path)
+      end
+
       protected
 
       def tree(max_level, format, visited = [])
@@ -80,6 +149,10 @@ class Delphivm
       end
 
       def proccess
+        if multi_top_prj
+          reset if options.reset?
+          prepare
+        end
         foreach_do :proccess
       end
 
@@ -88,6 +161,7 @@ class Delphivm
       end
 
       def collect_dependences
+        return
         sorted_imports = {}
         imports.each do |lib_tag, importer|
           importer.dependences_script.collect_dependences
@@ -107,14 +181,22 @@ class Delphivm
         end
       end
 
+      def mark_satisfied(lib_tag)
+        @satisfied_libs ||= {}
+        if multi_top_prj
+          @satisfied_libs[lib_tag] = true
+        else
+          required_by.script.mark_satisfied(lib_tag)
+        end
+      end
+
       def satisfied(lib_tag)
-        lib_tag = lib_tag.to_sym
-        result = false
-        parent_result = false
-        result = true if @imports.has_key?(lib_tag) && @imports[lib_tag].satisfied?
-        parent_result = true if required_by && required_by.script.satisfied(lib_tag)
-        result ||= parent_result
-        result
+        @satisfied_libs ||= {}
+        if multi_top_prj
+          @satisfied_libs.has_key?(lib_tag)
+        else
+          required_by.script.satisfied(lib_tag)
+        end
       end
     end
 
@@ -144,20 +226,21 @@ class Delphivm
         @libopts = liboptions
         @source_uri = libopts[:uri] || Pathname(source) + lib_file
         @ide_pkgs = []
-        @dependences_scriptname =  script.file_name.dirname + 'vendor' + lib_tag + IMPORTS_FNAME
+        @dependences_scriptname =  script.vendor_path + lib_tag + IMPORTS_FNAME
         @satisfied = false
         instance_eval(&block) if block
       end
 
       def lib_tag
-        "#{libname}-#{libver}"
+        @llib_tag ||= "#{libname}-#{libver}"
       end
 
       def lib_file
-        "#{lib_tag}-#{idever}.zip"
+        @lib_file ||= "#{lib_tag}-#{idever}.zip"
       end
 
       # import.dvm file must exist in vendor
+      # in order to vendorize? method works
       def ensure_dependences_script
         fname = dependences_scriptname
         return if fname.exist?
@@ -173,7 +256,7 @@ class Delphivm
       end
 
       def satisfied?
-        @satisfied
+        script.satisfied(lib_tag)
       end
 
       private
@@ -187,7 +270,7 @@ class Delphivm
         ide_pkgs.each do |ide_pkg|
           # El paquete para el IDE debe estar compilado para Win32
           # Preferir Release
-          search = (PRJ_ROOT + 'out' + idever + 'Win32' + '{Release,Debug}' + 'bin' + ide_pkg)
+          search = (script.root_path + 'out' + idever + 'Win32' + '{Release,Debug}' + 'bin' + ide_pkg)
 
           pkg_by_cfg = {}
           Pathname.glob(search).each_with_object(pkg_by_cfg) do |pkg, groups|
@@ -207,31 +290,38 @@ class Delphivm
       end
 
       def proccess
+        # p "#{lib_tag} proccess #{script.loaded}"
+        return if already_in_tree = script.send(:satisfied, lib_tag)
+        if script.multi_root # || script.multi_top_prj
+          dependences_script.send(:proccess)
+          return
+        end
         fail "import's source undefined" unless @source
-        return if (idevers & script.options[:idevers]).empty?
+        net_idevers = (idevers & script.idevers_filter)
+        return if net_idevers.empty?
         destination = DVM_IMPORTS + idever
         cache_folder = destination + lib_tag
         exist = cache_folder.exist?
-        already_in_tree = script.send(:satisfied, lib_tag)
+
         if exist && script.options.force? && !already_in_tree
           exist = false
           FileUtils.remove_dir(cache_folder.win, true)
         end
         status = exist ? :'cached in' : :'fetch to'
         say
-        say "[#{script.level}] Importing #{lib_file}", [:blue, :bold]
+        say "#{script.prj_name} Importing [#{script.level}] #{lib_file}", [:blue, :bold]
         say_status status, "#{destination.win}", :green
 
         zip_file = download(source_uri, lib_file) unless exist
         exist ||= zip_file
-        exist ? @satisfied = true : @satisfied = false
+        mark_satisfied if exist
         return if defined? Ocra
 
         unzip(zip_file, destination) if zip_file
         return unless exist
         vendorize
         ensure_dependences_script
-        dependences_script.send(:foreach_do, :proccess)
+        dependences_script.send(:proccess)
       end
 
       def show_ide_install_report(report)
@@ -242,7 +332,7 @@ class Delphivm
         end
       end
 
-      def get_vendor_files
+      def dvm_vendor_files
         Pathname.glob(DVM_IMPORTS + idever + lib_tag + '**/*')
       end
 
@@ -251,16 +341,17 @@ class Delphivm
       end
 
       def vendorize
+        # p "vendorize to #{script.vendor_path}"
         if vendorized?
           say_status :skip, "#{lib_file}, already in vendor", :yellow
           return
         end
-        files = get_vendor_files
+        files = dvm_vendor_files
         pb = ProgressBar.create(total: files.size, title: '  %9s ->' % 'vendorize', format: '%t %J%% %E %B')
         files.each do |file|
           next if file.directory?
           route = file.relative_path_from(DVM_IMPORTS + idever)
-          link = PRJ_IMPORTS + route
+          link = script.vendor_path + route
           install_vendor(link, file)
           pb.increment
         end
@@ -281,12 +372,19 @@ class Delphivm
         dependences_script.send(:tree, max_level, format, visited) if (max_level > script.level)
       end
 
+      def mark_satisfied
+        script.send(:mark_satisfied, lib_tag)
+      end
+
       def tree_uml(max_level, visited)
-        if script.required_by
-          link = "[#{script.required_by.lib_tag}] --> [#{lib_tag}]"
-          say link unless visited.include?(link)
-          visited << link
+        if script.multi_top_prj
+          target = script.prj_tag
+        else
+          target = script.required_by.lib_tag
         end
+        link = "[#{target}] --> [#{lib_tag}]"
+        say link unless visited.include?(link)
+        visited << link
       end
 
       def tree_draw(max_level, visited)
