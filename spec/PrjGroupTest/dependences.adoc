@@ -1,0 +1,25 @@
+= Dependences
+:imagesdir: assets
+:imagesoutdir: assets
+
+.Diagrama UML
+["plantuml", "uml-diagram", "png"]
+----
+skinparam component {
+  FontSize 23
+  FontName Courier
+  InterfaceBackgroundColor RosyBrown
+  InterfaceBorderColor orange
+  BackgroundColor<<root>> Red
+  BorderColor<<root>> #FF6655
+  BorderColor black
+  BackgroundColor white
+  ArrowFontName Impact
+  ArrowColor #FF6655
+  ArrowFontColor #777777
+}
+[testPrjA-0.1.0] <<root>>
+[testPrjB-0.1.0] <<root>>
+
+include::depen.txt[]
+----
