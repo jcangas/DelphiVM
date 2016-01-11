@@ -1,4 +1,4 @@
 @echo off
 @echo --- DVM TEST ---
 set DVMCATALOG=%~dp0imports
-ruby ..\..\bin\delphivm test %*
+ruby %~dp0..\..\bin\delphivm test %*

@@ -54,28 +54,29 @@
    method_option :force, type: :boolean, aliases: '-f', default: false, desc: 'force download when already in local cache'
    method_option :reset, type: :boolean, aliases: '-r', default: false, desc: 'clean prj vendor before import'
    method_option :sym, type: :boolean, aliases: '-s', default: false, desc: 'use symlinks'
+   method_option :multi, type: :boolean, aliases: '-m', default: false, desc: 'multi-project aware mode'
    def import(*idevers)
-     ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
-     idevers =  ides_in_prj if idevers.empty?
-     idevers &= ides_in_prj
      say 'WARN: ensure your project folder supports symlinks!!' if options.sym?
-     do_reset if options.reset?
-     prepare
      silence_warnings do
-       DSL.load_dvm_script(PRJ_IMPORTS_FILE, options.merge(idevers: idevers)).send :proccess
+       DSL.new_dvm_script(PRJ_ROOT, options).send :proccess
      end
    end
 
    desc 'reset', 'erase vendor imports.'
    def reset
-     do_reset
-     prepare
+     silence_warnings do
+       script = DSL.new_dvm_script(PRJ_ROOT, options)
+       script.reset
+       script.prepare
+     end
    end
 
    desc 'tree MAX_LEVEL', 'show dependencs tree. defaul MAX_LEVEL = 100'
+   method_option :multi, type: :boolean, aliases: '-m', default: false, desc: 'multi-project aware mode'
+   method_option :format, type: :string, required: true, aliases: '-f', default: 'draw', desc: 'render format: draw, uml'
    def tree(max_level = 100)
      silence_warnings do
-       DSL.load_dvm_script(PRJ_IMPORTS_FILE).send(:tree, max_level.to_i)
+       DSL.new_dvm_script(PRJ_ROOT, options).send(:tree, max_level.to_i, options.format)
      end
    end
 
@@ -103,14 +104,6 @@
      silence_warnings do
        DSL.load_dvm_script(PRJ_IMPORTS_FILE).send :ide_install
      end
-   end
-
-   def do_reset
-     remove_dir(PRJ_IMPORTS)
-   end
-
-   def prepare
-     PRJ_IMPORTS.mkpath
    end
 
    def adjust_prj_paths(prj_paths, import)

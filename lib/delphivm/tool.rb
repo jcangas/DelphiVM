@@ -3,10 +3,10 @@ class Delphivm
     attr_reader :app
     attr_reader :title
 
-    def initialize(app: '', title: 'unknown', ide_prj: ide_prj)
+    def initialize(app: '', title: 'unknown', use_ide: ide_prj)
       @app = app
       @title = title
-      @ide_prj = ide_prj
+      @ide_prj = use_ide
     end
 
     def idever

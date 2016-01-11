@@ -9,6 +9,14 @@ class Delphivm
     attr_reader :workdir
     attr_reader :build_tool
 
+    def self.root_path
+      @root_path || PRJ_ROOT
+    end
+
+    def self.root_path=(value)
+      @root_path = value
+    end
+
     def self.prj_paths(value = nil)
       return @prj_paths = value if value
       @prj_paths ||= { src: 'src', samples: 'samples', test: 'test' }
@@ -35,7 +43,7 @@ class Delphivm
     end
 
     def self.ides_in_prj
-      @ides_in_prj ||= ides_filter(ides_in_config, :prj)
+      @ides_in_prj = ides_filter(ides_in_config, :prj)
     end
 
     def self.ides_filter(ides, kind)
@@ -72,9 +80,10 @@ class Delphivm
     end
 
     def self.ide_in_prj?(ide)
-      unless @dproj_paths
+      unless false && @dproj_paths
         ide_tags = ::Delphivm::IDEInfos.to_h.keys.join(',')
-        @dproj_paths = PRJ_ROOT.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
+         #p ":)", root_path
+         @dproj_paths = root_path.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
       end
       !@dproj_paths.select { |path| /#{ide.to_s}.*/.match(path) }.empty?
     end
@@ -113,7 +122,7 @@ class Delphivm
       path
     end
 
-    def initialize(idever, workdir = PRJ_ROOT)
+    def initialize(idever, workdir = root_path)
       @idever = idever.to_s.upcase
       @workdir = workdir
       @reg = Win32::Registry::HKEY_CURRENT_USER

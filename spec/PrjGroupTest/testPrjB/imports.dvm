@@ -1,5 +1,6 @@
 
 source File.join(File.dirname(__FILE__), 'imports')
+source ENV['DVMCATALOG']
 
 uses 'D210' do
   import 'Summer', '1.2.1', uri: 'https://github.com/jcangas/SummerFW4D/releases/download/v1.2.1/Summer-1.2.1-D210.zip' do
