@@ -10,3 +10,4 @@ pkg
 bin/dvm-cache/
 bin/dvm-imports/
 *.log
+spec/PrjGroupTest/assets
