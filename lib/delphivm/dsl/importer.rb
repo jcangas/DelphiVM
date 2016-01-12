@@ -62,7 +62,55 @@ class Delphivm
         script.send(:already_fetch, lib_tag)
       end
 
+      def build(idetag, cfg, action)
+        dependences_script.build(idetag, cfg, action)
+        setup_ide_paths
+        ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
+        ides_installed = IDEServices.idelist(:installed).map(&:to_s)
+
+        use_ides = idevers & ides_in_prj
+        use_ides &= idetag unless idetag.empty?
+        use_ides &= ides_installed
+
+        use_ides.each do |use_ide|
+          unless build_as_copy(use_ide, action)
+            ide = IDEServices.new(use_ide)
+            ide.call_build_tool(action, cfg)
+          end
+        end
+      end
+
       private
+
+      def setup_ide_paths
+        IDEServices.root_path = script.root_path
+        import_root_path = script.vendor_path + lib_tag
+        vendor_prj_paths = {}
+        vendor_path = import_root_path.relative_path_from(script.root_path)
+        IDEServices.default_prj_paths.each do |key, val|
+          vendor_prj_paths[key] = "#{vendor_path}/#{val}"
+        end
+        IDEServices.prj_paths(vendor_prj_paths)
+      end
+
+      def build_as_copy(ide_tag, action)
+        import_out_path = PRJ_IMPORTS + lib_tag + 'out' + ide_tag
+        return false unless import_out_path.exist?
+        say_status(action.upcase.to_sym, "copy imported #{import_out_path.relative_path_from PRJ_IMPORTS}", :yellow)
+        Pathname(import_out_path).glob('**/*.*').each do |file|
+          rel_route = file.relative_path_from(import_out_path)
+          dest_route = PRJ_ROOT + 'out' + ide_tag + rel_route
+
+          if action == 'Clean'
+            FileUtils.rm(dest_route, verbose: false, force: true)
+          elsif action == 'Make'
+            FileUtils.cp(file, dest_route, verbose: false)
+          else
+            FileUtils.cp(file, dest_route, verbose: false)
+          end
+        end
+        true
+      end
 
       def ide_install(*packages)
         @ide_pkgs = packages
@@ -102,7 +150,6 @@ class Delphivm
           dependences_script.send(:proccess)
           return
         end
-        fail "import's source undefined" unless @source
         return if need_idevers.empty?
         destination = DVM_IMPORTS + idever
         cache_folder = destination + lib_tag
@@ -119,6 +166,7 @@ class Delphivm
         say_status status, status_report, :green
 
         unless exist
+          fail "import's source undefined" unless @source
           zip_file = download(source_uri, lib_file)
           mark_fetch
           unzip(zip_file, destination) if zip_file

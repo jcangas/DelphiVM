@@ -23,7 +23,6 @@ class Delphivm
         @loaded = file_name.exist?
         return self unless @loaded
         instance_eval(File.read(file_name))
-        collect_dependences
         self
       end
 
@@ -65,11 +64,11 @@ class Delphivm
       end
 
       def multi_root
-        options.multi? && required_by.nil?
+        options[:multi] && required_by.nil?
       end
 
       def multi_top_prj
-        options.multi? && (required_by && required_by.script.multi_root) || required_by.nil?
+        options[:multi] && (required_by && required_by.script.multi_root) || required_by.nil?
       end
 
       def source(value = nil)
@@ -103,7 +102,7 @@ class Delphivm
           ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
         end
         @idevers_filter = options.idevers || []
-        @idevers_filter =  ides_in_prj if @idevers_filter.empty?
+        @idevers_filter = ides_in_prj if @idevers_filter.empty?
         @idevers_filter &= ides_in_prj
       end
 
@@ -113,6 +112,27 @@ class Delphivm
 
       def prepare
         FileUtils.mkpath(vendor_path) unless multi_root
+      end
+
+      def build(idetag, cfg, action)
+        missing = missing_ides(idetag)
+        unless missing.empty?
+          say_status(:WARN, "#{missing} not installed!", :red)
+        end
+        imports.values.each do |import|
+          import.build(idetag, cfg, action)
+        end
+      end
+
+      def needed_ides
+        @needed_ides ||= imports.values.map(&:idevers).flatten.uniq
+      end
+
+      def missing_ides(idetag)
+        need_ides = needed_ides
+        need_ides &= idetag unless idetag.empty?
+        ides_installed = IDEServices.idelist(:installed).map(&:to_s)
+        need_ides - (ides_installed & need_ides)
       end
 
       protected
@@ -131,19 +151,6 @@ class Delphivm
 
       def ide_install
         foreach_do :do_ide_install
-      end
-
-      def collect_dependences
-        return
-        sorted_imports = {}
-        imports.each do |lib_tag, importer|
-          importer.dependences_script.collect_dependences
-          importer.dependences_script.imports.each do |key, val|
-            sorted_imports[key] = val unless sorted_imports.key?(key)
-          end
-          sorted_imports[lib_tag] = importer unless sorted_imports.key?(lib_tag)
-        end
-        @imports = sorted_imports
       end
 
       def foreach_do(method, args = [], owned = false)
@@ -166,7 +173,7 @@ class Delphivm
       def already_fetch(lib_tag)
         if required_by.nil?
           @fetch_libs ||= {}
-          @fetch_libs.has_key?(lib_tag)
+          @fetch_libs.key?(lib_tag)
         else
           required_by.script.already_fetch(lib_tag)
         end

@@ -15,11 +15,16 @@ class Delphivm
 
     def self.root_path=(value)
       @root_path = value
+      @dproj_paths = nil # force refresh
     end
 
     def self.prj_paths(value = nil)
       return @prj_paths = value if value
-      @prj_paths ||= { src: 'src', samples: 'samples', test: 'test' }
+      @prj_paths ||= default_prj_paths
+    end
+
+    def self.default_prj_paths
+      { src: 'src', samples: 'samples', test: 'test' }
     end
 
     def self.idelist(kind = :installed)
@@ -62,6 +67,14 @@ class Delphivm
       false
     end
 
+    def self.ide_in_prj?(ide)
+      unless @dproj_paths
+        ide_tags = ::Delphivm::IDEInfos.to_h.keys.join(',')
+        @dproj_paths = root_path.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
+      end
+      !@dproj_paths.select { |path| /#{ide.to_s}.*/.match(path) }.empty?
+    end
+
     def self.report_ides(ides, kind = :found)
       say
       say '%30s IDEs: %d' % ["#{kind.to_s.upcase}", ides.size], :green, true
@@ -77,15 +90,6 @@ class Delphivm
 
     def self.prj_paths_glob
       @prj_paths_glob = "{#{prj_paths.values.join(',')}}"
-    end
-
-    def self.ide_in_prj?(ide)
-      unless false && @dproj_paths
-        ide_tags = ::Delphivm::IDEInfos.to_h.keys.join(',')
-         #p ":)", root_path
-         @dproj_paths = root_path.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
-      end
-      !@dproj_paths.select { |path| /#{ide.to_s}.*/.match(path) }.empty?
     end
 
     def self.platforms_in_prj(_ide)
@@ -122,7 +126,7 @@ class Delphivm
       path
     end
 
-    def initialize(idever, workdir = root_path)
+    def initialize(idever, workdir = IDEServices.root_path)
       @idever = idever.to_s.upcase
       @workdir = workdir
       @reg = Win32::Registry::HKEY_CURRENT_USER
@@ -134,7 +138,7 @@ class Delphivm
     end
 
     def set_env
-      ENV['PATH'] = prj_bin_paths.join(';') + ';' + vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
+      ENV['PATH'] = prj_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
 
       ENV['DVM_IDETAG'] = idever.to_s
       ENV['DVM_PRJDIR'] = workdir.win

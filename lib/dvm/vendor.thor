@@ -17,7 +17,8 @@
                  type: :string,
                  aliases: '-g',
                  default: configuration.build_args,
-                 desc: 'Use BuildGroup', for: :build
+                 desc: 'Use BuildGroup',
+                 for: :build
 
    desc 'init', 'create and initialize vendor directory'
    def init
@@ -106,55 +107,12 @@
      end
    end
 
-   def adjust_prj_paths(prj_paths, import)
-     vendor_prj_paths = {}
-     vendor_path = PRJ_IMPORTS.relative_path_from(PRJ_ROOT)
-     prj_paths.each { |key, val| vendor_prj_paths[key] = "#{vendor_path}/#{import}/#{val}" }
-     IDEServices.prj_paths(vendor_prj_paths)
-   end
-
    def do_build_action(idetag, cfg, action)
      idetag = [idetag] unless idetag.is_a? Array
      cfg ||= {}
      cfg['BuildGroup'] = options[:group] if options.group?
-     script = DSL.load_dvm_script(PRJ_IMPORTS_FILE, options)
-     ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
-     ides_installed = IDEServices.idelist(:installed).map(&:to_s)
-     prj_paths = IDEServices.prj_paths
 
-     need_ides = script.imports.values.map(&:idevers).flatten.uniq
-     need_ides &= idetag unless idetag.empty?
-     missing_ides = need_ides - (ides_installed & need_ides)
-     say_status(:WARN, "#{missing_ides} not installed!", :red) unless missing_ides.empty?
-
-     script.imports.values.each do |import|
-       adjust_prj_paths(prj_paths, import.lib_tag)
-       use_ides = import.idevers & ides_in_prj
-       use_ides &= idetag unless idetag.empty?
-       use_ides &= ides_installed
-       use_ides.each do |use_ide|
-         next if build_as_copy(import.lib_tag, use_ide, action)
-         ide = IDEServices.new(use_ide)
-         ide.call_build_tool(action, cfg)
-       end
-     end
-   end
-
-   def build_as_copy(lib_tag, ide_tag, action)
-     import_out_path = PRJ_IMPORTS + lib_tag + 'out' + ide_tag
-     return false unless import_out_path.exist?
-     say_status(action.to_sym, "using imported #{import_out_path.relative_path_from PRJ_IMPORTS}", :yellow)
-     Pathname(import_out_path).glob('**/*.*').each do |file|
-       rel_route = file.relative_path_from(import_out_path)
-       dest_route = PRJ_ROOT + 'out' + ide_tag + rel_route
-       if action == 'Clean'
-         remove_file(dest_route, verbose: false)
-       elsif action == 'Make'
-         copy_file(file, dest_route, verbose: false, force: true)
-       else
-         copy_file(file, dest_route, verbose: false, force: true)
-       end
-     end
-     return true
+     script = DSL.new_dvm_script(PRJ_ROOT, options)
+     script.build(idetag, cfg, action)
    end
 end
