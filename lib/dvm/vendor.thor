@@ -1,24 +1,19 @@
 ﻿class Vendor < BuildTarget
-   desc 'clean', 'clean vendor products', for: :clean
-   desc 'make',  'make vendor products', for: :make
-   desc 'build', 'build vendor products', for: :build
-   method_option :group,
-                 type: :string, aliases: '-g',
-                 default: configuration.build_args,
-                 desc: 'Use BuildGroup',
-                 for: :clean
-   method_option :group,
-                 type: :string,
-                 aliases: '-g',
-                 default: configuration.build_args,
-                 desc: 'Use BuildGroup',
-                 for: :make
-   method_option :group,
-                 type: :string,
-                 aliases: '-g',
-                 default: configuration.build_args,
-                 desc: 'Use BuildGroup',
-                 for: :build
+   %w(clean make build).each do |action|
+     desc action, "#{action} vendor products", for: action.to_sym
+     method_option :multi,
+                   type: :boolean,
+                   aliases: '-m',
+                   default: false,
+                   desc: 'multi-project mode',
+                   for: action.to_sym
+     method_option :group,
+                   type: :string,
+                   aliases: '-g',
+                   default: configuration.build_args,
+                   desc: 'Use BuildGroup',
+                   for: action.to_sym
+   end
 
    desc 'init', 'create and initialize vendor directory'
    def init
@@ -53,10 +48,10 @@
 
    desc 'import', 'download and install vendor imports'
    method_option :force, type: :boolean, aliases: '-f', default: false, desc: 'force download when already in local cache'
-   method_option :reset, type: :boolean, aliases: '-r', default: false, desc: 'clean prj vendor before import'
+   method_option :reset, type: :boolean, aliases: '-r', default: false, desc: 'erase vendor folder before import'
    method_option :sym, type: :boolean, aliases: '-s', default: false, desc: 'use symlinks'
-   method_option :multi, type: :boolean, aliases: '-m', default: false, desc: 'multi-project aware mode'
-   def import(*idevers)
+   method_option :multi, type: :boolean, aliases: '-m', default: false, desc: 'multi-project mode'
+   def import(*_idevers)
      say 'WARN: ensure your project folder supports symlinks!!' if options.sym?
      silence_warnings do
        DSL.new_dvm_script(PRJ_ROOT, options).send :proccess
@@ -73,7 +68,7 @@
    end
 
    desc 'tree MAX_LEVEL', 'show dependencs tree. defaul MAX_LEVEL = 100'
-   method_option :multi, type: :boolean, aliases: '-m', default: false, desc: 'multi-project aware mode'
+   method_option :multi, type: :boolean, aliases: '-m', default: false, desc: 'multi-project mode'
    method_option :format, type: :string, required: true, aliases: '-f', default: 'draw', desc: 'render format: draw, uml'
    def tree(max_level = 100)
      silence_warnings do
@@ -108,10 +103,9 @@
    end
 
    def do_build_action(idetag, cfg, action)
-     idetag = [idetag] unless idetag.is_a? Array
+     idetag = [idetag] unless idetag.is_a?(Array) || idetag == :all
      cfg ||= {}
      cfg['BuildGroup'] = options[:group] if options.group?
-
      script = DSL.new_dvm_script(PRJ_ROOT, options)
      script.build(idetag, cfg, action)
    end

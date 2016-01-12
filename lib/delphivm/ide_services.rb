@@ -15,7 +15,9 @@ class Delphivm
 
     def self.root_path=(value)
       @root_path = value
-      @dproj_paths = nil # force refresh
+      # force refresh
+      @dproj_paths = nil
+      @default_ide = nil
     end
 
     def self.prj_paths(value = nil)
@@ -193,7 +195,7 @@ class Delphivm
 
     def get_main_group_file
       srcdir = workdir + IDEServices.prj_paths[:src] + '**'
-      Pathname.glob(srcdir + "#{idever}**/#{prj_slug}App.#{group_file_ext}").first ||
+      Pathname.glob(srcdir + "#{idever}**/#{prj_slug}*.#{group_file_ext}").first ||
         Pathname.glob(srcdir + "#{idever}**/*.#{group_file_ext}").first ||
         Pathname.glob(srcdir + "*.#{group_file_ext}").first ||
         Pathname.glob(workdir + "*.#{group_file_ext}").first
@@ -210,21 +212,26 @@ class Delphivm
       say "[#{idever}] IDE start with #{ideexe_args.join(' ')}"
     end
 
-    def call_build_tool(target, config)
+    def call_build_tool(target, config, options = { verbose: false })
       set_env
       buildidr = workdir + "#{IDEServices.prj_paths_glob}/**/#{idever}**/*.#{group_file_ext}"
 
       Pathname.glob(buildidr) do |f|
         f_to_show = f.relative_path_from(workdir)
         build_tool.args(config: config, target: target, file: f.win)
-        say "[#{idever}] ", :green
-        say "#{target.upcase}: #{f_to_show}"
-        say("[#{build_tool.title}] ", :green)
-        say(build_tool.cmdln_args.join(' '))
-        say
-        WinServices.winshell(out_filter: ->(line) { line =~ /\b(warning|hint|error)\b/i }) do |i|
-          # WinServices.winshell do |i|
-          build_tool.call(i)
+        say("[#{idever}] #{target.upcase}: ", [:green, :bold])
+        say("(#{build_tool.title}) ", [:blue, :bold])
+        say("#{f_to_show}")
+        if options[:verbose]
+          say("args: ")
+          say(build_tool.cmdln_args.join(' '))
+          say
+        end
+        unless options[:noop]
+          WinServices.winshell(out_filter: ->(line) { line =~ /\b(warning|hint|error)\b/i }) do |i|
+            # WinServices.winshell do |i|
+            build_tool.call(i)
+          end
         end
       end
     end

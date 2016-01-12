@@ -107,7 +107,7 @@ class Delphivm
       end
 
       def reset
-        FileUtils.rm_r(vendor_path, verbose: false, force: true)
+        FileUtils.rm_r(vendor_path, force: true, verbose: false, noop: false)
       end
 
       def prepare
@@ -115,6 +115,7 @@ class Delphivm
       end
 
       def build(idetag, cfg, action)
+        say "vendor #{action} for #{prj_tag}" if multi_top_prj && !multi_root
         missing = missing_ides(idetag)
         unless missing.empty?
           say_status(:WARN, "#{missing} not installed!", :red)
@@ -125,12 +126,12 @@ class Delphivm
       end
 
       def needed_ides
-        @needed_ides ||= imports.values.map(&:idevers).flatten.uniq
+        @needed_ides ||= imports.values.map(&:idevers).flatten.uniq.compact
       end
 
       def missing_ides(idetag)
         need_ides = needed_ides
-        need_ides &= idetag unless idetag.empty?
+        need_ides &= idetag unless idetag == :all || idetag.empty?
         ides_installed = IDEServices.idelist(:installed).map(&:to_s)
         need_ides - (ides_installed & need_ides)
       end
@@ -170,12 +171,12 @@ class Delphivm
         end
       end
 
-      def already_fetch(lib_tag)
+      def fetched(lib_tag)
         if required_by.nil?
           @fetch_libs ||= {}
           @fetch_libs.key?(lib_tag)
         else
-          required_by.script.already_fetch(lib_tag)
+          required_by.script.fetched(lib_tag)
         end
       end
 
