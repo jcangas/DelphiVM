@@ -9,9 +9,24 @@ class Delphivm
     attr_reader :workdir
     attr_reader :build_tool
 
+    def self.root_path
+      @root_path || PRJ_ROOT
+    end
+
+    def self.root_path=(value)
+      @root_path = value
+      # force refresh
+      @dproj_paths = nil
+      @default_ide = nil
+    end
+
     def self.prj_paths(value = nil)
       return @prj_paths = value if value
-      @prj_paths ||= { src: 'src', samples: 'samples', test: 'test' }
+      @prj_paths ||= default_prj_paths
+    end
+
+    def self.default_prj_paths
+      { src: 'src', samples: 'samples', test: 'test' }
     end
 
     def self.idelist(kind = :installed)
@@ -35,7 +50,7 @@ class Delphivm
     end
 
     def self.ides_in_prj
-      @ides_in_prj ||= ides_filter(ides_in_config, :prj)
+      @ides_in_prj = ides_filter(ides_in_config, :prj)
     end
 
     def self.ides_filter(ides, kind)
@@ -54,6 +69,14 @@ class Delphivm
       false
     end
 
+    def self.ide_in_prj?(ide)
+      unless @dproj_paths
+        ide_tags = ::Delphivm::IDEInfos.to_h.keys.join(',')
+        @dproj_paths = root_path.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
+      end
+      !@dproj_paths.select { |path| /#{ide.to_s}.*/.match(path) }.empty?
+    end
+
     def self.report_ides(ides, kind = :found)
       say
       say '%30s IDEs: %d' % ["#{kind.to_s.upcase}", ides.size], :green, true
@@ -69,14 +92,6 @@ class Delphivm
 
     def self.prj_paths_glob
       @prj_paths_glob = "{#{prj_paths.values.join(',')}}"
-    end
-
-    def self.ide_in_prj?(ide)
-      unless @dproj_paths
-        ide_tags = ::Delphivm::IDEInfos.to_h.keys.join(',')
-        @dproj_paths = PRJ_ROOT.glob("#{prj_paths_glob}/**/{#{ide_tags}}*/").uniq
-      end
-      !@dproj_paths.select { |path| /#{ide.to_s}.*/.match(path) }.empty?
     end
 
     def self.platforms_in_prj(_ide)
@@ -113,7 +128,7 @@ class Delphivm
       path
     end
 
-    def initialize(idever, workdir = PRJ_ROOT)
+    def initialize(idever, workdir = IDEServices.root_path)
       @idever = idever.to_s.upcase
       @workdir = workdir
       @reg = Win32::Registry::HKEY_CURRENT_USER
@@ -125,7 +140,7 @@ class Delphivm
     end
 
     def set_env
-      ENV['PATH'] = prj_bin_paths.join(';') + ';' + vendor_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
+      ENV['PATH'] = prj_bin_paths.join(';') + ';' + IDEServices.use(idever, false)
 
       ENV['DVM_IDETAG'] = idever.to_s
       ENV['DVM_PRJDIR'] = workdir.win
@@ -180,7 +195,7 @@ class Delphivm
 
     def get_main_group_file
       srcdir = workdir + IDEServices.prj_paths[:src] + '**'
-      Pathname.glob(srcdir + "#{idever}**/#{prj_slug}App.#{group_file_ext}").first ||
+      Pathname.glob(srcdir + "#{idever}**/#{prj_slug}*.#{group_file_ext}").first ||
         Pathname.glob(srcdir + "#{idever}**/*.#{group_file_ext}").first ||
         Pathname.glob(srcdir + "*.#{group_file_ext}").first ||
         Pathname.glob(workdir + "*.#{group_file_ext}").first
@@ -197,21 +212,26 @@ class Delphivm
       say "[#{idever}] IDE start with #{ideexe_args.join(' ')}"
     end
 
-    def call_build_tool(target, config)
+    def call_build_tool(target, config, options = { verbose: false })
       set_env
       buildidr = workdir + "#{IDEServices.prj_paths_glob}/**/#{idever}**/*.#{group_file_ext}"
 
       Pathname.glob(buildidr) do |f|
         f_to_show = f.relative_path_from(workdir)
         build_tool.args(config: config, target: target, file: f.win)
-        say "[#{idever}] ", :green
-        say "#{target.upcase}: #{f_to_show}"
-        say("[#{build_tool.title}] ", :green)
-        say(build_tool.cmdln_args.join(' '))
-        say
-        WinServices.winshell(out_filter: ->(line) { line =~ /\b(warning|hint|error)\b/i }) do |i|
-          # WinServices.winshell do |i|
-          build_tool.call(i)
+        say("[#{idever}] #{target.upcase}: ", [:green, :bold])
+        say("(#{build_tool.title}) ", [:blue, :bold])
+        say("#{f_to_show}")
+        if options[:verbose]
+          say("args: ")
+          say(build_tool.cmdln_args.join(' '))
+          say
+        end
+        unless options[:noop]
+          WinServices.winshell(out_filter: ->(line) { line =~ /\b(warning|hint|error)\b/i }) do |i|
+            # WinServices.winshell do |i|
+            build_tool.call(i)
+          end
         end
       end
     end
