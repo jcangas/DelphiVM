@@ -56,7 +56,7 @@ class Delphivm
 
   class MSBuild < Tool
     def initialize(ide_prj)
-      super(app: 'msbuild', title: 'MS-Build', ide_prj: ide_prj)
+      super(app: 'msbuild', title: 'MS-Build', use_ide: ide_prj)
     end
 
     def call(out)
@@ -84,7 +84,7 @@ class Delphivm
   class IDETool < Tool
     def initialize(ide_prj)
       ideexe = ide_prj.ide_app_path
-      super(app: ideexe, title: 'IDE Compiler', ide_prj: ide_prj)
+      super(app: ideexe, title: 'IDE Compiler', use_ide: ide_prj)
     end
 
     def default_args

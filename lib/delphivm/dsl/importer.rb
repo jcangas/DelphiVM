@@ -58,11 +58,64 @@ class Delphivm
         script.send(:satisfied, lib_tag)
       end
 
-      def already_fetch?
-        script.send(:already_fetch, lib_tag)
+      def fetched?
+        script.send(:fetched, lib_tag)
+      end
+
+      def build(idetag, cfg, action)
+        return if satisfied?
+        dependences_script.build(idetag, cfg, action)
+        return if script.multi_root
+        setup_ide_paths
+        ides_in_prj = IDEServices.idelist(:prj).map(&:to_s)
+        ides_installed = IDEServices.idelist(:installed).map(&:to_s)
+        idetag = ides_in_prj if idetag == :all
+        idetag = [IDEServices.default_ide] if idetag.empty?
+        ides_in_prj if idetag == :all
+        use_ides = idevers & ides_in_prj
+        use_ides &= idetag unless idetag.empty?
+        use_ides &= ides_installed
+
+        action_opts = { verbose: false, noop: false }
+        use_ides.each do |use_ide|
+          unless build_by_mirror(use_ide, action, action_opts)
+            ide = IDEServices.new(use_ide)
+            ide.call_build_tool(action, cfg, action_opts)
+          end
+        end
+        mark_satisfied
       end
 
       private
+
+      def setup_ide_paths
+        IDEServices.root_path = script.root_path
+        import_root_path = script.vendor_path + lib_tag
+        vendor_prj_paths = {}
+        vendor_path = import_root_path.relative_path_from(script.root_path)
+        IDEServices.default_prj_paths.each do |key, val|
+          vendor_prj_paths[key] = "#{vendor_path}/#{val}"
+        end
+        IDEServices.prj_paths(vendor_prj_paths)
+      end
+
+      def build_by_mirror(ide_tag, action, action_opts)
+        import_out_path = script.vendor_path + lib_tag + 'out' + ide_tag
+        return false unless import_out_path.exist?
+        say("[#{ide_tag}] #{action.upcase}: ", [:green, :bold])
+        say("(Mirroring) ", [:blue, :bold])
+        say("#{import_out_path.relative_path_from script.root_path}")
+        Pathname(import_out_path).glob('**/*.*').each do |file|
+          rel_route = file.relative_path_from(import_out_path)
+          dest_route = PRJ_ROOT + 'out' + ide_tag + rel_route
+          if action == 'Clean'
+            FileUtils.rm(dest_route, action_opts[:force])
+          else
+            FileUtils.cp(file, dest_route, action_opts)
+          end
+        end
+        true
+      end
 
       def ide_install(*packages)
         @ide_pkgs = packages
@@ -102,15 +155,16 @@ class Delphivm
           dependences_script.send(:proccess)
           return
         end
-        fail "import's source undefined" unless @source
         return if need_idevers.empty?
+
+        # fectch
         destination = DVM_IMPORTS + idever
         cache_folder = destination + lib_tag
         exist = cache_folder.exist?
 
-        if exist && script.options.force? && !already_fetch?
+        if exist && script.options.force? && !fetched?
           exist = false
-          FileUtils.remove_dir(cache_folder.win, true)
+          FileUtils.rm_r(cache_folder.win, force: true, noop: false, verbose: false)
         end
         status = exist ? :'cached in' : :'fetch from'
         status_report = exist ? destination.win : source_uri
@@ -119,6 +173,7 @@ class Delphivm
         say_status status, status_report, :green
 
         unless exist
+          fail "import's source undefined" unless @source
           zip_file = download(source_uri, lib_file)
           mark_fetch
           unzip(zip_file, destination) if zip_file
@@ -175,7 +230,8 @@ class Delphivm
 
       def tree(max_level, format, visited)
         send("tree_#{format}", max_level, visited)
-        dependences_script.send(:tree, max_level, format, visited) if (max_level > script.level)
+        ofs = script.options[:multi] ? -1 : 0
+        dependences_script.send(:tree, max_level, format, visited) if max_level > (script.level + ofs)
       end
 
       def mark_satisfied
@@ -186,19 +242,19 @@ class Delphivm
         script.send(:mark_fetch, lib_tag)
       end
 
-      def tree_uml(max_level, visited)
+      def tree_uml(_max_level, visited)
         if script.multi_top_prj
           target = script.prj_tag
         else
           target = script.required_by.lib_tag
         end
         link = "[#{target}] --> [#{lib_tag}]"
-        say link unless visited.include?(link) unless script.multi_root
+        say link unless script.multi_root || visited.include?(link)
         visited << link
       end
 
-      def tree_draw(max_level, visited)
-        if script.level == 0
+      def tree_draw(_max_level, _visited)
+        if script.level <= 0
           indent = ''
         else
           if @index == script.imports.size - 1
@@ -209,12 +265,14 @@ class Delphivm
           indent = ' ' * 2 * (script.level - 1) + ' ' * (script.level - 1) + head + "\u2500 "
         end
         ides_installed = IDEServices.idelist(:installed).map(&:to_s)
-        say "-#{"%2s" % script.level}:  ", [:yellow, :bold]
+        ofs = script.options[:multi] ? -1 : 0
+        lvl = script.level + ofs
         say "#{indent}#{lib_tag} ", [:blue, :bold]
         idevers.each do |idever|
           ide_color = ides_installed.include?(idever) ? :green : :red
           say "#{idever} ", [ide_color, :bold]
         end
+        say "##{'%s' % lvl} ", [:yellow, :bold] if lvl >= 0
         say
       end
 
