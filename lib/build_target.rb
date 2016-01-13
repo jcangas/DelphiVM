@@ -65,11 +65,11 @@ class BuildTarget < DvmTask
       define_method mth do
         msbuild_params = options[:props]
         if options[:multi]
-					if options[:ide].include?('DEFIDE')
-	          ides_to_call = []
-	        elsif options[:ide].map(&:upcase).include?('ALL')
-	          ides_to_call = :all
-	        end
+          if options[:ide].include?('DEFIDE')
+            ides_to_call = []
+          elsif options[:ide].map(&:upcase).include?('ALL')
+            ides_to_call = :all
+          end
           clear_products
           self.class.depends.each { |task| invoke "#{task}:#{mth}" }
           send("do_#{mth}", ides_to_call, msbuild_params)

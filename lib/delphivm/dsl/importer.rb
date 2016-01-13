@@ -230,7 +230,8 @@ class Delphivm
 
       def tree(max_level, format, visited)
         send("tree_#{format}", max_level, visited)
-        dependences_script.send(:tree, max_level, format, visited) if max_level > script.level
+        ofs = script.options[:multi] ? -1 : 0
+        dependences_script.send(:tree, max_level, format, visited) if max_level > (script.level + ofs)
       end
 
       def mark_satisfied
@@ -253,7 +254,7 @@ class Delphivm
       end
 
       def tree_draw(_max_level, _visited)
-        if script.level == 0
+        if script.level <= 0
           indent = ''
         else
           if @index == script.imports.size - 1
@@ -264,12 +265,14 @@ class Delphivm
           indent = ' ' * 2 * (script.level - 1) + ' ' * (script.level - 1) + head + "\u2500 "
         end
         ides_installed = IDEServices.idelist(:installed).map(&:to_s)
-        say "-#{'%2s' % script.level}:  ", [:yellow, :bold]
+        ofs = script.options[:multi] ? -1 : 0
+        lvl = script.level + ofs
         say "#{indent}#{lib_tag} ", [:blue, :bold]
         idevers.each do |idever|
           ide_color = ides_installed.include?(idever) ? :green : :red
           say "#{idever} ", [ide_color, :bold]
         end
+        say "##{'%s' % lvl} ", [:yellow, :bold] if lvl >= 0
         say
       end
 
