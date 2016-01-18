@@ -91,8 +91,8 @@ class Delphivm
       def setup_ide_paths
         IDEServices.root_path = script.root_path
         import_root_path = script.vendor_path + lib_tag
-        vendor_prj_paths = {}
         vendor_path = import_root_path.relative_path_from(script.root_path)
+        vendor_prj_paths = {out: "#{vendor_path}/out"}
         IDEServices.default_prj_paths.each do |key, val|
           vendor_prj_paths[key] = "#{vendor_path}/#{val}"
         end
@@ -109,8 +109,9 @@ class Delphivm
           rel_route = file.relative_path_from(import_out_path)
           dest_route = PRJ_ROOT + 'out' + ide_tag + rel_route
           if action == 'Clean'
-            FileUtils.rm(dest_route, action_opts[:force])
+            FileUtils.rm(dest_route, action_opts.merge(force: true))
           else
+            dest_route.dirname.mkpath
             FileUtils.cp(file, dest_route, action_opts)
           end
         end
@@ -179,10 +180,9 @@ class Delphivm
           unzip(zip_file, destination) if zip_file
         end
         mark_satisfied
-        return unless exist
-        vendorize
-        ensure_dependences_script
-        dependences_script.send(:proccess)
+        if vendorize
+          dependences_script.send(:proccess)
+        end
       end
 
       def show_ide_install_report(report)
@@ -205,7 +205,7 @@ class Delphivm
         # p "vendorize to #{script.vendor_path}"
         if vendorized?
           say_status :skip, "#{lib_file}, already in vendor", :yellow
-          return
+          return false
         end
         files = dvm_vendor_files
         pb = ProgressBar.create(total: files.size, title: '  %9s ->' % 'vendorize', format: '%t %J%% %E %B')
@@ -217,6 +217,8 @@ class Delphivm
           pb.increment
         end
         pb.finish
+        ensure_dependences_script
+        true
       end
 
       def install_vendor(link, target)
