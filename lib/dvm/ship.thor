@@ -16,7 +16,7 @@ class Ship < BuildTarget
 
 protected
 	def get_zip_name(idetag)
-		Pathname('ship') + spec.get_zip_name(idetag)
+		Pathname('ship') + spec(idetag).get_zip_name(idetag)
 	end
 
 	def ides_in_prj
@@ -50,16 +50,16 @@ protected
 		progress = lambda{|file| pb.increment}
 		zipping = lambda{pb.finish; say "     zipping ..."}
 		done = lambda{ say "     done!"}
-		spec.build(idetag, self.class.configuration.ship_groups, outdir: 'ship', start: start, progress: progress, zipping: zipping, done: done)
+		spec(idetag).build(idetag, self.class.configuration.ship_groups, outdir: 'ship', start: start, progress: progress, zipping: zipping, done: done)
 	end
 
-	def spec
+	def spec(idetag)
 		@spec ||= ::Ship::Spec.new do |s|
 			s.name = Delphivm::APPMODULE.name
 			s.version = Delphivm::APPMODULE.VERSION.tag
 			s.ignore_files(['**/*.~*', '**/*.{bak,local,dsk,tvsconfig,identcache}', '**/ModelSupport_*/**/*.*', '**/LibrarySupport/**/*.*', '**/__history/*.*', '*.log', '.DS_Store'])
-			s.bin_files("out/%{idetag}/*/*/bin/**{.*,}/*.*")
-			s.lib_files("out/%{idetag}/*/{Debug,Release}/lib/*.*")
+			s.bin_files("out/#{idetag}/*/*/bin/**{.*,}/*.*")
+			s.lib_files("out/#{idetag}/*/{Debug,Release}/lib/*.*")
 			s.source_files(["src/**/*.*", "*.*"])
 			s.sample_files("samples/**/*.*")
 			s.test_files("test/**/*.*")

@@ -48,7 +48,7 @@ class Ship
     end
 
     def build(idever, groups, outdir: '.', start: nil, progress: nil, zipping: nil, done: nil)
-      self.vars = { idever: idever }
+      self.vars = { idetag: idever }
       @groups = groups
       reset_files
       zip_fname = Pathname(outdir) + get_zip_name(idever)
