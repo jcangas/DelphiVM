@@ -1,6 +1,21 @@
 = DelphiVM CHANGELOG
 :sectnums!:
 
+== v3.6.4
+
+=== Mejoras en vendor:(build/make/clean)
+
+* Nueva opción --multi
+
+Permite invocar desde una carpeta que contiene multiples proyectos. Aplica la acción
+vendor:(build/make/clean) en cada proyecto.
+
+=== Mejoras en vendor:import
+
+* Nueva opción --multi
+
+Permite invocar desde una carpeta que contiene multiples proyectos. Aplica import en cada proyecto
+
 === Mejoras en vendor:tree
 
 * Nueva opción --multi
