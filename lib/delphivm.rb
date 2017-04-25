@@ -32,7 +32,10 @@ class Delphivm
   GEM_ROOT = Pathname(__FILE__).dirname.parent
   EXE_NAME = 'DelphiVM'
 
-  DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
+  if ENV["DVM_APPDATA"]
+    DVM_DATA = Pathname(ENV["DVM_APPDATA"].gsub('\\','/')) + EXE_NAME
+  else
+    DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
   DVM_DATA.mkpath
 
   DVM_TEMP = Pathname(ENV["TEMP"].gsub('\\','/')).realpath
