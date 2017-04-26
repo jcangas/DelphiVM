@@ -4,10 +4,10 @@ require 'mini_portile' # force OCRA sees it !!
 require 'nokogiri'
 require 'zip'
 
-require 'win32/registry.rb'
 require 'open3'
 require 'open-uri'
 require 'net/http'
+require 'net/https'
 require 'ruby-progressbar'
 require 'build_target'
 
@@ -16,6 +16,22 @@ require 'delphivm/ide_services'
 require 'delphivm/dsl'
 
 require 'thor/runner'
+
+require 'open-uri'
+require 'net/https'
+
+# hack to solve "Ruby SSL Certificate Verify Failed" problem
+# http://jimneath.org/2011/10/19/ruby-ssl-certificate-verify-failed.html
+module Net
+  class HTTP
+    alias_method :original_use_ssl=, :use_ssl=
+    def use_ssl=(flag)
+      self.ca_file = Pathname(__FILE__).dirname + 'ca-bundle.crt'
+      self.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      self.original_use_ssl = flag
+    end
+  end
+end
 
 class Delphivm
 	module Util #:nodoc:

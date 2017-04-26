@@ -1,8 +1,7 @@
 
-/out
+out
 dvm-cache/
-/vendor/cache
-/vendor/imports
+vendor
 _site
 *.zip
 .DS_Store
@@ -10,3 +9,5 @@ Thumbs.db
 pkg
 bin/dvm-cache/
 bin/dvm-imports/
+*.log
+spec/PrjGroupTest/assets

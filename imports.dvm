@@ -1,6 +1,6 @@
 
-source 'z:\Dropbox\@ASSOFT\tg\librerias'
+source 'z:\Dropbox\delphivm.org\imports'
 
-uses 'D200' do
-  import "SummerFW4D", "0.8.5"
+uses 'D210' do
+  import "Summer", "1.2.1"
 end

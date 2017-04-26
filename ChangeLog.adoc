@@ -1,0 +1,139 @@
+= DelphiVM CHANGELOG
+:sectnums!:
+
+== v3.6.4
+
+=== Mejoras en vendor:(build/make/clean)
+
+* Nueva opción --multi
+
+Permite invocar desde una carpeta que contiene multiples proyectos. Aplica la acción
+vendor:(build/make/clean) en cada proyecto.
+
+=== Mejoras en vendor:import
+
+* Nueva opción --multi
+
+Permite invocar desde una carpeta que contiene multiples proyectos. Aplica import en cada proyecto
+
+=== Mejoras en vendor:tree
+
+* Nueva opción --multi
+
+Permite invocar desde una carpeta que contiene multiples proyectos. Construye el árbol de dependencias conjunto
+para todos los proyectos.
+
+* Nueva opción --format
+
+Especifica el formato de salida del árbol. Actualmente admite dos valores
+
+draw::
+
+Es el valor por defecto. Renderiza el árbol en forma de gráfica en la consola.
+
+uml::
+
+Renderiza el árbol en usando la sintaxis de http://plantuml.com[PlantUML] en la consola.
+Esto permite redireccionar la salida a fichero de texto para procesar la salida PlnatUML con otras herramientas, como
+http://asciidoctor.org[AscciDoctor]. De esta forma, podemos fácilmente incluir el diagrama UML de dependencias en
+otros documentos.
+
+== v3.6.2
+
+=== vendor:import
+
+*  Corrige: no debe registrar paquetes IDE
+
+=== vendor:reg
+
+* Corrige: debe mostrar el nombre del import que registra paquetes IDE
+
+* refactorización: implmentación más simple y rápida
+
+== v3.6.1
+
+=== Nueva opción prj:reset
+
+Borra el out del proyecto
+
+=== Nueva opción vendor:tree MAX_LEVEL
+
+Muestra el árbol de dependencias solo hasta un nivel máximo de profundidad.
+
+Util para revisar las dependencias directas (MAX_LEVEL = 0) o depurar las dependencias en general
+
+=== vendor:import
+
+* Copia todo el contenido del .zip al directorio vendor, inlcuido el out si el zip lo contiene.
+Ahora solo se envia salida al prj out durante vendor:make o vendor:build.
+
+* fetch: optimizado:
+** En lugar de descargar el import entero a memoria y luego crear el fichero
+local en disco, la descarga se produce en bloques, lo que permite descargar ficheros grandes
+con menos consumo de memoria.
+
+** optimizada la opción -f. Esta opción borra la copia local del import en el cache, par forzar una
+descarga fresca. Si el import aparecia varias veces en el árbol, se borraba cada vez, ahora solo se
+borra la primera vez que aparece en el árbol, las siguientes apariciones, reusan la copia recien
+descargada.
+
+=== "build_as_copy" feature para vendor:build/make
+
+Si el zip contiene un out, en lugar de invocar MSBuild, se copia la versión ya compilada en vendor al
+project out.
+
+=== dvm vendor:tree
+
+Mejorado esqeuma de colores: para cada IDE en cada import indica si cada version del
+IDE esta instalada (verde) o no lo está (rojo). De esta forma, en un vistazo podemos
+ver si se podrá completar una determinada build.
+
+== v3.5.6
+
+=== Mejorado comando vendor:tree
+
+Mejora colores y dibuja las ramas.
+
+=== Mejorada opción vendor:build --ide
+
+Ahora se soporta la opcion --ide. Admite una lista de ide tags (D200, D210, etc).
+Advierte si algun IDE necesario para el build requerido en algún importA no esta instalado.
+
+== v3.5.5
+
+=== General
+
+* Corrige {idetag} error
+
+=== dvm vendor:import command
+
+* mejora de los mensajes de progreso (nivel de indirección, colores, indentacion) para facilitar lectura
+* al importar paquetes, solo se importan los que son para algun IDE usado en el proyecto
+* Nuevo argumento IDEVERS
+
+----
+dvm vendor:import D200 D210
+----
+
+restringe la importacion solo a paqquetes para esos IDEs. Si pasamos IDEs no usados en el prj,
+se ignoran.
+
+=== Nuevo comando vendor:tree
+
+----
+dvm vendor:tree
+- 0:  Dido-0.9.4 D210, D200
+- 1:    Summer-1.2.1 D210
+- 0:  ics-3.2.0 D200
+----
+
+Una vez hecho el import, nos permite visualizar de forma resumida y coloreada el arbol de
+dependencias, incluyendo el nivel de indirección. Si no se ha invocado vendor:import solo muestra
+las dependencias definidas en imports.dvm
+
+== v3.5.4
+
+=== vendor:import recursivo. Al fin!
+
+Invoca import.dvm recursivamente para cada dependencia. Por tanto, por fin,
+en cada proyecto basta poner tus dependencias directas, sin preocuparse de las que esos imports tengan a su vez.

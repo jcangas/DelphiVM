@@ -1,0 +1,16 @@
+
+source File.join(File.dirname(__FILE__), 'imports')
+source ENV['DVMCATALOG']
+
+uses 'D210' do
+  import 'Summer', '1.2.1', uri: 'https://github.com/jcangas/SummerFW4D/releases/download/v1.2.1/Summer-1.2.1-D210.zip' do
+    ide_install('SummerD210.bpl')
+  end
+  import "Dido", "0.9.4"
+  import "Lord", "0.9.4"
+end
+
+uses 'D200' do
+  import "Dido", "0.9.4"
+  import 'ics', '3.2.0'
+end
