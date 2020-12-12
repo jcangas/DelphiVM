@@ -47,7 +47,9 @@ class Delphivm
   end
   DVM_TEMP.mkpath
 
-  if ENV["APPDATA"]
+  if ENV["DVM_APPDATA"]
+    DVM_DATA = Pathname(ENV["DVM_APPDATA"].gsub('\\','/')) + EXE_NAME
+  elsif ENV["APPDATA"]
     DVM_DATA = Pathname(ENV["APPDATA"].gsub('\\','/')) + EXE_NAME
   else
     DVM_DATA = Pathname(__FILE__).dirname.parent + 'bin'
